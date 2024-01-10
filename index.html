@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billion Pixels - Mystery Boxes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: auto; /* Enable scrolling */
+            background: #0c0c0c;
+            color: #fff;
+        }
+
+        header {
+            background-color: #1a1a1a;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 50px auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            overflow: auto; /* Enable scrolling within the container */
+            padding-top: 70px; /* Adjusted padding for the header height */
+        }
+
+        .connect-wallet {
+            cursor: pointer;
+            margin-right: 10px; /* Adjusted margin to the right */
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #boxNumber {
+            padding: 8px;
+            margin-right: 8px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        #searchButton {
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pixels-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            margin-top: 50px; /* Adjusted margin for the boxes under the header */
+        }
+
+        .pixel {
+            width: 30px;
+            height: 30px;
+            background-color: #360033;
+            border: 1px solid #0b8793;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            margin: 2px;
+            border-radius: 8px; /* Rounded corners */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            animation: none;
+        }
+
+        .pixel:hover {
+            background-color: #2ecc71;
+        }
+
+        .pixel.opened {
+            background-color: #2ecc71;
+            border: 1px solid #27ae60;
+            cursor: not-allowed;
+        }
+
+        /* Dynamic particle animation */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='10' cy='10' r='2' /%3E%3Ccircle cx='30' cy='30' r='2' /%3E%3Ccircle cx='50' cy='50' r='2' /%3E%3Ccircle cx='70' cy='70' r='2' /%3E%3Ccircle cx='90' cy='90' r='2' /%3E%3C/g%3E%3C/svg%3E");
+            background-size: 100px 100px;
+            pointer-events: none;
+            animation: particleAnimation 20s linear infinite;
+        }
+
+        @keyframes particleAnimation {
+            to {
+                transform: translate3d(100%, 100%, 0);
+            }
+        }
+
+        /* Bounce animation */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-30px);
+            }
+            60% {
+                transform: translateY(-15px);
+            }
+        }
+
+        /* Apply bounce animation on clicked pixel */
+        .pixel.clicked {
+            animation: bounce 0.5s;
+        }
+
+        /* Cryptocurrency background animation */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: url("https://media.giphy.com/media/3o6gDXsF6t1JqU3ZEQ/giphy.gif");
+            background-size: cover;
+            pointer-events: none;
+            opacity: 0.2; /* Adjust opacity as needed */
+            mix-blend-mode: overlay; /* Blend with the particle animation */
+        }
+
+        /* Counting bar styles */
+        .counting-bar {
+            width: 200px; /* Extended width */
+            height: 20px; /* Adjusted height */
+            background-color: #333;
+            border-radius: 10px; /* Rounded corners */
+            overflow: hidden;
+            margin-left: 10px;
+            position: relative;
+        }
+
+        .filling-bar {
+            height: 100%;
+            width: 0;
+            background-color: #4caf50;
+            border-radius: 10px; /* Match parent's border radius */
+            transition: width 0.3s ease;
+        }
+
+        .count-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Billion Pixels - Mystery Boxes</h1>
+        <div class="search-container">
+            <input type="text" id="boxNumber" placeholder="Enter box number">
+            <button id="searchButton" onclick="searchBox()">Search</button>
+        </div>
+        <div class="counting-bar">
+            <div class="filling-bar" id="fillingBar"></div>
+            <div class="count-label" id="countLabel">0 / 100000</div>
+        </div>
+        <div class="connect-wallet" onclick="connectWallet()">
+            <button>Connect Wallet</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="pixels-container" id="pixelsContainer">
+            <!-- Dynamically generated pixels with Mystery Boxes -->
+        </div>
+    </div>
+
+    <script>
+        // Function to dynamically generate pixels with Mystery Boxes
+        function generatePixels() {
+            const pixelsContainer = document.getElementById('pixelsContainer');
+
+            for (let i = 1; i <= 100000; i++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.setAttribute('data-pixel-id', i);
+                pixel.textContent = i;
+                pixel.addEventListener('click', () => openMysteryBox(i));
+                pixelsContainer.appendChild(pixel);
+            }
+        }
+
+        // Function to open a Mystery Box
+        function openMysteryBox(pixelId) {
+            const pixel = document.querySelector(`.pixel[data-pixel-id="${pixelId}"]`);
+
+            if (!pixel.classList.contains('opened')) {
+                pixel.classList.add('opened', 'clicked');
+                pixel.style.cursor = 'not-allowed';
+
+                const prize = generateRandomPrize(); // Replace this with your logic to get an actual prize
+
+                // Update counting bar and trigger filling animation
+                updateCountingBar();
+                triggerFillingAnimation();
+
+                // Simulate a delay before displaying the alert
+                setTimeout(() => {
+                    alert(`Congratulations! You opened Mystery Box #${pixelId} and won: ${prize}`);
+                }, 500);
+            }
+        }
+
+        // Function to generate a random prize (for demonstration purposes)
+        function generateRandomPrize() {
+            const prizes = ['100 USD', '50 USD', 'Free NFT', 'Special Badge', 'No Prize'];
+            const randomIndex = Math.floor(Math.random() * prizes.length);
+            return prizes[randomIndex];
+        }
+
+        // Function to connect wallet (simulated)
+        function connectWallet() {
+            alert('Connecting to MetaMask (simulated)...');
+            // Simulate the connection process here
+        }
+
+        // Function to search for a specific box number
+        function searchBox() {
+            const boxNumberInput = document.getElementById('boxNumber');
+            const boxNumber = parseInt(boxNumberInput.value);
+
+            if (!isNaN(boxNumber) && boxNumber > 0 && boxNumber <= 100000) {
+                const pixel = document.querySelector(`.pixel[data-pixel-id="${boxNumber}"]`);
+                if (pixel) {
+                    alert(`Box #${boxNumber} found!`);
+                    pixel.style.backgroundColor = '#e74c3c'; // Highlight the found box
+                } else {
+                    alert(`Box #${boxNumber} not found.`);
+                }
+            } else {
+                alert('Please enter a valid box number between 1 and 100,000.');
+            }
+        }
+
+        // Function to update counting bar based on opened boxes
+        function updateCountingBar() {
+            const openedPixels = document.querySelectorAll('.pixel.opened').length;
+            const totalPixels = 100000;
+            const fillingPercentage = (openedPixels / totalPixels) * 100;
+
+            const fillingBar = document.getElementById('fillingBar');
+            const countLabel = document.getElementById('countLabel');
+
+            fillingBar.style.width = `${fillingPercentage}%`;
+            countLabel.textContent = `${openedPixels} / ${totalPixels}`;
+        }
+
+        // Function to trigger the filling animation
+        function triggerFillingAnimation() {
+            const fillingBar = document.getElementById('fillingBar');
+
+            // Reset the animation by removing and re-adding the class
+            fillingBar.classList.remove('filling-animation');
+            void fillingBar.offsetWidth; // Trigger reflow
+            fillingBar.classList.add('filling-animation');
+        }
+
+        // Initialize the webpage
+        generatePixels();
+    </script>
+</body>
+</html>

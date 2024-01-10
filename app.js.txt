@@ -1,0 +1,43 @@
+// app.js
+
+// Function to dynamically generate pixels with Mystery Boxes
+function generatePixels() {
+    const pixelsContainer = document.getElementById('pixelsContainer');
+
+    for (let i = 1; i <= 100; i++) {
+        const pixel = document.createElement('div');
+        pixel.classList.add('pixel');
+        pixel.setAttribute('data-pixel-id', i);
+        pixel.innerHTML = `<i class="fas fa-gift"></i>`;
+        pixel.addEventListener('click', () => openMysteryBox(i));
+        pixelsContainer.appendChild(pixel);
+    }
+}
+
+// Function to open a Mystery Box
+function openMysteryBox(pixelId) {
+    const pixel = document.querySelector(`.pixel[data-pixel-id="${pixelId}"]`);
+
+    if (!pixel.classList.contains('opened')) {
+        pixel.innerHTML = `<i class="fas fa-gift-opened"></i>`;
+        pixel.classList.add('opened');
+        pixel.style.cursor = 'not-allowed';
+
+        const prize = generateRandomPrize(); // Replace this with your logic to get an actual prize
+
+        // Simulate a delay before displaying the alert
+        setTimeout(() => {
+            alert(`Congratulations! You opened Mystery Box #${pixelId} and won: ${prize}`);
+        }, 500);
+    }
+}
+
+// Function to generate a random prize (for demonstration purposes)
+function generateRandomPrize() {
+    const prizes = ['100 USD', '50 USD', 'Free NFT', 'Special Badge', 'No Prize'];
+    const randomIndex = Math.floor(Math.random() * prizes.length);
+    return prizes[randomIndex];
+}
+
+// Initialize the webpage
+generatePixels();
