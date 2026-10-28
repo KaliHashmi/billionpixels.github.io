@@ -13,6 +13,8 @@ type Variant = 'development' | 'uat' | 'production';
 const VARIANT = (process.env.APP_VARIANT ?? 'development') as Variant;
 const BUNDLE_ID = process.env.HISAB_BUNDLE_ID ?? 'com.hisab.accounting';
 const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID;
+/** Only for hosted browser previews: a placeholder base path rewritten when the page loads. */
+const WEB_BASE = process.env.HISAB_WEB_BASE;
 
 const VARIANTS: Record<Variant, { name: string; suffix: string; scheme: string }> = {
   development: { name: 'Hisab (Dev)', suffix: '.dev', scheme: 'hisab-dev' },
@@ -59,13 +61,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       output: 'single',
     },
     plugins: [
-      'expo-router',
+      // Previews ship one bundle so no chunk has to be fetched from an unknown path.
+      ['expo-router', WEB_BASE ? { asyncRoutes: false } : {}],
       'expo-sqlite',
       'expo-sharing',
       'expo-document-picker',
       ['expo-local-authentication', { faceIDPermission: 'Allow Hisab to use Face ID to unlock your books.' }],
     ],
-    experiments: { typedRoutes: false },
+    experiments: { typedRoutes: false, ...(WEB_BASE ? { baseUrl: WEB_BASE } : {}) },
     extra: {
       appVariant: VARIANT,
       supportsRTL: true,
