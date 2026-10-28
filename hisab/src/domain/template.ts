@@ -1,3 +1,4 @@
+import { DEMO_COMPANY_NAME, demoBranding } from './branding';
 import { Account, AccountType, AppState, ID, Journal, Payment, PaymentTerm, Settings, Tax } from './types';
 import { byId, newId } from './utils';
 
@@ -267,6 +268,9 @@ export function ensureCompanyDefaults(state: AppState): AppState {
   for (const [key, code] of SETTINGS_ACCOUNTS) if (!settings[key]) settings[key] = byCode(code);
   const defaults: Partial<Settings> = { country: 'XX', companyNameAr: '', vatRegistered: true, siEmployeeRate: 0, siEmployerRate: 0 };
   for (const [k, v] of Object.entries(defaults)) if (settings[k] === undefined) settings[k] = v;
+  // Demo books saved before stamps existed get the demo stamp and signature.
+  const demoUpgrade = settings.companyName === DEMO_COMPANY_NAME && settings.stampMode === undefined && settings.signatureImage === undefined;
+  if (demoUpgrade) Object.assign(settings, demoBranding());
 
   const taxes = state.taxes.map((t) =>
     t.vatCategory ? t : { ...t, vatCategory: (t.amount > 0 ? 'standard' : 'zero') as Tax['vatCategory'], reverseCharge: !!t.reverseCharge },
@@ -276,6 +280,7 @@ export function ensureCompanyDefaults(state: AppState): AppState {
     p.method ? p : { ...p, method: (journals.get(p.journalId)?.type === 'cash' ? 'cash' : 'bank_transfer') as Payment['method'] },
   );
   const changed =
+    demoUpgrade ||
     accounts !== state.accounts ||
     SETTINGS_ACCOUNTS.some(([k]) => settings[k] !== state.settings[k]) ||
     Object.keys(defaults).some((k) => settings[k] !== (state.settings as unknown as Record<string, unknown>)[k]) ||

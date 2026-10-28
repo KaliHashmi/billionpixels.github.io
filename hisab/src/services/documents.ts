@@ -55,9 +55,9 @@ function doc(body: string, dir: 'ltr' | 'rtl' = 'ltr') {
   return `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"/><style>${BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
-/** Company stamp and authorised signature for an issued document (empty when none is set up). */
-function sealHtml(s: AppState, kind: BrandedDocument, issued: boolean): string {
-  const b = issued ? documentBranding(s.settings, kind) : undefined;
+/** Company stamp and authorised signature (empty when none is set up or switched off for this document). */
+function sealHtml(s: AppState, kind: BrandedDocument, draft = false): string {
+  const b = documentBranding(s.settings, kind, draft);
   if (!b) return '';
   return `<div class="seal"><div class="seal-box">
     <div class="seal-art">
@@ -159,7 +159,7 @@ export function invoiceHtml(s: AppState, move: Move): string {
     </table>
     <p class="muted">${esc(amountInWords(totals.total, s.settings.currency, 'en'))}<br/><span class="ar">${esc(amountInWords(totals.total, s.settings.currency, 'ar'))}</span></p>
     ${move.narration ? `<h2>${bi('Terms and Conditions / Notes')}</h2><div>${esc(move.narration).replace(/\n/g, '<br/>')}</div>` : ''}
-    ${sealHtml(s, move.moveType.startsWith('out') ? 'sales' : 'purchases', move.state === 'posted')}
+    ${move.state === 'cancel' ? '' : sealHtml(s, move.moveType.startsWith('out') ? 'sales' : 'purchases', move.state === 'draft')}
     ${move.moveType.startsWith('out') ? `<div class="footer">${esc(s.settings.invoiceFooter)}</div>` : ''}
   `);
 }
@@ -194,7 +194,7 @@ export function voucherHtml(s: AppState, p: Payment): string {
       ${field(inbound ? 'Deposited to' : 'Paid from', esc(journal?.name ?? ''))}
       ${field('Being', esc(being || '—'))}
     </div>
-    ${sealHtml(s, 'vouchers', p.state !== 'cancel')}
+    ${p.state === 'cancel' ? '' : sealHtml(s, 'vouchers')}
     <div class="sign">
       <div>${bi(inbound ? 'Received by' : 'Prepared by')}</div>
       <div>${bi('Accountant')}</div>
@@ -222,6 +222,7 @@ export function statementHtml(s: AppState, partner: Partner, items: { move: Move
       <tr><td>${bi('Total Overdue')}</td><td class="num">${fmt(overdue)}</td></tr>
       <tr class="grand"><td>${bi('Total Due')}</td><td class="num">${esc(s.settings.currency)} ${fmt(total)}</td></tr>
     </table>
+    ${sealHtml(s, 'reports')}
     <div class="footer">${esc(s.settings.invoiceFooter)}</div>
   `);
 }
@@ -243,6 +244,7 @@ export function reportHtml(s: AppState, r: TableReport, lang: Lang = 'en'): stri
     <div class="header">${companyBlock(s)}<div class="muted" style="text-align:end">${esc(r.subtitle)}<br/>${esc(translate(lang, 'Currency'))}: ${esc(s.settings.currency)}</div></div>
     <h1>${esc(r.title)}</h1>
     <table><thead><tr>${r.columns.map((c, i) => `<th${i > 0 ? ' class="num"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+    ${sealHtml(s, 'reports')}
     <div class="footer">Hisab · ${formatDateIn(lang, new Date().toISOString().slice(0, 10))}</div>
   `,
     lang === 'ar' ? 'rtl' : 'ltr',

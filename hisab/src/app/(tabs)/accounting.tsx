@@ -43,7 +43,7 @@ export default function AccountingMenu() {
       <MenuItem icon="pie-chart-outline" title={t('Analytic Accounts')} onPress={() => router.push('/config/analyticAccounts')} />
       {admin && <MenuItem icon="people-outline" title={t('Users & Access')} onPress={() => router.push('/users')} />}
       {admin && <MenuItem icon="settings-outline" title={t('Settings')} subtitle={t('Company, language, lock dates, backup')} onPress={() => router.push('/settings')} />}
-      {admin && <MenuItem icon="ribbon-outline" title={t('Stamp & Signature')} subtitle={t('Printed on issued invoices and vouchers')} onPress={() => router.push('/stamp')} />}
+      {admin && <MenuItem icon="ribbon-outline" title={t('Stamp & Signature')} subtitle={t('Printed on every PDF: invoices, vouchers, reports')} onPress={() => router.push('/stamp')} />}
       <MenuItem icon="person-circle-outline" title={t('My Account')} subtitle={t('Password, sign out')} onPress={() => router.push('/account')} />
     </Screen>
   );

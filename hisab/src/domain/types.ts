@@ -373,10 +373,13 @@ export interface Settings {
   signatureImage?: string;
   signatoryName?: string;
   signatoryTitle?: string;
-  /** Where the stamp and signature are printed. Defaults: sales and vouchers yes, purchases no. */
+  /** Where the stamp and signature are printed. Every switch defaults to on. */
   brandSales?: boolean;
   brandVouchers?: boolean;
   brandPurchases?: boolean;
+  /** Reports, VAT return, salary sheet and payment reminders. */
+  brandReports?: boolean;
+  brandDrafts?: boolean;
   onboarded: boolean;
 }
 

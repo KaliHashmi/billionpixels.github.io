@@ -1,7 +1,7 @@
 import { Settings } from './types';
 
 /** Which issued documents carry the company stamp and signature. */
-export type BrandedDocument = 'sales' | 'purchases' | 'vouchers';
+export type BrandedDocument = 'sales' | 'purchases' | 'vouchers' | 'reports';
 
 const INK = '#1e3a8a';
 
@@ -102,26 +102,56 @@ export function signatureSvg(strokes: Point[][]): string | undefined {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r(w)} ${r(h)}" width="${r(w)}" height="${r(h)}"><path d="${paths.join('')}" fill="none" stroke="#0b2a6b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
-/** The stamp image (data URI) to print, if any. */
+/** The stamp image (data URI) to print, if any. Companies that never chose get the generated stamp. */
 export function stampSource(s: Settings): string | undefined {
-  if (s.stampMode === 'generated') return svgDataUri(generatedStampSvg(s));
+  if ((s.stampMode ?? 'generated') === 'generated') return svgDataUri(generatedStampSvg(s));
   if (s.stampMode === 'image') return s.stampImage;
   return undefined;
 }
 
+/** Every document type carries the stamp unless switched off in Stamp & Signature. */
 export function brandingApplies(s: Settings, kind: BrandedDocument): boolean {
   if (kind === 'sales') return s.brandSales ?? true;
   if (kind === 'vouchers') return s.brandVouchers ?? true;
-  return s.brandPurchases ?? false;
+  if (kind === 'reports') return s.brandReports ?? true;
+  return s.brandPurchases ?? true;
 }
 
-/** Stamp and signature to print on an issued document, or undefined when there is nothing to print. */
-export function documentBranding(s: Settings, kind: BrandedDocument): { stamp?: string; signature?: string; name?: string; title?: string } | undefined {
-  if (!brandingApplies(s, kind)) return undefined;
+/** Stamp and signature to print on a document, or undefined when there is nothing to print. */
+export function documentBranding(s: Settings, kind: BrandedDocument, draft = false): { stamp?: string; signature?: string; name?: string; title?: string } | undefined {
+  if (!brandingApplies(s, kind) || (draft && s.brandDrafts === false)) return undefined;
   const stamp = stampSource(s);
   const signature = s.signatureImage;
   if (!stamp && !signature) return undefined;
   return { stamp, signature, name: s.signatoryName, title: s.signatoryTitle };
+}
+
+export const DEMO_COMPANY_NAME = 'Hisab Demo Trading LLC';
+
+/** A handwriting-like scribble for the demo signature: a looped capital, a run of letters and an underline. */
+export function demoSignature(): Point[][] {
+  const word: Point[] = [];
+  for (let i = 0; i <= 220; i++) {
+    const t = i / 220;
+    const a = t * Math.PI * 2 * 5.5;
+    // A tall opening loop, then smaller uneven letters that drift slightly upwards.
+    const size = t < 0.18 ? 26 : 13 - 6 * t;
+    const loop = t < 0.18 ? 14 : 8;
+    const y = 52 - 8 * t - size * Math.cos(a) * (0.75 + 0.25 * Math.sin(2.3 * a));
+    // Slant the letters to the right like handwriting.
+    word.push([16 + 170 * t + loop * Math.sin(a) + 0.35 * (52 - y), y]);
+  }
+  const underline: Point[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    underline.push([200 - 185 * t, 70 + 12 * t - 9 * Math.sin(t * Math.PI)]);
+  }
+  return [word, underline];
+}
+
+/** Stamp and signature settings of the demo company. */
+export function demoBranding(): Partial<Settings> {
+  return { stampMode: 'generated', signatureImage: svgDataUri(signatureSvg(demoSignature())!), signatoryName: 'Ahmed Al Balushi', signatoryTitle: 'General Manager' };
 }
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

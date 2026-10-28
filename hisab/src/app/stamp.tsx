@@ -15,7 +15,7 @@ import { Segmented, SwitchField, TextField } from '../ui/fields';
 import { SignaturePad } from '../ui/SignaturePad';
 import { colors, space } from '../ui/theme';
 
-type Branding = Pick<Settings, 'stampMode' | 'stampImage' | 'signatureImage' | 'signatoryName' | 'signatoryTitle' | 'brandSales' | 'brandVouchers' | 'brandPurchases'>;
+type Branding = Pick<Settings, 'stampMode' | 'stampImage' | 'signatureImage' | 'signatoryName' | 'signatoryTitle' | 'brandSales' | 'brandVouchers' | 'brandPurchases' | 'brandReports' | 'brandDrafts'>;
 type SignatureMode = 'none' | 'draw' | 'image';
 
 /** Shows an image data URI; SVG sources are drawn with react-native-svg. */
@@ -31,14 +31,16 @@ export default function StampScreen() {
   const { t } = useT();
   const c = s.settings;
   const [form, setForm] = useState<Branding>({
-    stampMode: c.stampMode ?? 'none',
+    stampMode: c.stampMode ?? 'generated',
     stampImage: c.stampImage,
     signatureImage: c.signatureImage,
     signatoryName: c.signatoryName ?? '',
     signatoryTitle: c.signatoryTitle ?? '',
     brandSales: c.brandSales ?? true,
     brandVouchers: c.brandVouchers ?? true,
-    brandPurchases: c.brandPurchases ?? false,
+    brandPurchases: c.brandPurchases ?? true,
+    brandReports: c.brandReports ?? true,
+    brandDrafts: c.brandDrafts ?? true,
   });
   const set = (patch: Partial<Branding>) => setForm((f) => ({ ...f, ...patch }));
   const [sigMode, setSigMode] = useState<SignatureMode>(!c.signatureImage ? 'none' : svgFromDataUri(c.signatureImage) ? 'draw' : 'image');
@@ -80,7 +82,7 @@ export default function StampScreen() {
       signatoryName: form.signatoryName?.trim() || undefined,
       signatoryTitle: form.signatoryTitle?.trim() || undefined,
     };
-    if (run((st) => ({ ...st, settings: { ...st.settings, ...patch } }))) notify(t('Saved'), t('Every issued invoice and voucher will now carry this stamp and signature.'));
+    if (run((st) => ({ ...st, settings: { ...st.settings, ...patch } }))) notify(t('Saved'), t('Every PDF and printout will now carry this stamp and signature.'));
   };
 
   const sample = s.moves
@@ -100,7 +102,7 @@ export default function StampScreen() {
       <Stack.Screen options={{ title: t('Stamp & Signature') }} />
       <Card>
         <SectionTitle>{t('Preview')}</SectionTitle>
-        <Text style={st.hint}>{t('This block is printed at the bottom of every issued (posted) document. Drafts are never stamped.')}</Text>
+        <Text style={st.hint}>{t('This block is printed at the bottom of every PDF and printout: invoices, bills, credit notes, vouchers, reports and reminders.')}</Text>
         <View style={st.previewWrap}>
           <View style={st.previewArt}>
             {stamp ? (
@@ -211,7 +213,9 @@ export default function StampScreen() {
         <SectionTitle>{t('Print On')}</SectionTitle>
         <SwitchField label={t('Sales invoices & credit notes')} value={!!form.brandSales} onChange={(v) => set({ brandSales: v })} />
         <SwitchField label={t('Receipt & payment vouchers')} value={!!form.brandVouchers} onChange={(v) => set({ brandVouchers: v })} />
-        <SwitchField label={t('Purchase invoices')} value={!!form.brandPurchases} onChange={(v) => set({ brandPurchases: v })} hint={t('Your internal copy of supplier bills.')} />
+        <SwitchField label={t('Purchase invoices')} value={!!form.brandPurchases} onChange={(v) => set({ brandPurchases: v })} />
+        <SwitchField label={t('Reports, VAT return and reminders')} value={!!form.brandReports} onChange={(v) => set({ brandReports: v })} />
+        <SwitchField label={t('Draft documents')} value={!!form.brandDrafts} onChange={(v) => set({ brandDrafts: v })} hint={t('Turn off to stamp only posted documents.')} />
       </Card>
 
       <Button title={t('Save')} icon="checkmark" onPress={save} />

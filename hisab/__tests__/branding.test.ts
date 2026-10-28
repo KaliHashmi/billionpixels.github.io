@@ -1,21 +1,36 @@
 import { documentBranding, generatedStampSvg, signatureSvg, svgDataUri, svgFromDataUri, toBase64 } from '../src/domain/branding';
 import { createDemoCompany } from '../src/domain/seed';
-import { invoiceHtml, voucherHtml } from '../src/services/documents';
+import { createCompany, ensureCompanyDefaults } from '../src/domain/template';
+import { invoiceHtml, reportHtml, statementHtml, voucherHtml } from '../src/services/documents';
 
 describe('stamp and signature', () => {
   const s = createDemoCompany();
   const posted = s.moves.find((m) => m.moveType === 'out_invoice' && m.state === 'posted')!;
   const bill = s.moves.find((m) => m.moveType === 'in_invoice' && m.state === 'posted')!;
 
-  it('prints on issued sales invoices and vouchers but not on drafts or purchase invoices by default', () => {
-    expect(invoiceHtml(s, posted)).toContain('class="stamp"');
-    expect(invoiceHtml(s, posted)).toContain('class="signature"');
+  it('prints on every kind of document unless switched off', () => {
+    const report = reportHtml(s, { title: 'VAT Return', subtitle: '', columns: [''], rows: [] });
+    for (const html of [invoiceHtml(s, posted), invoiceHtml(s, bill), invoiceHtml(s, { ...posted, state: 'draft' }), voucherHtml(s, s.payments.find((p) => p.state === 'posted')!), report, statementHtml(s, s.partners[0], [])]) {
+      expect(html).toContain('class="stamp"');
+      expect(html).toContain('class="signature"');
+    }
     expect(invoiceHtml(s, posted)).toContain('Ahmed Al Balushi');
-    expect(invoiceHtml(s, { ...posted, state: 'draft' })).not.toContain('class="seal"');
-    expect(invoiceHtml(s, bill)).not.toContain('class="seal"');
-    const withPurchases = { ...s, settings: { ...s.settings, brandPurchases: true } };
-    expect(invoiceHtml(withPurchases, bill)).toContain('class="seal"');
-    expect(voucherHtml(s, s.payments.find((p) => p.state === 'posted')!)).toContain('class="seal"');
+    expect(invoiceHtml(s, { ...posted, state: 'cancel' })).not.toContain('class="seal"');
+    const off = { ...s, settings: { ...s.settings, brandDrafts: false, brandPurchases: false, brandReports: false } };
+    expect(invoiceHtml(off, { ...posted, state: 'draft' })).not.toContain('class="seal"');
+    expect(invoiceHtml(off, bill)).not.toContain('class="seal"');
+    expect(reportHtml(off, { title: 'x', subtitle: '', columns: [''], rows: [] })).not.toContain('class="seal"');
+    expect(invoiceHtml(off, posted)).toContain('class="seal"');
+  });
+
+  it('gives books that never chose a stamp the generated one, and upgrades old demo books', () => {
+    const plain = createCompany({ companyName: 'Muscat Traders', currency: 'OMR', vatRate: 5, country: 'OM' });
+    expect(documentBranding(plain.settings, 'sales')?.stamp).toContain('MUSCAT%20TRADERS');
+    const oldDemo = { ...s, settings: { ...s.settings, stampMode: undefined, signatureImage: undefined, signatoryName: undefined } };
+    const upgraded = ensureCompanyDefaults(oldDemo);
+    expect(upgraded.settings.signatureImage).toBeDefined();
+    expect(upgraded.settings.signatoryName).toBe('Ahmed Al Balushi');
+    expect(ensureCompanyDefaults(upgraded)).toBe(upgraded);
   });
 
   it('prints nothing when no stamp or signature is set up, or the document type is switched off', () => {
