@@ -546,6 +546,7 @@ export const ar: Record<string, string> = {
   "of which pending clearance": "منها قيد التحصيل",
   "Off-Balance Sheet": "خارج الميزانية",
   "Office Supplies": "مستلزمات مكتبية",
+  "OK": "حسناً",
   "Older": "أقدم",
   "Oman": "سلطنة عُمان",
   "Omani": "عُماني",

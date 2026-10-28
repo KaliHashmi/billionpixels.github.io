@@ -4,6 +4,12 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { AppState } from '../domain/types';
+import { notify } from '../ui/dialog';
+
+/** Browser previews cannot print or download files; the phone apps use the share sheet. */
+function webUnavailable() {
+  notify('PDF / Print / Export', 'Available in the iPhone and Android app.\nمتاح في تطبيق آيفون وأندرويد.');
+}
 
 function downloadOnWeb(filename: string, content: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
@@ -18,7 +24,8 @@ function downloadOnWeb(filename: string, content: string, mimeType: string) {
 /** Save a text file and open the system share sheet (email, Drive, Files…). */
 export async function shareTextFile(filename: string, content: string, mimeType: string): Promise<void> {
   if (Platform.OS === 'web') {
-    downloadOnWeb(filename, content, mimeType);
+    if (typeof window !== 'undefined' && window.top === window.self) downloadOnWeb(filename, content, mimeType);
+    else webUnavailable();
     return;
   }
   const file = new File(Paths.cache, filename);
@@ -28,7 +35,7 @@ export async function shareTextFile(filename: string, content: string, mimeType:
 
 export async function sharePdf(html: string, filename: string): Promise<void> {
   if (Platform.OS === 'web') {
-    await Print.printAsync({ html });
+    await printHtml(html);
     return;
   }
   const { uri } = await Print.printToFileAsync({ html });
@@ -39,6 +46,11 @@ export async function sharePdf(html: string, filename: string): Promise<void> {
 }
 
 export async function printHtml(html: string): Promise<void> {
+  // Embedded previews (iframes) cannot open the print dialog.
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.top !== window.self) {
+    webUnavailable();
+    return;
+  }
   await Print.printAsync({ html });
 }
 

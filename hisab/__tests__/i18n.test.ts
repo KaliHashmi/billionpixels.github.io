@@ -16,7 +16,7 @@ declare const process: { env: Record<string, string | undefined> };
 const SRC = path.join(__dirname, '..', 'src');
 
 /** Literals that are not user-facing text. */
-const UNTRANSLATED = new Set(['PDF', 'English', 'CSV / Excel', 'DEV', 'UAT', 'OMR', 'OM', 'Demo']);
+const UNTRANSLATED = new Set(['PDF', 'English', 'CSV / Excel', 'DEV', 'UAT', 'OMR', 'OM', 'Demo', 'PDF / Print / Export']);
 
 function walk(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e: { name: string; isDirectory(): boolean }) => (e.isDirectory() ? walk(path.join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [path.join(dir, e.name)] : []));

@@ -5,7 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StoreProvider, useStore } from '../data/store';
 import { CreateAdminScreen, ForcePasswordChangeScreen, LoginScreen } from '../features/Auth';
 import Onboarding from '../features/Onboarding';
-import { I18nProvider } from '../i18n';
+import { I18nProvider, useT } from '../i18n';
+import { DialogHost } from '../ui/dialog';
 import { Loading } from '../ui/components';
 import { EnvBadge } from '../ui/EnvBadge';
 import { colors } from '../ui/theme';
@@ -18,10 +19,16 @@ export default function RootLayout() {
           <StatusBar style="light" />
           <Gate />
           <EnvBadge />
+          <Dialogs />
         </StoreProvider>
       </I18nProvider>
     </SafeAreaProvider>
   );
+}
+
+function Dialogs() {
+  const { t } = useT();
+  return <DialogHost cancelLabel={t('Cancel')} okLabel={t('OK')} />;
 }
 
 function Gate() {
