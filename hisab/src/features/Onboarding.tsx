@@ -3,7 +3,8 @@ import { Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ENV } from '../config/env';
 import { migrate } from '../data/persistence';
-import { useStore } from '../data/store';
+import { randomBytes, useStore } from '../data/store';
+import { addUser } from '../domain/auth';
 import { createDemoCompany } from '../domain/seed';
 import { COUNTRIES, createCompany, CURRENCIES } from '../domain/template';
 import { useT } from '../i18n';
@@ -12,16 +13,21 @@ import { pickTextFile, readBackup } from '../services/files';
 import { Button, Card, Screen } from '../ui/components';
 import { notify } from '../ui/dialog';
 import { NumberField, Segmented, SelectField, TextField } from '../ui/fields';
+import { NewPasswordFields } from './Auth';
 import { colors, space } from '../ui/theme';
 
 export default function Onboarding() {
-  const { replace } = useStore();
+  const { replace, startSession } = useStore();
   const { t, lang, setLang } = useT();
   const [companyName, setCompanyName] = useState('');
   const [country, setCountry] = useState('OM');
   const [currency, setCurrency] = useState('OMR');
   const [vatRate, setVatRate] = useState(5);
   const [lastMonth, setLastMonth] = useState('12');
+  const [adminName, setAdminName] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
   const chooseCountry = (code: string) => {
     const c = COUNTRIES.find((x) => x.code === code);
@@ -37,7 +43,18 @@ export default function Onboarding() {
       notify(t('Company name required'), t('Please enter the name of your company.'));
       return;
     }
-    replace(createCompany({ companyName: companyName.trim(), currency, vatRate, country, fiscalYearLastMonth: Number(lastMonth) }));
+    if (password !== confirm) {
+      notify(t('Passwords do not match'), t('Type the same password twice.'));
+      return;
+    }
+    try {
+      const company = createCompany({ companyName: companyName.trim(), currency, vatRate, country, fiscalYearLastMonth: Number(lastMonth) });
+      const { state, user } = addUser(company, { username, name: adminName || companyName, role: 'admin', password }, randomBytes);
+      startSession(user.id);
+      replace(state);
+    } catch (e) {
+      notify(t('Validation Error'), t(e instanceof Error ? e.message : String(e)));
+    }
   };
 
   const restore = async () => {
@@ -79,6 +96,10 @@ export default function Onboarding() {
             onChange={(v) => v && setLastMonth(v)}
             options={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: monthName(lang, i) }))}
           />
+          <Text style={{ fontSize: 15, fontWeight: '700', marginVertical: space.sm }}>{t('Administrator account')}</Text>
+          <TextField label={t('Your Name')} value={adminName} onChange={setAdminName} />
+          <TextField label={t('Username')} value={username} onChange={setUsername} required autoCapitalize="none" />
+          <NewPasswordFields password={password} confirm={confirm} onPassword={setPassword} onConfirm={setConfirm} />
           <Button title={t('Create Company')} icon="checkmark" onPress={create} />
         </Card>
         <Button title={t('Restore from Backup')} icon="cloud-download-outline" variant="secondary" onPress={restore} />

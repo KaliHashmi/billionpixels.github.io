@@ -306,6 +306,26 @@ export interface CashClosing {
   moveId?: ID;
 }
 
+export type UserRole = 'admin' | 'accountant' | 'viewer';
+
+export interface User {
+  id: ID;
+  username: string;
+  name: string;
+  role: UserRole;
+  /** PBKDF2-HMAC-SHA256 of the password, hex. */
+  passwordHash: string;
+  salt: string;
+  iterations: number;
+  active: boolean;
+  /** Set when an administrator assigns a temporary password. */
+  mustChangePassword: boolean;
+  failedAttempts: number;
+  lockedUntil?: string;
+  lastLoginAt?: string;
+  createdAt: string;
+}
+
 export interface Settings {
   companyName: string;
   companyAddress: string;
@@ -366,6 +386,7 @@ export interface AppState {
   employees: Employee[];
   payrollRuns: PayrollRun[];
   cashClosings: CashClosing[];
+  users: User[];
   sequences: Record<string, number>;
 }
 

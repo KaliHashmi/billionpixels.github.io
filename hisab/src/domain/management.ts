@@ -220,7 +220,8 @@ export function bankReconciliation(state: AppState, journalId: ID, asOf: string)
   const depositsInTransit: BankReconciliation['depositsInTransit'] = [];
   const unpresentedPayments: BankReconciliation['unpresentedPayments'] = [];
   for (const m of state.moves) {
-    if (m.state !== 'posted' || m.journalId !== journalId || m.date > asOf || m.origin !== 'payment') continue;
+    // Payments, salary transfers… recorded through the transit accounts of this bank journal.
+    if (m.state !== 'posted' || m.journalId !== journalId || m.date > asOf || m.origin === 'statement') continue;
     for (const l of m.lines) {
       if (!transitAccounts.has(l.accountId)) continue;
       const r = lineResidual(l, idx, d);

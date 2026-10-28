@@ -192,6 +192,7 @@ it('demo company balances', () => {
   const brs = bankReconciliation(s, bank.id, '2099-12-31');
   expect(brs.difference).toBe(0);
   expect(brs.unrecordedInBooks).toHaveLength(2);
+  expect(brs.unpresentedPayments).toHaveLength(0);
 });
 
 import { amountInWords } from '../src/domain/words';
@@ -201,4 +202,15 @@ it('writes amounts in words', () => {
   expect(amountInWords(1250.5, 'OMR', 'ar')).toBe('فقط ألف ومائتان وخمسون ريال عماني وخمسمائة بيسة لا غير');
   expect(amountInWords(3021, 'OMR', 'ar')).toBe('فقط ثلاثة آلاف وواحد وعشرون ريال عماني لا غير');
   expect(amountInWords(105.129, 'OMR', 'en')).toBe('One Hundred and Five Omani Rials and One Hundred and Twenty-Nine Baisa Only');
+});
+
+it('lists unpaid salary transfers as unpresented in the bank reconciliation', () => {
+  const { s: s0, bank } = oman();
+  const emp: Employee = { id: newId(), name: 'E', code: '', position: '', nationality: 'expat', basicSalary: 400, housingAllowance: 0, transportAllowance: 0, otherAllowance: 0, socialInsurance: false, bankName: '', iban: '', joinDate: D, active: true };
+  let s: AppState = { ...s0, employees: [emp] };
+  const run = newPayrollRun(s, '2026-03');
+  s = payPayroll(postPayroll(savePayrollRun(s, run), run.id), run.id, bank.id, '2026-03-31');
+  const brs = bankReconciliation(s, bank.id, '2026-04-30');
+  expect(brs.unpresentedPayments.map((u) => u.amount)).toEqual([400]);
+  expect(brs.projectedBalance).toBe(-400);
 });

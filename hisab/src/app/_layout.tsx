@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StoreProvider, useStore } from '../data/store';
+import { CreateAdminScreen, ForcePasswordChangeScreen, LoginScreen } from '../features/Auth';
 import Onboarding from '../features/Onboarding';
 import { I18nProvider } from '../i18n';
 import { Loading } from '../ui/components';
@@ -24,9 +25,12 @@ export default function RootLayout() {
 }
 
 function Gate() {
-  const { ready, state } = useStore();
+  const { ready, state, user } = useStore();
   if (!ready) return <Loading />;
   if (!state) return <Onboarding />;
+  if (!state.users.length) return <CreateAdminScreen />;
+  if (!user) return <LoginScreen />;
+  if (user.mustChangePassword) return <ForcePasswordChangeScreen />;
   return (
     <View style={{ flex: 1 }}>
       <Stack

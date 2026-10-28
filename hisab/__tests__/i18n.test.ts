@@ -2,6 +2,7 @@
 const fs = require('fs');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
+import { ROLE_LABELS } from '../src/domain/auth';
 import { MOVE_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '../src/domain/engine';
 import { cashPosition, vatReturn } from '../src/domain/management';
 import { AGED_BUCKETS, balanceSheet, cashFlow, dashboard, executiveSummary, profitAndLoss } from '../src/domain/reports';
@@ -15,7 +16,7 @@ declare const process: { env: Record<string, string | undefined> };
 const SRC = path.join(__dirname, '..', 'src');
 
 /** Literals that are not user-facing text. */
-const UNTRANSLATED = new Set(['PDF', 'English', 'CSV / Excel', 'DEV', 'UAT', 'OMR', 'OM']);
+const UNTRANSLATED = new Set(['PDF', 'English', 'CSV / Excel', 'DEV', 'UAT', 'OMR', 'OM', 'Demo']);
 
 function walk(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e: { name: string; isDirectory(): boolean }) => (e.isDirectory() ? walk(path.join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [path.join(dir, e.name)] : []));
@@ -56,7 +57,7 @@ function dataKeys(): Set<string> {
   s.paymentTerms.forEach((x) => add(x.name));
   COUNTRIES.forEach((c) => add(c.name));
   CURRENCIES.forEach((c) => add(c.name));
-  for (const m of [ACCOUNT_TYPE_LABELS, MOVE_TYPE_LABELS, PAYMENT_METHOD_LABELS, VAT_CATEGORY_LABELS, JOURNAL_TYPE_LABELS]) Object.values(m).forEach((v) => add(v));
+  for (const m of [ROLE_LABELS, ACCOUNT_TYPE_LABELS, MOVE_TYPE_LABELS, PAYMENT_METHOD_LABELS, VAT_CATEGORY_LABELS, JOURNAL_TYPE_LABELS]) Object.values(m).forEach((v) => add(v));
   AGED_BUCKETS.forEach((b) => add(b));
   for (const def of Object.values(ENTITIES)) {
     add(def.title, def.singular);

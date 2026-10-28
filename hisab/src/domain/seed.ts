@@ -1,4 +1,5 @@
 import { confirmAsset, postDepreciations, saveAsset } from './assets';
+import { addUser } from './auth';
 import { invoiceStatus, newInvoiceLine, newMove, PaymentInput, postMove, reconcileStatementLine, registerPayment, saveDraft, saveStatementLine, suggestMatches, WriteOff } from './engine';
 import { newPayrollRun, payPayroll, postPayroll, savePayrollRun } from './operations';
 import { createCompany, CompanySetup } from './template';
@@ -32,6 +33,9 @@ export function createDemoCompany(
   setup: CompanySetup = { companyName: 'Hisab Demo Trading LLC', currency: 'OMR', vatRate: 5, country: 'OM' },
 ): AppState {
   let s = createCompany(setup);
+  s = addUser(s, { username: 'admin', name: 'Demo Administrator', role: 'admin', password: 'demo1234' }).state;
+  s = addUser(s, { username: 'accountant', name: 'Demo Accountant', role: 'accountant', password: 'demo1234' }).state;
+  s = addUser(s, { username: 'owner', name: 'Demo Owner (read-only)', role: 'viewer', password: 'demo1234' }).state;
   s = { ...s, settings: { ...s.settings, companyNameAr: 'شركة حساب التجريبية للتجارة ش.م.م', companyAddress: 'Al Khuwair, Muscat\nSultanate of Oman', companyTaxId: 'OM1100000000', companyPhone: '+968 2400 0000', companyEmail: 'accounts@hisab-demo.om' } };
   const acc = (code: string) => s.accounts.find((a) => a.code === code)!.id;
   const saleTax = s.settings.defaultSaleTaxId!;

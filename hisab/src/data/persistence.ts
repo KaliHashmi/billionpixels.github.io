@@ -18,6 +18,7 @@ export const COLLECTIONS: CollectionName[] = [
   'employees',
   'payrollRuns',
   'cashClosings',
+  'users',
 ];
 
 export const SCHEMA_VERSION = 1;

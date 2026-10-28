@@ -58,7 +58,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       favicon: './assets/favicon.png',
       output: 'single',
     },
-    plugins: ['expo-router', 'expo-sqlite', 'expo-sharing', 'expo-document-picker'],
+    plugins: [
+      'expo-router',
+      'expo-sqlite',
+      'expo-sharing',
+      'expo-document-picker',
+      ['expo-local-authentication', { faceIDPermission: 'Allow Hisab to use Face ID to unlock your books.' }],
+    ],
     experiments: { typedRoutes: false },
     extra: {
       appVariant: VARIANT,

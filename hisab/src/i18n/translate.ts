@@ -28,7 +28,7 @@ export function translate(lang: Lang, key: string, params?: Record<string, strin
 
 export function hasTranslation(key: string): boolean {
   if (ar[key] !== undefined) return true;
-  return NUM.test(key) && ar[key.replace(NUM, '{n}')] !== undefined;
+  return !!key.match(NUM) && ar[key.replace(NUM, '{n}')] !== undefined;
 }
 
 const MONTHS: Record<Lang, string[]> = {

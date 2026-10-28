@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 import { ENV } from '../config/env';
 import { migrate } from '../data/persistence';
 import { useBooks, useStore } from '../data/store';
+import { isAdmin } from '../domain/auth';
 import { COUNTRIES } from '../domain/template';
 import { Settings } from '../domain/types';
 import { isValidISODate, today } from '../domain/utils';
@@ -11,7 +12,7 @@ import { accountOptions, taxOptions, termOptions } from '../features/entities';
 import { useT } from '../i18n';
 import { monthName } from '../i18n/translate';
 import { makeBackup, pickTextFile, readBackup, shareTextFile } from '../services/files';
-import { Button, ButtonRow, Card, Row, Screen, SectionTitle } from '../ui/components';
+import { Button, ButtonRow, Card, EmptyState, Row, Screen, SectionTitle } from '../ui/components';
 import { confirm, notify } from '../ui/dialog';
 import { NumberField, Segmented, SelectField, SwitchField, TextField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
@@ -20,7 +21,7 @@ type AccountKey = { [K in keyof Settings]-?: Settings[K] extends string ? K : ne
 
 export default function SettingsScreen() {
   const s = useBooks();
-  const { run, replace } = useStore();
+  const { run, replace, user } = useStore();
   const { t, lang, setLang } = useT();
   const [form, setForm] = useState<Settings>(s.settings);
   const set = (patch: Partial<Settings>) => setForm({ ...form, ...patch });
@@ -62,6 +63,8 @@ export default function SettingsScreen() {
   const accountField = (label: string, key: AccountKey, filter?: Parameters<typeof accountOptions>[1]) => (
     <SelectField label={t(label)} required value={form[key] as string} options={accountOptions(s, filter, t)} onChange={(v) => v && set({ [key]: v } as Partial<Settings>)} />
   );
+
+  if (!isAdmin(user?.role)) return <EmptyState icon="lock-closed-outline" title={t('Administrators only')} />;
 
   return (
     <Screen>

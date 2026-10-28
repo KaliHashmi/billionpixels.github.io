@@ -1,13 +1,16 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { useBooks } from '../../data/store';
+import { useBooks, useStore } from '../../data/store';
+import { isAdmin } from '../../domain/auth';
 import { chequeRegister } from '../../domain/management';
 import { useT } from '../../i18n';
 import { MenuItem, Screen, SectionTitle } from '../../ui/components';
 
 export default function AccountingMenu() {
   const s = useBooks();
+  const { user } = useStore();
+  const admin = isAdmin(user?.role);
   const { t } = useT();
   const toReconcile = useMemo(() => s.statementLines.filter((l) => !l.reconciled).length, [s.statementLines]);
   const pendingCheques = useMemo(() => chequeRegister(s).filter((c) => c.status === 'pending').length, [s]);
@@ -38,7 +41,9 @@ export default function AccountingMenu() {
       <MenuItem icon="pricetag-outline" title={t('Taxes')} onPress={() => router.push('/config/taxes')} />
       <MenuItem icon="time-outline" title={t('Payment Terms')} onPress={() => router.push('/config/paymentTerms')} />
       <MenuItem icon="pie-chart-outline" title={t('Analytic Accounts')} onPress={() => router.push('/config/analyticAccounts')} />
-      <MenuItem icon="settings-outline" title={t('Settings')} subtitle={t('Company, language, lock dates, backup')} onPress={() => router.push('/settings')} />
+      {admin && <MenuItem icon="people-outline" title={t('Users & Access')} onPress={() => router.push('/users')} />}
+      {admin && <MenuItem icon="settings-outline" title={t('Settings')} subtitle={t('Company, language, lock dates, backup')} onPress={() => router.push('/settings')} />}
+      <MenuItem icon="person-circle-outline" title={t('My Account')} subtitle={t('Password, sign out')} onPress={() => router.push('/account')} />
     </Screen>
   );
 }

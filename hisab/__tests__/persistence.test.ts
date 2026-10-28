@@ -9,7 +9,7 @@ describe('persistence diff', () => {
     expect(c.upserts.length).toBe(
       s.accounts.length + s.journals.length + s.taxes.length + s.paymentTerms.length + s.partners.length + s.products.length +
         s.analyticAccounts.length + s.moves.length + s.reconciles.length + s.payments.length + s.statementLines.length + s.assets.length +
-        s.budgets.length + s.employees.length + s.payrollRuns.length + s.cashClosings.length,
+        s.budgets.length + s.employees.length + s.payrollRuns.length + s.cashClosings.length + s.users.length,
     );
     expect(c.meta.map((m) => m.key).sort()).toEqual(['sequences', 'settings']);
   });

@@ -26,6 +26,8 @@ export function TextField({
   required,
   editable = true,
   autoCapitalize,
+  secure,
+  onSubmit,
 }: {
   label: string;
   value: string;
@@ -36,6 +38,9 @@ export function TextField({
   required?: boolean;
   editable?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  /** Password entry (hidden text, no autocorrect). */
+  secure?: boolean;
+  onSubmit?: () => void;
 }) {
   return (
     <View style={s.field}>
@@ -49,6 +54,10 @@ export function TextField({
         keyboardType={keyboardType}
         editable={editable}
         autoCapitalize={autoCapitalize}
+        secureTextEntry={secure}
+        autoCorrect={secure ? false : undefined}
+        textContentType={secure ? 'password' : undefined}
+        onSubmitEditing={onSubmit}
         style={[s.input, multiline && { minHeight: 70, textAlignVertical: 'top' }, !editable && s.readonly]}
       />
     </View>

@@ -350,8 +350,9 @@ function build(report: string, s: AppState, p: PeriodValue, x: Extra, t: Tr, fmt
 
 export default function ReportScreen() {
   const { report, accountId, journalId, budgetId, preset } = useLocalSearchParams<{ report: string; accountId?: string; journalId?: string; budgetId?: string; preset?: PresetKey }>();
+  const extra = useMemo(() => ({ accountId: accountId || undefined, journalId, budgetId }), [accountId, journalId, budgetId]);
   // Remount per report so each one starts with its own default period.
-  return <ReportView key={`${report}-${preset ?? ''}`} report={report} preset={preset} extra={{ accountId: accountId || undefined, journalId, budgetId }} />;
+  return <ReportView key={`${report}-${preset ?? ''}`} report={report} preset={preset} extra={extra} />;
 }
 
 function ReportView({ report, preset, extra }: { report: string; preset?: PresetKey; extra: Extra }) {

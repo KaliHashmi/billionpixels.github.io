@@ -247,6 +247,7 @@ export function createCompany(setup: CompanySetup): AppState {
     employees: [],
     payrollRuns: [],
     cashClosings: [],
+    users: [],
     sequences: {},
   };
 }

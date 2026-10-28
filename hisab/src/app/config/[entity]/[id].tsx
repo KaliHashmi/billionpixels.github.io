@@ -5,6 +5,7 @@ import { useBooks, useMoney, useStore } from '../../../data/store';
 import { invoiceStatus, isInvoice } from '../../../domain/engine';
 import { Partner } from '../../../domain/types';
 import { EntityDef, ENTITIES, FieldDef, isReferenced } from '../../../features/entities';
+import { isAdmin } from '../../../domain/auth';
 import { useT } from '../../../i18n';
 import { Button, ButtonRow, Card, Row, Screen, SectionTitle } from '../../../ui/components';
 import { confirm, notify } from '../../../ui/dialog';
@@ -13,11 +14,14 @@ import { space } from '../../../ui/theme';
 
 type Rec = { id: string; active: boolean } & Record<string, unknown>;
 
+/** Configuration that affects how everything is posted. */
+const ADMIN_ONLY = ['accounts', 'journals', 'taxes'];
+
 export default function EntityForm() {
   const params = useLocalSearchParams<{ entity: string; id: string; kind?: string }>();
   const def = ENTITIES[params.entity] as EntityDef<Rec> | undefined;
   const s = useBooks();
-  const { run } = useStore();
+  const { run, user } = useStore();
   const { t } = useT();
   const existing = def && params.id !== 'new' ? (s[def.collection] as unknown as Rec[]).find((r) => r.id === params.id) : undefined;
   const [rec, setRec] = useState<Rec | undefined>(() => existing ?? def?.create(s, params));
@@ -25,6 +29,10 @@ export default function EntityForm() {
   const set = (key: string, value: unknown) => setRec({ ...rec, [key]: value });
 
   const save = () => {
+    if (ADMIN_ONLY.includes(def.collection) && !isAdmin(user?.role)) {
+      notify(t('Administrators only'), t('Only an administrator can change the chart of accounts, journals and taxes.'));
+      return;
+    }
     for (const f of def.fields) {
       const v = rec[f.key];
       if (f.required && (v === undefined || v === '' || (typeof v === 'string' && !v.trim()))) {
@@ -46,6 +54,10 @@ export default function EntityForm() {
   };
 
   const remove = async () => {
+    if (ADMIN_ONLY.includes(def.collection) && !isAdmin(user?.role)) {
+      notify(t('Administrators only'), t('Only an administrator can change the chart of accounts, journals and taxes.'));
+      return;
+    }
     if (isReferenced(s, def.collection, rec.id)) {
       if (await confirm(t('In use'), t('This record is used in your books, so it can only be archived.'), t('Archive'))) {
         run((st) => ({ ...st, [def.collection]: (st[def.collection] as unknown as Rec[]).map((r) => (r.id === rec.id ? { ...r, active: false } : r)) }));
