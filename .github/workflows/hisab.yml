@@ -1,0 +1,67 @@
+name: Hisab
+
+on:
+  push:
+    paths: ['hisab/**', '.github/workflows/hisab.yml']
+  pull_request:
+    paths: ['hisab/**', '.github/workflows/hisab.yml']
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Build profile
+        type: choice
+        options: [uat, production]
+        default: uat
+      platform:
+        description: Platform
+        type: choice
+        options: [all, android, ios]
+        default: all
+      submit:
+        description: Submit to the stores after building (TestFlight / Play internal track for UAT)
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    working-directory: hisab
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hisab/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+
+  build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hisab/package-lock.json
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: EAS build
+        env:
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+        run: >
+          eas build --non-interactive --no-wait
+          --profile ${{ inputs.profile }}
+          --platform ${{ inputs.platform }}
+          ${{ inputs.submit && '--auto-submit' || '' }}
