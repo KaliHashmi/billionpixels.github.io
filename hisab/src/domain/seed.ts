@@ -1,4 +1,5 @@
 import { confirmAsset, postDepreciations, saveAsset } from './assets';
+import { Point, signatureSvg, svgDataUri } from './branding';
 import { addUser } from './auth';
 import { invoiceStatus, newInvoiceLine, newMove, PaymentInput, postMove, reconcileStatementLine, registerPayment, saveDraft, saveStatementLine, suggestMatches, WriteOff } from './engine';
 import { newPayrollRun, payPayroll, postPayroll, savePayrollRun } from './operations';
@@ -29,6 +30,27 @@ function employee(p: Partial<Employee> & { name: string; basicSalary: number }):
 }
 
 /** A company populated with realistic Omani demo data (used by the UAT build and tests). */
+/** A handwriting-like scribble for the demo signature: a looped capital, a run of letters and an underline. */
+function demoSignature(): Point[][] {
+  const word: Point[] = [];
+  for (let i = 0; i <= 220; i++) {
+    const t = i / 220;
+    const a = t * Math.PI * 2 * 5.5;
+    // A tall opening loop, then smaller uneven letters that drift slightly upwards.
+    const size = t < 0.18 ? 26 : 13 - 6 * t;
+    const loop = t < 0.18 ? 14 : 8;
+    const y = 52 - 8 * t - size * Math.cos(a) * (0.75 + 0.25 * Math.sin(2.3 * a));
+    // Slant the letters to the right like handwriting.
+    word.push([16 + 170 * t + loop * Math.sin(a) + 0.35 * (52 - y), y]);
+  }
+  const underline: Point[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    underline.push([200 - 185 * t, 70 + 12 * t - 9 * Math.sin(t * Math.PI)]);
+  }
+  return [word, underline];
+}
+
 export function createDemoCompany(
   setup: CompanySetup = { companyName: 'Hisab Demo Trading LLC', currency: 'OMR', vatRate: 5, country: 'OM' },
 ): AppState {
@@ -37,6 +59,7 @@ export function createDemoCompany(
   s = addUser(s, { username: 'accountant', name: 'Demo Accountant', role: 'accountant', password: 'demo1234' }).state;
   s = addUser(s, { username: 'owner', name: 'Demo Owner (read-only)', role: 'viewer', password: 'demo1234' }).state;
   s = { ...s, settings: { ...s.settings, companyNameAr: 'شركة حساب التجريبية للتجارة ش.م.م', companyAddress: 'Al Khuwair, Muscat\nSultanate of Oman', companyTaxId: 'OM1100000000', companyPhone: '+968 2400 0000', companyEmail: 'accounts@hisab-demo.om' } };
+  s = { ...s, settings: { ...s.settings, stampMode: 'generated', signatureImage: svgDataUri(signatureSvg(demoSignature())!), signatoryName: 'Ahmed Al Balushi', signatoryTitle: 'General Manager' } };
   const acc = (code: string) => s.accounts.find((a) => a.code === code)!.id;
   const saleTax = s.settings.defaultSaleTaxId!;
   const purchaseTax = s.settings.defaultPurchaseTaxId!;

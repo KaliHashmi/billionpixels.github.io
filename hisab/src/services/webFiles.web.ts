@@ -103,3 +103,25 @@ export async function htmlToPdfBlob(html: string): Promise<Blob> {
     frame.remove();
   }
 }
+
+/** Read an image file as a PNG data URI, scaled down so it stays small enough to store. */
+export function imageToDataUri(file: Blob, maxSide = 700): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * k));
+      canvas.height = Math.max(1, Math.round(img.height * k));
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('This file is not an image Hisab can read. Use a PNG or JPG.'));
+    };
+    img.src = url;
+  });
+}

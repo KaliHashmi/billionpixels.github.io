@@ -365,6 +365,18 @@ export interface Settings {
   defaultSaleTaxId?: ID;
   defaultPurchaseTaxId?: ID;
   defaultPaymentTermId?: ID;
+  /** Company stamp printed on issued documents: none, drawn from the company name, or an uploaded image. */
+  stampMode?: 'none' | 'generated' | 'image';
+  /** Uploaded stamp as a data URI. */
+  stampImage?: string;
+  /** Authorised signature as a data URI (an uploaded image or a drawn SVG). */
+  signatureImage?: string;
+  signatoryName?: string;
+  signatoryTitle?: string;
+  /** Where the stamp and signature are printed. Defaults: sales and vouchers yes, purchases no. */
+  brandSales?: boolean;
+  brandVouchers?: boolean;
+  brandPurchases?: boolean;
   onboarded: boolean;
 }
 

@@ -1,3 +1,4 @@
+import { BrandedDocument, documentBranding } from '../domain/branding';
 import { invoiceStatus, PAYMENT_METHOD_LABELS } from '../domain/engine';
 import { computeInvoiceTotals } from '../domain/tax';
 import { AppState, Move, Partner, Payment } from '../domain/types';
@@ -37,6 +38,13 @@ const BASE_CSS = `
   .field b { font-weight: 600; color: #6b7280; min-width: 120px; }
   .amount { font-size: 18px; font-weight: 800; color: #714B67; }
   .sign { display: flex; justify-content: space-between; margin-top: 48px; gap: 24px; }
+  .seal { display: flex; justify-content: flex-end; margin-top: 24px; page-break-inside: avoid; }
+  .seal-box { width: 250px; text-align: center; }
+  .seal-art { position: relative; height: 130px; border-bottom: 1px solid #1f2328; }
+  .seal-art .stamp { position: absolute; width: 124px; height: 124px; object-fit: contain; inset-inline-start: 0; top: 3px; }
+  .seal-art .signature { position: absolute; max-width: 170px; max-height: 76px; object-fit: contain; inset-inline-end: 6px; bottom: 6px; }
+  .seal-label { font-size: 10px; color: #6b7280; margin-top: 4px; }
+  .seal-name { font-weight: 600; font-size: 11px; }
   .sign div { flex: 1; border-top: 1px solid #1f2328; padding-top: 4px; text-align: center; color: #6b7280; font-size: 11px; }
 `;
 
@@ -45,6 +53,20 @@ const bi = (en: string) => `${esc(en)} <span class="ar">${esc(translate('ar', en
 
 function doc(body: string, dir: 'ltr' | 'rtl' = 'ltr') {
   return `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"/><style>${BASE_CSS}</style></head><body>${body}</body></html>`;
+}
+
+/** Company stamp and authorised signature for an issued document (empty when none is set up). */
+function sealHtml(s: AppState, kind: BrandedDocument, issued: boolean): string {
+  const b = issued ? documentBranding(s.settings, kind) : undefined;
+  if (!b) return '';
+  return `<div class="seal"><div class="seal-box">
+    <div class="seal-art">
+      ${b.stamp ? `<img class="stamp" src="${esc(b.stamp)}" alt=""/>` : ''}
+      ${b.signature ? `<img class="signature" src="${esc(b.signature)}" alt=""/>` : ''}
+    </div>
+    ${b.name ? `<div class="seal-name">${esc(b.name)}${b.title ? ` – ${esc(b.title)}` : ''}</div>` : ''}
+    <div class="seal-label">${bi('Authorized Signature & Stamp')}</div>
+  </div></div>`;
 }
 
 function companyBlock(s: AppState) {
@@ -137,6 +159,7 @@ export function invoiceHtml(s: AppState, move: Move): string {
     </table>
     <p class="muted">${esc(amountInWords(totals.total, s.settings.currency, 'en'))}<br/><span class="ar">${esc(amountInWords(totals.total, s.settings.currency, 'ar'))}</span></p>
     ${move.narration ? `<h2>${bi('Terms and Conditions / Notes')}</h2><div>${esc(move.narration).replace(/\n/g, '<br/>')}</div>` : ''}
+    ${sealHtml(s, move.moveType.startsWith('out') ? 'sales' : 'purchases', move.state === 'posted')}
     ${move.moveType.startsWith('out') ? `<div class="footer">${esc(s.settings.invoiceFooter)}</div>` : ''}
   `);
 }
@@ -171,6 +194,7 @@ export function voucherHtml(s: AppState, p: Payment): string {
       ${field(inbound ? 'Deposited to' : 'Paid from', esc(journal?.name ?? ''))}
       ${field('Being', esc(being || '—'))}
     </div>
+    ${sealHtml(s, 'vouchers', p.state !== 'cancel')}
     <div class="sign">
       <div>${bi(inbound ? 'Received by' : 'Prepared by')}</div>
       <div>${bi('Accountant')}</div>

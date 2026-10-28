@@ -8,3 +8,7 @@ export async function saveFileOnWeb(_filename: string, _data: string | Blob, _mi
 export async function htmlToPdfBlob(_html: string): Promise<Blob> {
   throw new Error('Not available on this platform');
 }
+
+export async function imageToDataUri(_file: Blob): Promise<string> {
+  throw new Error('Not available on this platform');
+}

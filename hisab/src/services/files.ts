@@ -6,7 +6,8 @@ import { Platform } from 'react-native';
 import { AppState } from '../domain/types';
 import { notify } from '../ui/dialog';
 
-import { DownloadDeclined, htmlToPdfBlob, saveFileOnWeb } from './webFiles';
+import { toBase64 } from '../domain/branding';
+import { DownloadDeclined, htmlToPdfBlob, imageToDataUri, saveFileOnWeb } from './webFiles';
 
 /** Shown when a browser view cannot save files at all. */
 function webUnavailable() {
@@ -68,6 +69,18 @@ export async function pickTextFile(types: string[]): Promise<string | null> {
     return (await fetch(asset.uri)).text();
   }
   return new File(asset.uri).text();
+}
+
+/** Let the user pick a PNG/JPG and return it as a data URI. Returns null if cancelled. */
+export async function pickImage(): Promise<string | null> {
+  const res = await DocumentPicker.getDocumentAsync({ type: ['image/png', 'image/jpeg'], copyToCacheDirectory: true });
+  if (res.canceled || !res.assets.length) return null;
+  const asset = res.assets[0];
+  if (Platform.OS === 'web') return imageToDataUri(asset.file ?? (await (await fetch(asset.uri)).blob()));
+  if ((asset.size ?? 0) > 1_500_000) throw new Error('The image is too large. Use a PNG or JPG under 1.5 MB.');
+  const bytes = new Uint8Array(await new File(asset.uri).arrayBuffer());
+  const mime = asset.mimeType === 'image/jpeg' || /\.jpe?g$/i.test(asset.name) ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${toBase64(bytes)}`;
 }
 
 export function toCsv(rows: (string | number | undefined)[][]): string {
