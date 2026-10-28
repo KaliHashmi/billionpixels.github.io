@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Platform, Pressable } from 'react-native';
+import { Image, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ColorValue } from 'react-native';
 import { useT } from '../../i18n';
@@ -36,7 +36,10 @@ export default function TabsLayout() {
         ),
       }}
     >
-      <Tabs.Screen name="index" options={{ ...tab(t('Dashboard'), 'speedometer-outline'), headerTitle: t('Hisab') }} />
+      <Tabs.Screen name="index" options={{
+          ...tab(t('Dashboard'), 'speedometer-outline'),
+          headerTitle: () => <Image source={require('../../../assets/header-logo.png')} accessibilityLabel={t('Hisab')} style={{ width: 30, height: 30 }} resizeMode="contain" />,
+        }} />
       <Tabs.Screen name="customers" options={tab(t('Customers'), 'people-outline')} />
       <Tabs.Screen name="vendors" options={tab(t('Vendors'), 'cart-outline')} />
       <Tabs.Screen name="accounting" options={tab(t('Accounting'), 'calculator-outline')} />
