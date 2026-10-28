@@ -4,16 +4,16 @@ import { FlatList, View } from 'react-native';
 import { useBooks, useLookups, useMoney } from '../../data/store';
 import { invoiceStatus, isInvoice } from '../../domain/engine';
 import { MoveType } from '../../domain/types';
-import { formatDate } from '../../domain/utils';
 import { moveBadge } from '../../features/status';
+import { useT } from '../../i18n';
 import { Badge, Chips, EmptyState, Fab, ListItem, SearchBar } from '../../ui/components';
 import { colors, space } from '../../ui/theme';
 
 const TITLES: Record<MoveType, string> = {
-  out_invoice: 'Invoices',
+  out_invoice: 'Sales Invoices',
   out_refund: 'Credit Notes',
-  in_invoice: 'Bills',
-  in_refund: 'Refunds',
+  in_invoice: 'Purchase Invoices',
+  in_refund: 'Vendor Credit Notes',
   entry: 'Journal Entries',
 };
 
@@ -25,6 +25,8 @@ export default function MovesList() {
   const s = useBooks();
   const { partners, journals, reconcileIndex } = useLookups();
   const money = useMoney();
+  const { t, fmtDate } = useT();
+  const formatDate = fmtDate;
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>(params.filter ?? 'all');
   const invoice = isInvoice(type);
@@ -62,7 +64,7 @@ export default function MovesList() {
     : (['all', 'draft', 'posted'] as Filter[])
   ).map((f) => ({
     value: f,
-    label: { all: 'All', draft: 'Draft', open: type.startsWith('in') ? 'To Pay' : 'Unpaid', overdue: 'Overdue', paid: 'Paid', posted: 'Posted' }[f],
+    label: t({ all: 'All', draft: 'Draft', open: type.startsWith('in') ? 'To Pay' : 'Unpaid', overdue: 'Overdue', paid: 'Paid', posted: 'Posted' }[f]),
     count: rows.filter((r) => matches(f, r)).length,
   }));
 
@@ -78,28 +80,28 @@ export default function MovesList() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Stack.Screen options={{ title: TITLES[type] }} />
+      <Stack.Screen options={{ title: t(TITLES[type]) }} />
       <View style={{ padding: space.md, gap: space.sm }}>
-        <SearchBar value={q} onChangeText={setQ} placeholder="Search number, partner, reference…" />
+        <SearchBar value={q} onChangeText={setQ} placeholder={t('Search number, partner, reference…')} />
         <Chips options={filters} value={filter} onChange={setFilter} />
       </View>
       <FlatList
         data={visible}
         keyExtractor={(r) => r.m.id}
         contentContainerStyle={{ paddingBottom: 100 }}
-        ListEmptyComponent={<EmptyState title={`No ${TITLES[type].toLowerCase()} yet`} message="Tap + to create one." />}
+        ListEmptyComponent={<EmptyState title={t('Nothing here yet')} message={t('Tap + to create one.')} />}
         renderItem={({ item: { m, st, total } }) => {
           const badge = moveBadge(m, st);
           const partner = m.partnerId ? partners.get(m.partnerId)?.name : undefined;
           return (
             <ListItem
-              title={m.name === '/' ? `Draft ${m.ref ? `· ${m.ref}` : ''}` : m.name}
-              subtitle={[partner ?? (invoice ? '' : journals.get(m.journalId)?.name), formatDate(m.invoiceDate ?? m.date), m.dueDate && st && st.residual > 0 && m.state === 'posted' ? `Due ${formatDate(m.dueDate)}` : '']
+              title={m.name === '/' ? `${t('Draft')} ${m.ref ? `· ${m.ref}` : ''}` : m.name}
+              subtitle={[partner ?? (invoice ? '' : t(journals.get(m.journalId)?.name ?? '')), formatDate(m.invoiceDate ?? m.date), m.dueDate && st && st.residual > 0 && m.state === 'posted' ? `${t('Due')} ${formatDate(m.dueDate)}` : '']
                 .filter(Boolean)
                 .join(' · ')}
               right={money(total)}
-              rightSub={st && m.state === 'posted' && st.residual > 0 && st.residual !== total ? `Due ${money(st.residual)}` : undefined}
-              badge={<Badge label={badge.label} tone={badge.tone} />}
+              rightSub={st && m.state === 'posted' && st.residual > 0 && st.residual !== total ? `${t('Due')} ${money(st.residual)}` : undefined}
+              badge={<Badge label={t(badge.label)} tone={badge.tone} />}
               onPress={() => router.push({ pathname: '/moves/[id]', params: { id: m.id } })}
             />
           );

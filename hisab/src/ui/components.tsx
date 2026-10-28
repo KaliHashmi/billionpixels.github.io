@@ -13,6 +13,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { useT } from '../i18n';
 import { colors, radius, space } from './theme';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -89,7 +90,7 @@ export function ListItem({
 }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.listItem, pressed && onPress && styles.pressed]}>
-      {icon && <Ionicons name={icon} size={22} color={colors.primary} style={{ marginRight: space.md }} />}
+      {icon && <Ionicons name={icon} size={22} color={colors.primary} style={{ marginEnd: space.md }} />}
       <View style={{ flex: 1 }}>
         <Text style={styles.listTitle} numberOfLines={1}>
           {title}
@@ -100,12 +101,12 @@ export function ListItem({
           </Text>
         )}
       </View>
-      <View style={{ alignItems: 'flex-end', marginLeft: space.sm }}>
+      <View style={{ alignItems: 'flex-end', marginStart: space.sm }}>
         {!!right && <Text style={styles.listRight}>{right}</Text>}
         {!!rightSub && <Text style={styles.listSubtitle}>{rightSub}</Text>}
         {badge}
       </View>
-      {onPress && !right && !badge && <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+      {onPress && !right && !badge && <Chevron />}
     </Pressable>
   );
 }
@@ -125,9 +126,15 @@ export function MenuItem({ icon, title, subtitle, onPress, count }: { icon: Icon
           <Text style={styles.countText}>{count}</Text>
         </View>
       )}
-      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+      <Chevron />
     </Pressable>
   );
+}
+
+/** Forward chevron that points the reading direction (mirrored in Arabic). */
+export function Chevron() {
+  const { rtl } = useT();
+  return <Ionicons name={rtl ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.muted} />;
 }
 
 const BADGE_COLORS: Record<string, string> = {
@@ -144,6 +151,9 @@ const BADGE_COLORS: Record<string, string> = {
   to_reconcile: colors.warning,
   running: colors.accent,
   closed: colors.success,
+  pending: colors.warning,
+  cleared: colors.success,
+  bounced: colors.danger,
 };
 
 export function Badge({ label, tone }: { label: string; tone: string }) {
@@ -188,7 +198,7 @@ export function Button({
         style,
       ]}
     >
-      {icon && <Ionicons name={icon} size={small ? 16 : 18} color={fg} style={{ marginRight: 6 }} />}
+      {icon && <Ionicons name={icon} size={small ? 16 : 18} color={fg} style={{ marginEnd: 6 }} />}
       <Text style={[styles.buttonText, small && { fontSize: 13 }, { color: fg }]}>{title}</Text>
     </Pressable>
   );
@@ -224,14 +234,15 @@ export function Loading() {
   );
 }
 
-export function SearchBar({ value, onChangeText, placeholder = 'Search…' }: { value: string; onChangeText: (s: string) => void; placeholder?: string }) {
+export function SearchBar({ value, onChangeText, placeholder }: { value: string; onChangeText: (s: string) => void; placeholder?: string }) {
+  const { t } = useT();
   return (
     <View style={styles.search}>
       <Ionicons name="search" size={18} color={colors.muted} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('Search…')}
         placeholderTextColor={colors.muted}
         style={styles.searchInput}
         autoCorrect={false}
@@ -337,10 +348,10 @@ export const styles = StyleSheet.create({
   listTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   listSubtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
   listRight: { fontSize: 15, fontWeight: '600', color: colors.text },
-  menuIcon: { width: 36, height: 36, borderRadius: 8, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center', marginRight: space.md },
-  countPill: { backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginRight: space.sm },
+  menuIcon: { width: 36, height: 36, borderRadius: 8, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center', marginEnd: space.md },
+  countPill: { backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginEnd: space.sm },
   countText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  badge: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 },
+  badge: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4, alignSelf: 'flex-start' },
   badgeText: { fontSize: 11, fontWeight: '700' },
   button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1 },
   buttonSmall: { paddingVertical: 7, paddingHorizontal: 12 },

@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { addDays, addMonths, endOfMonth, fiscalYear, startOfMonth, today } from '../domain/utils';
 import { Chips } from './components';
+import { useT } from '../i18n';
 import { DateField } from './fields';
 import { space } from './theme';
 
-export type PresetKey = 'this_month' | 'last_month' | 'this_quarter' | 'last_quarter' | 'this_fy' | 'last_fy' | 'custom';
+export type PresetKey = 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'this_quarter' | 'last_quarter' | 'this_fy' | 'last_fy' | 'custom';
 
 export interface PeriodValue {
   from: string;
@@ -21,6 +22,13 @@ function quarterStart(d: string) {
 
 export function computePeriod(preset: PresetKey, fyLastMonth: number, ref = today()): { from: string; to: string } {
   switch (preset) {
+    case 'this_week':
+    case 'last_week': {
+      // Weeks run Sunday to Saturday, as in Oman.
+      const d = new Date(Number(ref.slice(0, 4)), Number(ref.slice(5, 7)) - 1, Number(ref.slice(8, 10)));
+      const start = addDays(ref, -d.getDay() - (preset === 'last_week' ? 7 : 0));
+      return { from: start, to: addDays(start, 6) };
+    }
     case 'this_month':
       return { from: startOfMonth(ref), to: endOfMonth(ref) };
     case 'last_month': {
@@ -47,6 +55,8 @@ export function computePeriod(preset: PresetKey, fyLastMonth: number, ref = toda
 }
 
 const PRESETS: { value: PresetKey; label: string }[] = [
+  { value: 'this_week', label: 'This Week' },
+  { value: 'last_week', label: 'Last Week' },
   { value: 'this_month', label: 'This Month' },
   { value: 'last_month', label: 'Last Month' },
   { value: 'this_quarter', label: 'This Quarter' },
@@ -65,10 +75,11 @@ export function usePeriod(fyLastMonth: number, initial: PresetKey = 'this_fy', a
 }
 
 export function PeriodPicker({ value, onChange, fyLastMonth, single }: { value: PeriodValue; onChange: (v: PeriodValue) => void; fyLastMonth: number; single?: boolean }) {
+  const { t } = useT();
   return (
     <View style={{ gap: space.sm }}>
       <Chips
-        options={PRESETS}
+        options={PRESETS.map((p) => ({ ...p, label: t(p.label) }))}
         value={value.preset}
         onChange={(preset) => onChange(preset === 'custom' ? { ...value, preset } : { ...computePeriod(preset, fyLastMonth), preset })}
       />
@@ -76,11 +87,11 @@ export function PeriodPicker({ value, onChange, fyLastMonth, single }: { value: 
         <View style={{ flexDirection: single ? 'column' : 'row', gap: space.sm }}>
           {!single && (
             <View style={{ flex: 1 }}>
-              <DateField label="From" value={value.from} onChange={(from) => onChange({ ...value, from })} />
+              <DateField label={t('From')} value={value.from} onChange={(from) => onChange({ ...value, from })} />
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <DateField label={single ? 'As of' : 'To'} value={value.to} onChange={(to) => onChange({ ...value, to })} />
+            <DateField label={single ? t('As of') : t('To')} value={value.to} onChange={(to) => onChange({ ...value, to })} />
           </View>
         </View>
       )}

@@ -36,7 +36,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: `${BUNDLE_ID}${v.suffix}`,
       buildNumber: '1',
       config: { usesNonExemptEncryption: false },
-      infoPlist: { ITSAppUsesNonExemptEncryption: false },
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        // English and Arabic UI (Arabic switches the layout to right-to-left).
+        CFBundleLocalizations: ['en', 'ar'],
+        CFBundleAllowMixedLocalizations: true,
+      },
     },
     android: {
       package: `${BUNDLE_ID}${v.suffix}`,
@@ -57,6 +62,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     experiments: { typedRoutes: false },
     extra: {
       appVariant: VARIANT,
+      supportsRTL: true,
       ...(EAS_PROJECT_ID ? { eas: { projectId: EAS_PROJECT_ID } } : {}),
     },
   };

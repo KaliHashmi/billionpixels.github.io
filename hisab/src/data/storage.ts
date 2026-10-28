@@ -65,4 +65,13 @@ export const storage: Storage = {
   async clear() {
     await write({ upserts: [], deletes: [], meta: [] }, true);
   },
+  async getPref(key) {
+    const conn = await db();
+    const row = await conn.getFirstAsync<{ value: string }>('SELECT value FROM meta WHERE key = ?', `pref:${key}`);
+    return row?.value ?? null;
+  },
+  async setPref(key, value) {
+    const conn = await db();
+    await conn.runAsync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', `pref:${key}`, value);
+  },
 };

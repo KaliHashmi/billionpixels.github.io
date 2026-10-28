@@ -4,7 +4,8 @@ import { FlatList, Text, View } from 'react-native';
 import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
 import { saveStatementLine } from '../../domain/engine';
 import { AppState } from '../../domain/types';
-import { formatDate, isValidISODate, newId, round } from '../../domain/utils';
+import { isValidISODate, newId, round } from '../../domain/utils';
+import { useT } from '../../i18n';
 import { pickTextFile, parseCsv } from '../../services/files';
 import { Badge, Button, ButtonRow, Card, Chips, EmptyState, Fab, ListItem, Row, SearchBar } from '../../ui/components';
 import { notify } from '../../ui/dialog';
@@ -17,6 +18,7 @@ export default function BankScreen() {
   const { run } = useStore();
   const lk = useLookups();
   const money = useMoney();
+  const { t, fmtDate: formatDate } = useT();
   const liquidity = s.journals.filter((j) => j.active && (j.type === 'bank' || j.type === 'cash'));
   const [journalId, setJournalId] = useState(params.journalId ?? liquidity[0]?.id);
   const [filter, setFilter] = useState<'todo' | 'done' | 'all'>('todo');
@@ -48,7 +50,7 @@ export default function BankScreen() {
       const iDebit = col(['debit', 'withdrawal', 'money out']);
       const iCredit = col(['credit', 'deposit', 'money in']);
       if (iDate < 0 || iLabel < 0 || (iAmount < 0 && (iDebit < 0 || iCredit < 0))) {
-        notify('Unrecognized file', 'The CSV needs a header row with: date, label/description and amount (or debit + credit). Dates must be YYYY-MM-DD.');
+        notify(t('Unrecognized file'), t('The CSV needs a header row with: date, label/description and amount (or debit + credit). Dates must be YYYY-MM-DD.'));
         return;
       }
       const num = (v?: string) => Number((v ?? '').replace(/[^0-9.-]/g, '')) || 0;
@@ -68,15 +70,15 @@ export default function BankScreen() {
         }
         return next;
       });
-      notify('Import finished', `${count} transaction(s) imported${skipped ? `, ${skipped} row(s) skipped` : ''}.`);
+      notify(t('Import finished'), t('{count} transaction(s) imported, {skipped} row(s) skipped.', { count, skipped }));
     } catch (e) {
-      notify('Import failed', e instanceof Error ? e.message : String(e));
+      notify(t('Import failed'), e instanceof Error ? e.message : String(e));
     }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Stack.Screen options={{ title: journal?.name ?? 'Bank' }} />
+      <Stack.Screen options={{ title: `${t('Bank Reconciliation')} · ${t(journal?.name ?? '')}` }} />
       <FlatList
         data={visible}
         keyExtractor={(l) => l.id}
@@ -84,14 +86,15 @@ export default function BankScreen() {
         ListHeaderComponent={
           <View style={{ padding: space.md, gap: space.sm }}>
             {liquidity.length > 1 && (
-              <SelectField label="Journal" value={journalId} allowClear={false} options={liquidity.map((j) => ({ value: j.id, label: j.name }))} onChange={(v) => v && setJournalId(v)} />
+              <SelectField label={t('Journal')} value={journalId} allowClear={false} options={liquidity.map((j) => ({ value: j.id, label: t(j.name) }))} onChange={(v) => v && setJournalId(v)} />
             )}
             <Card>
-              <Row label="Balance in General Ledger" value={money(glBalance)} bold />
-              <Row label="Balance of transactions" value={money(statementBalance)} />
-              <Row label="To reconcile" value={String(lines.filter((l) => !l.reconciled).length)} />
+              <Row label={t('Balance in General Ledger')} value={money(glBalance)} bold />
+              <Row label={t('Balance of transactions')} value={money(statementBalance)} />
+              <Row label={t('To reconcile')} value={String(lines.filter((l) => !l.reconciled).length)} />
               <ButtonRow>
-                <Button small variant="secondary" title="Import CSV" icon="cloud-upload-outline" onPress={importCsv} />
+                <Button small variant="secondary" title={t('Import CSV')} icon="cloud-upload-outline" onPress={importCsv} />
+                <Button small variant="secondary" title={t('Reconciliation Report')} icon="document-text-outline" onPress={() => router.push({ pathname: '/reports/[report]', params: { report: 'bank-reconciliation', journalId } })} />
               </ButtonRow>
             </Card>
             <SearchBar value={q} onChangeText={setQ} />
@@ -99,27 +102,27 @@ export default function BankScreen() {
               value={filter}
               onChange={setFilter}
               options={[
-                { value: 'todo', label: 'To Reconcile' },
-                { value: 'done', label: 'Reconciled' },
-                { value: 'all', label: 'All' },
+                { value: 'todo', label: t('To Reconcile') },
+                { value: 'done', label: t('Reconciled') },
+                { value: 'all', label: t('All') },
               ]}
             />
           </View>
         }
         ListEmptyComponent={
-          <EmptyState icon="swap-vertical-outline" title={filter === 'todo' ? 'All caught up!' : 'No transactions'} message="Add bank transactions manually or import a CSV statement." />
+          <EmptyState icon="swap-vertical-outline" title={t(filter === 'todo' ? 'All caught up!' : 'No transactions')} message={t('Add bank transactions manually or import a CSV statement.')} />
         }
         renderItem={({ item: l }) => (
           <ListItem
             title={l.label || '—'}
             subtitle={[formatDate(l.date), l.partnerId ? lk.partners.get(l.partnerId)?.name : ''].filter(Boolean).join(' · ')}
             right={money(l.amount)}
-            badge={l.reconciled ? <Badge label="Reconciled" tone="reconciled" /> : <Badge label="To reconcile" tone="to_reconcile" />}
+            badge={l.reconciled ? <Badge label={t('Reconciled')} tone="reconciled" /> : <Badge label={t('To reconcile')} tone="to_reconcile" />}
             onPress={() => router.push({ pathname: '/bank/reconcile', params: { id: l.id } })}
           />
         )}
       />
-      {!journal && <Text style={{ padding: space.lg }}>Create a bank journal first.</Text>}
+      {!journal && <Text style={{ padding: space.lg }}>{t('Create a bank journal first.')}</Text>}
       {journal && <Fab onPress={() => router.push({ pathname: '/bank/line', params: { journalId } })} />}
     </View>
   );

@@ -4,11 +4,12 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
 import { deleteStatementLine, reconcileStatementLine, suggestMatches, undoStatementReconciliation } from '../../domain/engine';
-import { formatDate, round } from '../../domain/utils';
+import { isZero, round } from '../../domain/utils';
 import { accountOptions, partnerOptions, taxOptions } from '../../features/entities';
+import { useT } from '../../i18n';
 import { Button, ButtonRow, Card, Divider, Row, Screen, SearchBar, SectionTitle } from '../../ui/components';
 import { confirm } from '../../ui/dialog';
-import { SelectField, TextField } from '../../ui/fields';
+import { Segmented, SelectField, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
 
 export default function ReconcileScreen() {
@@ -17,6 +18,7 @@ export default function ReconcileScreen() {
   const { run } = useStore();
   const lk = useLookups();
   const money = useMoney();
+  const { t, fmtDate } = useT();
   const sl = s.statementLines.find((l) => l.id === id);
   const [selected, setSelected] = useState<string[]>([]);
   const [q, setQ] = useState('');
@@ -24,25 +26,34 @@ export default function ReconcileScreen() {
   const [accountId, setAccountId] = useState<string | undefined>();
   const [taxId, setTaxId] = useState<string | undefined>();
   const [label, setLabel] = useState(sl?.label ?? '');
+  const [excess, setExcess] = useState<'open' | 'book'>('open');
   const candidates = useMemo(() => (sl ? suggestMatches(s, { ...sl, partnerId }) : []), [s, sl, partnerId]);
   if (!sl) return null;
 
   const d = s.settings.decimals;
   const picked = candidates.filter((c) => selected.includes(c.line.id));
-  let remaining = sl.amount;
-  for (const c of picked) {
-    if (Math.sign(c.residual) !== Math.sign(remaining) || round(remaining, d) === 0) continue;
-    remaining = round(remaining - Math.sign(c.residual) * Math.min(Math.abs(c.residual), Math.abs(remaining)), d);
-  }
+  const matchedTotal = round(picked.reduce((x, c) => x + c.residual, 0), d);
+  const diff = round(sl.amount - matchedTotal, d);
+  // Selected documents exceed the bank amount: keep the rest open (partial payment) or book the difference.
+  const overMatched = !isZero(diff, d) && Math.sign(diff) !== Math.sign(sl.amount);
+  const fullMatch = !overMatched || excess === 'book';
+  const toExplain = overMatched && excess === 'open' ? 0 : diff;
+  const needsAccount = !isZero(toExplain, d);
+
   const term = q.trim().toLowerCase();
   const visible = candidates.filter(
-    (c) => !term || c.move.name.toLowerCase().includes(term) || c.move.ref.toLowerCase().includes(term) || (c.line.partnerId && lk.partners.get(c.line.partnerId)?.name.toLowerCase().includes(term)) || String(Math.abs(c.residual)).includes(term),
+    (c) =>
+      !term ||
+      c.move.name.toLowerCase().includes(term) ||
+      c.move.ref.toLowerCase().includes(term) ||
+      (c.line.partnerId && lk.partners.get(c.line.partnerId)?.name.toLowerCase().includes(term)) ||
+      String(Math.abs(c.residual)).includes(term),
   );
 
   const validate = () => {
     const ok = run((st) => {
       const withPartner = partnerId !== sl.partnerId ? { ...st, statementLines: st.statementLines.map((l) => (l.id === sl.id ? { ...l, partnerId } : l)) } : st;
-      return reconcileStatementLine(withPartner, sl.id, selected, round(remaining, d) !== 0 && accountId ? { accountId, label, taxId } : undefined);
+      return reconcileStatementLine(withPartner, sl.id, selected, needsAccount && accountId ? { accountId, label, taxId } : undefined, fullMatch && needsAccount);
     });
     if (ok) router.back();
   };
@@ -51,12 +62,12 @@ export default function ReconcileScreen() {
     const move = s.moves.find((m) => m.id === sl.moveId);
     return (
       <Screen>
-        <Stack.Screen options={{ title: 'Reconciled Transaction' }} />
+        <Stack.Screen options={{ title: t('Reconciled Transaction') }} />
         <Card>
           <Text style={{ fontSize: 17, fontWeight: '700' }}>{sl.label}</Text>
-          <Row label="Date" value={formatDate(sl.date)} />
-          <Row label="Amount" value={money(sl.amount)} bold />
-          {move && <Row label="Journal Entry" value={move.name} onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
+          <Row label={t('Date')} value={fmtDate(sl.date)} />
+          <Row label={t('Amount')} value={money(sl.amount)} bold />
+          {move && <Row label={t('Journal Entry')} value={move.name} onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
           {move?.lines.slice(1).map((l) => (
             <Row key={l.id} label={`${lk.accounts.get(l.accountId)?.code} ${l.label}`} value={money(l.credit - l.debit)} />
           ))}
@@ -64,10 +75,10 @@ export default function ReconcileScreen() {
             <Button
               small
               variant="secondary"
-              title="Undo Reconciliation"
+              title={t('Undo Reconciliation')}
               icon="arrow-undo-outline"
               onPress={async () => {
-                if (await confirm('Undo reconciliation', 'The generated journal entry will be deleted and the matched documents become open again.', 'Undo')) run((st) => undoStatementReconciliation(st, sl.id));
+                if (await confirm(t('Undo Reconciliation'), t('The generated journal entry will be deleted and the matched documents become open again.'), t('Undo'))) run((st) => undoStatementReconciliation(st, sl.id));
               }}
             />
           </ButtonRow>
@@ -78,43 +89,58 @@ export default function ReconcileScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: 'Reconcile' }} />
+      <Stack.Screen options={{ title: t('Reconcile') }} />
       <Card>
         <Text style={{ fontSize: 17, fontWeight: '700' }}>{sl.label || '—'}</Text>
-        <Row label={formatDate(sl.date)} value={money(sl.amount)} bold valueStyle={{ color: sl.amount >= 0 ? colors.success : colors.danger }} />
-        <SelectField label="Partner" value={partnerId} options={partnerOptions(s)} onChange={setPartnerId} />
+        <Row label={fmtDate(sl.date)} value={money(sl.amount)} bold valueStyle={{ color: sl.amount >= 0 ? colors.success : colors.danger }} />
+        <SelectField label={t('Partner')} value={partnerId} options={partnerOptions(s)} onChange={setPartnerId} />
         <Divider />
-        <Row label="Matched" value={money(round(sl.amount - remaining, d))} />
-        <Row label="Remaining to explain" value={money(remaining)} bold valueStyle={{ color: round(remaining, d) === 0 ? colors.success : colors.warning }} />
+        <Row label={t('Matched')} value={money(matchedTotal)} />
+        <Row label={t('Remaining to explain')} value={money(toExplain)} bold valueStyle={{ color: needsAccount ? colors.warning : colors.success }} />
         <ButtonRow>
-          <Button small title="Validate" icon="checkmark-done" onPress={validate} disabled={round(remaining, d) !== 0 && !accountId} />
-          <Button small variant="secondary" title="Edit" icon="create-outline" onPress={() => router.push({ pathname: '/bank/line', params: { id: sl.id } })} />
+          <Button small title={t('Validate')} icon="checkmark-done" onPress={validate} disabled={needsAccount && !accountId} />
+          <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={() => router.push({ pathname: '/bank/line', params: { id: sl.id } })} />
           <Button
             small
             variant="ghost"
-            title="Delete"
+            title={t('Delete')}
             onPress={async () => {
-              if ((await confirm('Delete transaction', 'Delete this bank transaction?', 'Delete', true)) && run((st) => deleteStatementLine(st, sl.id))) router.back();
+              if ((await confirm(t('Delete'), t('Delete this bank transaction?'), t('Delete'), true)) && run((st) => deleteStatementLine(st, sl.id))) router.back();
             }}
           />
         </ButtonRow>
       </Card>
 
-      {round(remaining, d) !== 0 && (
+      {overMatched && (
         <Card>
-          <SectionTitle>Counterpart for the remaining {money(remaining)}</SectionTitle>
-          <Text style={{ color: colors.muted, marginVertical: space.sm }}>Book the difference on an account, e.g. bank fees, rent or miscellaneous income.</Text>
-          <SelectField label="Account" value={accountId} options={accountOptions(s, (a) => a.type !== 'asset_cash')} onChange={setAccountId} />
-          <SelectField label="Tax (amount is tax-included)" value={taxId} options={taxOptions(s, remaining < 0 ? 'purchase' : 'sale')} onChange={setTaxId} />
-          <TextField label="Label" value={label} onChange={setLabel} />
+          <Text style={{ marginBottom: space.sm }}>{t('The selected documents exceed the bank amount by {amount}.', { amount: money(Math.abs(diff)) })}</Text>
+          <Segmented
+            value={excess}
+            onChange={setExcess}
+            options={[
+              { value: 'open', label: t('Keep open (partial)') },
+              { value: 'book', label: t('Book difference') },
+            ]}
+          />
         </Card>
       )}
 
-      <SectionTitle>Match with open items</SectionTitle>
-      <SearchBar value={q} onChangeText={setQ} placeholder="Search invoices, bills, payments…" />
-      {visible.length === 0 && <Text style={{ color: colors.muted }}>No open invoices, bills or payments in this direction.</Text>}
+      {needsAccount && (
+        <Card>
+          <SectionTitle>{t('Counterpart for the remaining {amount}', { amount: money(toExplain) })}</SectionTitle>
+          <Text style={{ color: colors.muted, marginVertical: space.sm }}>{t('Book the difference on an account, e.g. bank charges, card fees or a discount.')}</Text>
+          <SelectField label={t('Account')} value={accountId} options={accountOptions(s, (a) => a.type !== 'asset_cash', t)} onChange={setAccountId} />
+          <SelectField label={t('VAT (amount is VAT-inclusive)')} value={taxId} options={taxOptions(s, toExplain < 0 ? 'purchase' : 'sale', t)} onChange={setTaxId} />
+          <TextField label={t('Label')} value={label} onChange={setLabel} />
+        </Card>
+      )}
+
+      <SectionTitle>{t('Match with open items')}</SectionTitle>
+      <SearchBar value={q} onChangeText={setQ} placeholder={t('Search invoices, bills, payments…')} />
+      {visible.length === 0 && <Text style={{ color: colors.muted }}>{t('No open invoices, bills or payments in this direction.')}</Text>}
       {visible.slice(0, 50).map((c) => {
         const active = selected.includes(c.line.id);
+        const kind = c.move.origin === 'payment' ? s.payments.find((p) => p.id === c.move.originId) : undefined;
         return (
           <Pressable key={c.line.id} onPress={() => setSelected(active ? selected.filter((x) => x !== c.line.id) : [...selected, c.line.id])}>
             <Card style={active ? { borderColor: colors.primary, borderWidth: 2 } : undefined}>
@@ -123,7 +149,13 @@ export default function ReconcileScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '600' }}>{c.move.name}</Text>
                   <Text style={{ color: colors.muted, fontSize: 13 }}>
-                    {[c.line.partnerId ? lk.partners.get(c.line.partnerId)?.name : '', formatDate(c.move.date), c.move.origin === 'payment' ? 'Payment' : c.move.ref].filter(Boolean).join(' · ')}
+                    {[
+                      c.line.partnerId ? lk.partners.get(c.line.partnerId)?.name : '',
+                      fmtDate(c.move.date),
+                      kind ? `${t(kind.method === 'cheque' ? 'Cheque' : kind.method === 'card' ? 'Card' : 'Payment')}${kind.chequeNumber ? ` #${kind.chequeNumber}` : ''}` : c.move.ref,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </Text>
                 </View>
                 <Text style={{ fontWeight: '700' }}>{money(Math.abs(c.residual))}</Text>

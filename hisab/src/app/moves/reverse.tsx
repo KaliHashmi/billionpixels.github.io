@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 import { useBooks, useStore } from '../../data/store';
 import { MOVE_TYPE_LABELS, reverseMove } from '../../domain/engine';
 import { today } from '../../domain/utils';
+import { useT } from '../../i18n';
 import { Button, Card, Screen } from '../../ui/components';
 import { DateField, Segmented, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
@@ -12,13 +13,14 @@ export default function ReverseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useBooks();
   const { runWith } = useStore();
+  const { t } = useT();
   const move = s.moves.find((m) => m.id === id);
   const [date, setDate] = useState(today());
   const [reason, setReason] = useState('');
   const [mode, setMode] = useState<'full' | 'partial'>('full');
   if (!move) return null;
   const isEntry = move.moveType === 'entry';
-  const title = isEntry ? 'Reverse Entry' : move.moveType === 'out_invoice' ? 'Credit Note' : 'Refund';
+  const title = t(isEntry ? 'Reverse Entry' : move.moveType === 'out_invoice' ? 'Credit Note' : 'Vendor Credit Note');
 
   const submit = () => {
     const newId = runWith((st) => {
@@ -33,27 +35,29 @@ export default function ReverseScreen() {
       <Stack.Screen options={{ title, presentation: 'modal' }} />
       <Card>
         <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: space.md }}>
-          {MOVE_TYPE_LABELS[move.moveType]} {move.name}
+          {t(MOVE_TYPE_LABELS[move.moveType])} {move.name}
         </Text>
         {!isEntry && (
           <Segmented
-            label="Mode"
+            label={t('Mode')}
             value={mode}
             onChange={setMode}
             options={[
-              { value: 'full', label: 'Full refund' },
-              { value: 'partial', label: 'Partial (draft)' },
+              { value: 'full', label: t('Full refund') },
+              { value: 'partial', label: t('Partial (draft)') },
             ]}
           />
         )}
         <Text style={{ color: colors.muted, marginBottom: space.md }}>
-          {mode === 'full'
-            ? 'The reversal is posted and fully reconciled with the original document.'
-            : 'A draft is created so you can adjust the lines and amounts before confirming.'}
+          {t(
+            mode === 'full'
+              ? 'The reversal is posted and fully reconciled with the original document.'
+              : 'A draft is created so you can adjust the lines and amounts before confirming.',
+          )}
         </Text>
-        <TextField label="Reason" value={reason} onChange={setReason} placeholder="e.g. Damaged goods" />
-        <DateField label="Reversal Date" value={date} onChange={setDate} />
-        <Button title={isEntry ? 'Reverse' : `Create ${title}`} icon="checkmark" onPress={submit} />
+        <TextField label={t('Reason')} value={reason} onChange={setReason} placeholder={t('e.g. Damaged goods')} />
+        <DateField label={t('Reversal Date')} value={date} onChange={setDate} />
+        <Button title={isEntry ? t('Reverse') : `${t('Create')} ${title}`} icon="checkmark" onPress={submit} />
       </Card>
     </Screen>
   );

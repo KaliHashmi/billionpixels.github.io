@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { FlatList, KeyboardTypeOptions, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDays, isValidISODate, today } from '../domain/utils';
+import { useT } from '../i18n';
 import { SearchBar } from './components';
 import { colors, space } from './theme';
 
@@ -180,6 +181,7 @@ function OptionModal({
   allowClear?: boolean;
   onCreate?: (text: string) => void;
 }) {
+  const { t } = useT();
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string[]>(selected);
   const [wasVisible, setWasVisible] = useState(visible);
@@ -199,18 +201,18 @@ function OptionModal({
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={s.modalHeader}>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={s.modalAction}>Cancel</Text>
+            <Text style={s.modalAction}>{t('Cancel')}</Text>
           </Pressable>
           <Text style={s.modalTitle} numberOfLines={1}>
             {title}
           </Text>
           {multiple ? (
             <Pressable onPress={() => onSelect(sel)} hitSlop={10}>
-              <Text style={[s.modalAction, { fontWeight: '700' }]}>Done</Text>
+              <Text style={[s.modalAction, { fontWeight: '700' }]}>{t('Done')}</Text>
             </Pressable>
           ) : allowClear ? (
             <Pressable onPress={() => onSelect([])} hitSlop={10}>
-              <Text style={s.modalAction}>Clear</Text>
+              <Text style={s.modalAction}>{t('Clear')}</Text>
             </Pressable>
           ) : (
             <View style={{ width: 50 }} />
@@ -227,7 +229,7 @@ function OptionModal({
             onCreate && q.trim() ? (
               <Pressable style={s.option} onPress={() => onCreate(q.trim())}>
                 <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-                <Text style={[s.optionText, { color: colors.primary, marginLeft: 8 }]}>Create &quot;{q.trim()}&quot;</Text>
+                <Text style={[s.optionText, { color: colors.primary, marginStart: 8 }]}>{t('Create "{name}"', { name: q.trim() })}</Text>
               </Pressable>
             ) : undefined
           }
@@ -261,7 +263,7 @@ export function SelectField({
   options,
   onChange,
   required,
-  placeholder = 'Select…',
+  placeholder,
   editable = true,
   allowClear = true,
   onCreate,
@@ -277,6 +279,7 @@ export function SelectField({
   /** Quick-create a record from the search text; must return the new id. */
   onCreate?: (text: string) => string | undefined;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
   return (
@@ -284,7 +287,7 @@ export function SelectField({
       <FieldLabel label={label} required={required} />
       <Pressable disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
         <Text style={{ color: current ? colors.text : colors.muted, flex: 1, fontSize: 15 }} numberOfLines={1}>
-          {current?.label ?? placeholder}
+          {current?.label ?? placeholder ?? t('Select…')}
         </Text>
         {editable && <Ionicons name="chevron-down" size={18} color={colors.muted} />}
       </Pressable>
@@ -314,6 +317,7 @@ export function SelectField({
 }
 
 export function MultiSelectField({ label, value, options, onChange, editable = true }: { label: string; value: string[]; options: Option[]; onChange: (v: string[]) => void; editable?: boolean }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const labels = options.filter((o) => value.includes(o.value)).map((o) => o.label);
   return (
@@ -321,7 +325,7 @@ export function MultiSelectField({ label, value, options, onChange, editable = t
       <FieldLabel label={label} />
       <Pressable disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
         <Text style={{ color: labels.length ? colors.text : colors.muted, flex: 1, fontSize: 15 }} numberOfLines={2}>
-          {labels.length ? labels.join(', ') : 'None'}
+          {labels.length ? labels.join('، ') : t('None')}
         </Text>
         {editable && <Ionicons name="chevron-down" size={18} color={colors.muted} />}
       </Pressable>

@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StoreProvider, useStore } from '../data/store';
 import Onboarding from '../features/Onboarding';
+import { I18nProvider } from '../i18n';
 import { Loading } from '../ui/components';
 import { EnvBadge } from '../ui/EnvBadge';
 import { colors } from '../ui/theme';
@@ -11,11 +12,13 @@ import { colors } from '../ui/theme';
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StoreProvider>
-        <StatusBar style="light" />
-        <Gate />
-        <EnvBadge />
-      </StoreProvider>
+      <I18nProvider>
+        <StoreProvider>
+          <StatusBar style="light" />
+          <Gate />
+          <EnvBadge />
+        </StoreProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

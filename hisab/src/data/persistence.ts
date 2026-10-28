@@ -1,3 +1,4 @@
+import { ensureCompanyDefaults } from '../domain/template';
 import { AppState, CollectionName } from '../domain/types';
 
 export const COLLECTIONS: CollectionName[] = [
@@ -13,6 +14,10 @@ export const COLLECTIONS: CollectionName[] = [
   'payments',
   'statementLines',
   'assets',
+  'budgets',
+  'employees',
+  'payrollRuns',
+  'cashClosings',
 ];
 
 export const SCHEMA_VERSION = 1;
@@ -49,7 +54,7 @@ export function isEmptyChange(c: Change): boolean {
 /** Bring older saved data up to the current shape. */
 export function migrate(state: AppState): AppState {
   const empty = Object.fromEntries(COLLECTIONS.map((c) => [c, []]));
-  return { ...empty, ...state, sequences: state.sequences ?? {} } as AppState;
+  return ensureCompanyDefaults({ ...empty, ...state, sequences: state.sequences ?? {} } as AppState);
 }
 
 export interface Storage {
@@ -58,4 +63,7 @@ export interface Storage {
   apply(change: Change, next: AppState): Promise<void>;
   replaceAll(state: AppState): Promise<void>;
   clear(): Promise<void>;
+  /** Device preferences (language…), kept outside the books so they survive a reset. */
+  getPref(key: string): Promise<string | null>;
+  setPref(key: string, value: string): Promise<void>;
 }

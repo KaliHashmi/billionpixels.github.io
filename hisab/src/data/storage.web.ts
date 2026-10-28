@@ -37,4 +37,18 @@ export const storage: Storage = {
     latest = null;
     persist();
   },
+  async getPref(key) {
+    try {
+      return localStorage.getItem(`hisab:pref:${key}`);
+    } catch {
+      return null;
+    }
+  },
+  async setPref(key, value) {
+    try {
+      localStorage.setItem(`hisab:pref:${key}`, value);
+    } catch {
+      // Preferences are optional.
+    }
+  },
 };

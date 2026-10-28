@@ -44,6 +44,9 @@ export interface Journal {
 
 export type TaxUse = 'sale' | 'purchase' | 'none';
 
+/** VAT treatment, used to build the VAT return. */
+export type VatCategory = 'standard' | 'zero' | 'exempt' | 'out_of_scope' | 'reverse_charge' | 'import';
+
 export interface Tax {
   id: ID;
   name: string;
@@ -52,8 +55,15 @@ export interface Tax {
   amount: number;
   priceInclude: boolean;
   accountId: ID;
-  /** Label printed on invoices, e.g. "VAT 15%". */
+  /** Label printed on invoices, e.g. "VAT 5%". */
   label: string;
+  vatCategory: VatCategory;
+  /**
+   * Self-assessed tax (imported services, deferred import VAT): the buyer books both the
+   * input VAT (accountId) and the output VAT (reverseAccountId); it does not change the total.
+   */
+  reverseCharge: boolean;
+  reverseAccountId?: ID;
   active: boolean;
 }
 
@@ -134,11 +144,13 @@ export interface MoveLine {
   taxId?: ID;
   /** Taxes applied on this line (base lines). */
   taxIds?: ID[];
+  /** Output-VAT side of a reverse-charge tax. */
+  reverseCharge?: boolean;
   analyticAccountId?: ID;
   dateMaturity?: string;
 }
 
-export type MoveOrigin = 'manual' | 'payment' | 'statement' | 'asset' | 'tax_closing';
+export type MoveOrigin = 'manual' | 'payment' | 'statement' | 'asset' | 'tax_closing' | 'cheque' | 'cash_closing' | 'payroll';
 
 export interface Move {
   id: ID;
@@ -174,16 +186,31 @@ export interface Reconcile {
   date: string;
 }
 
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'card' | 'cheque';
+
 export interface Payment {
   id: ID;
+  /** Voucher number: RV/2026/00001 (receipt) or PV/2026/00001 (payment). */
   name: string;
   paymentType: 'inbound' | 'outbound';
-  partnerType: 'customer' | 'supplier';
+  /** 'other' = direct income/expense paid or received (no customer/vendor balance). */
+  partnerType: 'customer' | 'supplier' | 'other';
   partnerId?: ID;
   amount: number;
   date: string;
   journalId: ID;
   memo: string;
+  method: PaymentMethod;
+  chequeNumber?: string;
+  chequeBank?: string;
+  /** Cheque date (post-dated cheques). */
+  chequeDate?: string;
+  /** Entry that cleared the cheque when it was not matched through a bank statement. */
+  clearingMoveId?: ID;
+  bounced?: boolean;
+  /** For partnerType 'other': the income/expense account and optional tax (amount is tax-included). */
+  counterpartAccountId?: ID;
+  taxId?: ID;
   state: 'posted' | 'cancel';
   moveId: ID;
 }
@@ -218,6 +245,67 @@ export interface Asset {
   notes: string;
 }
 
+export interface Budget {
+  id: ID;
+  name: string;
+  /** Planned amount per month for each income/expense account. */
+  lines: { accountId: ID; monthly: number }[];
+  active: boolean;
+}
+
+export interface Employee {
+  id: ID;
+  name: string;
+  code: string;
+  position: string;
+  nationality: 'omani' | 'expat';
+  basicSalary: number;
+  housingAllowance: number;
+  transportAllowance: number;
+  otherAllowance: number;
+  /** Contributes to social insurance (Social Protection Fund). */
+  socialInsurance: boolean;
+  bankName: string;
+  iban: string;
+  joinDate: string;
+  active: boolean;
+}
+
+export interface Payslip {
+  employeeId: ID;
+  basic: number;
+  allowances: number;
+  overtime: number;
+  deductions: number;
+  siEmployee: number;
+  siEmployer: number;
+  net: number;
+}
+
+export interface PayrollRun {
+  id: ID;
+  /** yyyy-mm */
+  month: string;
+  date: string;
+  state: 'draft' | 'posted' | 'paid';
+  payslips: Payslip[];
+  moveId?: ID;
+  paymentMoveId?: ID;
+}
+
+export interface CashClosing {
+  id: ID;
+  date: string;
+  journalId: ID;
+  expected: number;
+  counted: number;
+  difference: number;
+  cardExpected: number;
+  cardSettled: number;
+  notes: string;
+  moveId?: ID;
+}
+
 export interface Settings {
   companyName: string;
   companyAddress: string;
@@ -232,12 +320,28 @@ export interface Settings {
   lockDate?: string;
   taxLockDate?: string;
   invoiceFooter: string;
+  /** ISO country code of the company, e.g. 'OM'. */
+  country: string;
+  companyNameAr: string;
+  vatRegistered: boolean;
   receivableAccountId: ID;
   payableAccountId: ID;
   suspenseAccountId: ID;
   outstandingReceiptsAccountId: ID;
   outstandingPaymentsAccountId: ID;
   taxSettlementAccountId: ID;
+  chequesReceivedAccountId: ID;
+  chequesIssuedAccountId: ID;
+  cardClearingAccountId: ID;
+  cashDifferenceAccountId: ID;
+  salaryExpenseAccountId: ID;
+  siExpenseAccountId: ID;
+  salariesPayableAccountId: ID;
+  siPayableAccountId: ID;
+  employeeAdvancesAccountId: ID;
+  /** Social insurance rates in percent of gross salary. */
+  siEmployeeRate: number;
+  siEmployerRate: number;
   defaultSaleTaxId?: ID;
   defaultPurchaseTaxId?: ID;
   defaultPaymentTermId?: ID;
@@ -258,6 +362,10 @@ export interface AppState {
   payments: Payment[];
   statementLines: StatementLine[];
   assets: Asset[];
+  budgets: Budget[];
+  employees: Employee[];
+  payrollRuns: PayrollRun[];
+  cashClosings: CashClosing[];
   sequences: Record<string, number>;
 }
 

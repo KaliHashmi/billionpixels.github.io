@@ -5,6 +5,7 @@ import { useBooks, useMoney, useStore } from '../../../data/store';
 import { invoiceStatus, isInvoice } from '../../../domain/engine';
 import { Partner } from '../../../domain/types';
 import { EntityDef, ENTITIES, FieldDef, isReferenced } from '../../../features/entities';
+import { useT } from '../../../i18n';
 import { Button, ButtonRow, Card, Row, Screen, SectionTitle } from '../../../ui/components';
 import { confirm, notify } from '../../../ui/dialog';
 import { MultiSelectField, NumberField, SelectField, SwitchField, TextField } from '../../../ui/fields';
@@ -17,6 +18,7 @@ export default function EntityForm() {
   const def = ENTITIES[params.entity] as EntityDef<Rec> | undefined;
   const s = useBooks();
   const { run } = useStore();
+  const { t } = useT();
   const existing = def && params.id !== 'new' ? (s[def.collection] as unknown as Rec[]).find((r) => r.id === params.id) : undefined;
   const [rec, setRec] = useState<Rec | undefined>(() => existing ?? def?.create(s, params));
   if (!def || !rec) return null;
@@ -26,13 +28,13 @@ export default function EntityForm() {
     for (const f of def.fields) {
       const v = rec[f.key];
       if (f.required && (v === undefined || v === '' || (typeof v === 'string' && !v.trim()))) {
-        notify('Missing field', `${f.label} is required.`);
+        notify(t('Missing field'), t('{field} is required.', { field: t(f.label) }));
         return;
       }
     }
     const err = def.validate?.(rec, s);
     if (err) {
-      notify('Validation Error', err);
+      notify(t('Validation Error'), t(err));
       return;
     }
     const ok = run((st) => {
@@ -45,13 +47,13 @@ export default function EntityForm() {
 
   const remove = async () => {
     if (isReferenced(s, def.collection, rec.id)) {
-      if (await confirm('In use', `This ${def.singular.toLowerCase()} is used in your books, so it can only be archived.`, 'Archive')) {
+      if (await confirm(t('In use'), t('This record is used in your books, so it can only be archived.'), t('Archive'))) {
         run((st) => ({ ...st, [def.collection]: (st[def.collection] as unknown as Rec[]).map((r) => (r.id === rec.id ? { ...r, active: false } : r)) }));
         router.back();
       }
       return;
     }
-    if (await confirm('Delete', `Delete this ${def.singular.toLowerCase()}?`, 'Delete', true)) {
+    if (await confirm(t('Delete'), t('Delete this record?'), t('Delete'), true)) {
       run((st) => ({ ...st, [def.collection]: (st[def.collection] as unknown as Rec[]).filter((r) => r.id !== rec.id) }));
       router.back();
     }
@@ -62,11 +64,11 @@ export default function EntityForm() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: existing ? def.display(rec) || def.singular : `New ${def.singular}` }} />
+      <Stack.Screen options={{ title: existing ? def.display(rec, t) || t(def.singular) : `${t('New')} ${t(def.singular)}` }} />
       {params.entity === 'partners' && existing && <PartnerSummary partner={existing as unknown as Partner} />}
       {sections.map((section) => (
         <Card key={section ?? 'main'}>
-          {section && <SectionTitle>{section}</SectionTitle>}
+          {section && <SectionTitle>{t(section)}</SectionTitle>}
           <Text style={{ height: section ? space.sm : 0 }} />
           {def.fields.filter((f) => f.section === section).map((f) => (
             <FieldInput key={f.key} field={f} value={rec[f.key]} onChange={(v) => set(f.key, v)} />
@@ -74,8 +76,8 @@ export default function EntityForm() {
         </Card>
       ))}
       <ButtonRow>
-        <Button title="Save" icon="checkmark" onPress={save} style={{ flex: 1 }} />
-        {existing && <Button title="Delete" variant="secondary" icon="trash-outline" onPress={remove} />}
+        <Button title={t('Save')} icon="checkmark" onPress={save} style={{ flex: 1 }} />
+        {existing && <Button title={t('Delete')} variant="secondary" icon="trash-outline" onPress={remove} />}
       </ButtonRow>
     </Screen>
   );
@@ -83,25 +85,28 @@ export default function EntityForm() {
 
 function FieldInput({ field, value, onChange }: { field: FieldDef<Rec>; value: unknown; onChange: (v: unknown) => void }) {
   const s = useBooks();
-  const options = useMemo(() => field.options?.(s) ?? [], [field, s]);
+  const { t } = useT();
+  const options = useMemo(() => field.options?.(s, t) ?? [], [field, s, t]);
+  const label = t(field.label);
   switch (field.type) {
     case 'text':
     case 'multiline':
-      return <TextField label={field.label} value={(value as string) ?? ''} onChange={onChange} required={field.required} multiline={field.type === 'multiline'} keyboardType={field.keyboard} autoCapitalize={field.keyboard === 'email-address' ? 'none' : undefined} />;
+      return <TextField label={label} value={(value as string) ?? ''} onChange={onChange} required={field.required} multiline={field.type === 'multiline'} keyboardType={field.keyboard} autoCapitalize={field.keyboard === 'email-address' ? 'none' : undefined} />;
     case 'number':
-      return <NumberField label={field.label} value={(value as number) ?? 0} onChange={onChange} required={field.required} />;
+      return <NumberField label={label} value={(value as number) ?? 0} onChange={onChange} required={field.required} />;
     case 'bool':
-      return <SwitchField label={field.label} value={!!value} onChange={onChange} hint={field.hint} />;
+      return <SwitchField label={label} value={!!value} onChange={onChange} hint={field.hint ? t(field.hint) : undefined} />;
     case 'select':
-      return <SelectField label={field.label} value={value as string | undefined} options={options} onChange={onChange} required={field.required} />;
+      return <SelectField label={label} value={value as string | undefined} options={options} onChange={onChange} required={field.required} />;
     case 'multi':
-      return <MultiSelectField label={field.label} value={(value as string[]) ?? []} options={options} onChange={onChange} />;
+      return <MultiSelectField label={label} value={(value as string[]) ?? []} options={options} onChange={onChange} />;
   }
 }
 
 function PartnerSummary({ partner }: { partner: Partner }) {
   const s = useBooks();
   const money = useMoney();
+  const { t } = useT();
   const stats = useMemo(() => {
     let invoiced = 0;
     let receivable = 0;
@@ -125,20 +130,20 @@ function PartnerSummary({ partner }: { partner: Partner }) {
     <Card>
       {partner.isCustomer && (
         <>
-          <Row label="Invoiced" value={money(stats.invoiced)} />
-          <Row label="Due from customer" value={money(stats.receivable)} bold />
+          <Row label={t('Invoiced')} value={money(stats.invoiced)} />
+          <Row label={t('Due from customer')} value={money(stats.receivable)} bold />
         </>
       )}
       {partner.isVendor && (
         <>
-          <Row label="Billed" value={money(stats.billed)} />
-          <Row label="Due to vendor" value={money(stats.payable)} bold />
+          <Row label={t('Billed')} value={money(stats.billed)} />
+          <Row label={t('Due to vendor')} value={money(stats.payable)} bold />
         </>
       )}
       <ButtonRow>
-        {partner.isCustomer && <Button small variant="secondary" title="Invoices" icon="document-text-outline" onPress={() => router.push({ pathname: '/moves', params: { type: 'out_invoice', partnerId: partner.id } })} />}
-        {partner.isVendor && <Button small variant="secondary" title="Bills" icon="receipt-outline" onPress={() => router.push({ pathname: '/moves', params: { type: 'in_invoice', partnerId: partner.id } })} />}
-        {partner.isCustomer && <Button small variant="secondary" title="Follow-up" icon="alarm-outline" onPress={() => router.push({ pathname: '/followups/[id]', params: { id: partner.id } })} />}
+        {partner.isCustomer && <Button small variant="secondary" title={t('Invoices')} icon="document-text-outline" onPress={() => router.push({ pathname: '/moves', params: { type: 'out_invoice', partnerId: partner.id } })} />}
+        {partner.isVendor && <Button small variant="secondary" title={t('Purchase Invoices')} icon="receipt-outline" onPress={() => router.push({ pathname: '/moves', params: { type: 'in_invoice', partnerId: partner.id } })} />}
+        {partner.isCustomer && <Button small variant="secondary" title={t('Follow-up')} icon="alarm-outline" onPress={() => router.push({ pathname: '/followups/[id]', params: { id: partner.id } })} />}
       </ButtonRow>
     </Card>
   );

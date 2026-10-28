@@ -1,11 +1,18 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Text } from 'react-native';
 import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
-import { cancelPayment } from '../../domain/engine';
-import { formatDate } from '../../domain/utils';
+import { bounceCheque, cancelPayment, chequeStatus, clearCheque, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
+import { today } from '../../domain/utils';
+import { useT } from '../../i18n';
+import { voucherHtml } from '../../services/documents';
+import { printHtml, sharePdf } from '../../services/files';
 import { Badge, Button, ButtonRow, Card, ListItem, Row, Screen, SectionTitle } from '../../ui/components';
-import { confirm } from '../../ui/dialog';
+import { confirm, notify } from '../../ui/dialog';
+import { DateField } from '../../ui/fields';
 import { colors } from '../../ui/theme';
+
+const CHEQUE_LABELS = { pending: 'Pending Clearance', cleared: 'Cleared', bounced: 'Bounced', cancelled: 'Cancelled' };
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,44 +20,87 @@ export default function PaymentScreen() {
   const { run } = useStore();
   const lk = useLookups();
   const money = useMoney();
+  const { t, fmtDate } = useT();
+  const [clearDate, setClearDate] = useState(today());
   const p = s.payments.find((x) => x.id === id);
   if (!p) return null;
   const move = s.moves.find((m) => m.id === p.moveId);
   const matched = s.reconciles
     .filter((r) => r.debitMoveId === p.moveId || r.creditMoveId === p.moveId)
     .map((r) => ({ r, other: s.moves.find((m) => m.id === (r.debitMoveId === p.moveId ? r.creditMoveId : r.debitMoveId)) }));
+  const inbound = p.paymentType === 'inbound';
+  const cheque = p.method === 'cheque' ? chequeStatus(s, p) : undefined;
+  const voucher = () => voucherHtml(s, p);
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: 'Payment' }} />
+      <Stack.Screen options={{ title: t(inbound ? 'Receipt Voucher' : 'Payment Voucher') }} />
       <Card>
         <Text style={{ fontSize: 20, fontWeight: '800' }}>{p.name}</Text>
-        <Badge label={p.state === 'cancel' ? 'Cancelled' : 'Posted'} tone={p.state === 'cancel' ? 'cancel' : 'posted'} />
-        <Row label="Type" value={p.paymentType === 'inbound' ? 'Receive money' : 'Send money'} />
-        <Row label={p.partnerType === 'customer' ? 'Customer' : 'Vendor'} value={p.partnerId ? lk.partners.get(p.partnerId)?.name : '—'} />
-        <Row label="Amount" value={money(p.amount)} bold />
-        <Row label="Date" value={formatDate(p.date)} />
-        <Row label="Journal" value={lk.journals.get(p.journalId)?.name} />
-        <Row label="Memo" value={p.memo || '—'} />
-        {p.state === 'posted' && (
+        <Badge label={t(p.state === 'cancel' ? (p.bounced ? 'Bounced' : 'Cancelled') : 'Posted')} tone={p.state === 'cancel' ? 'cancel' : 'posted'} />
+        <Row label={t('Type')} value={t(inbound ? 'Receive Money' : 'Pay Money')} />
+        <Row label={t(inbound ? 'Received from' : 'Paid to')} value={p.partnerId ? lk.partners.get(p.partnerId)?.name : p.counterpartAccountId ? t(lk.accounts.get(p.counterpartAccountId)?.name ?? '') : '—'} />
+        <Row label={t('Amount')} value={money(p.amount)} bold />
+        <Row label={t('Date')} value={fmtDate(p.date)} />
+        <Row label={t('Bank / Cash')} value={t(lk.journals.get(p.journalId)?.name ?? '')} />
+        <Row label={t('Payment Method')} value={t(PAYMENT_METHOD_LABELS[p.method])} />
+        {p.method === 'cheque' && (
+          <>
+            <Row label={t('Cheque Number')} value={p.chequeNumber} />
+            {!!p.chequeBank && <Row label={t('Bank Name')} value={p.chequeBank} />}
+            <Row label={t('Cheque Date')} value={fmtDate(p.chequeDate)} />
+            <Row label={t('Cheque Status')} value={t(CHEQUE_LABELS[cheque!])} valueStyle={{ color: cheque === 'cleared' ? colors.success : cheque === 'pending' ? colors.warning : colors.danger, fontWeight: '700' }} />
+          </>
+        )}
+        <Row label={t('Description')} value={p.memo || '—'} />
+        <ButtonRow>
+          <Button small title={t('Voucher PDF')} icon="share-outline" onPress={() => sharePdf(voucher(), p.name.replace(/\//g, '-')).catch((e) => notify(t('Could not share'), String(e)))} />
+          <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={() => printHtml(voucher()).catch((e) => notify(t('Could not print'), String(e)))} />
+          {move && <Button small variant="secondary" title={t('Journal Entry')} icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
+        </ButtonRow>
+      </Card>
+
+      {cheque === 'pending' && (
+        <Card>
+          <SectionTitle>{t('Cheque Clearance')}</SectionTitle>
+          <Text style={{ color: colors.muted, marginVertical: 8 }}>{t('Use this only if you do not reconcile bank statements; otherwise match the cheque in Bank Reconciliation.')}</Text>
+          <DateField label={t('Clearing Date')} value={clearDate} onChange={setClearDate} />
           <ButtonRow>
-            {move && <Button small variant="secondary" title="Journal Entry" icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
+            <Button small title={t('Mark as Cleared')} icon="checkmark-done" onPress={() => run((x) => clearCheque(x, p.id, clearDate))} />
             <Button
               small
               variant="danger"
-              title="Cancel Payment"
+              title={t('Bounced / Returned')}
+              icon="close-circle-outline"
               onPress={async () => {
-                if (await confirm('Cancel payment', 'The payment will be unreconciled from its invoices and its journal entry cancelled.', 'Cancel Payment', true)) run((x) => cancelPayment(x, p.id));
+                if (await confirm(t('Bounced cheque'), t('The cheque is cancelled and the related invoices become due again.'), t('Confirm'), true)) run((x) => bounceCheque(x, p.id));
               }}
             />
           </ButtonRow>
-        )}
-      </Card>
-      <SectionTitle>Reconciled with</SectionTitle>
-      {matched.length === 0 && <Text style={{ color: colors.muted }}>Not matched with any document yet.</Text>}
-      {matched.map(({ r, other }) => (
-        <ListItem key={r.id} title={other?.name ?? ''} subtitle={formatDate(r.date)} right={money(r.amount)} onPress={() => other && router.push({ pathname: '/moves/[id]', params: { id: other.id } })} />
-      ))}
+        </Card>
+      )}
+      {cheque === 'cleared' && p.clearingMoveId && (
+        <Button small variant="secondary" title={t('Undo Clearance')} icon="arrow-undo-outline" onPress={() => run((x) => unclearCheque(x, p.id))} />
+      )}
+      {p.state === 'posted' && cheque !== 'cleared' && (
+        <Button
+          small
+          variant="ghost"
+          title={t('Cancel Payment')}
+          onPress={async () => {
+            if (await confirm(t('Cancel Payment'), t('The payment will be unreconciled from its invoices and its journal entry cancelled.'), t('Cancel Payment'), true)) run((x) => cancelPayment(x, p.id));
+          }}
+        />
+      )}
+      {p.partnerType !== 'other' && (
+        <>
+          <SectionTitle>{t('Reconciled with')}</SectionTitle>
+          {matched.length === 0 && <Text style={{ color: colors.muted }}>{t('Not matched with any document yet.')}</Text>}
+          {matched.map(({ r, other }) => (
+            <ListItem key={r.id} title={other?.name ?? ''} subtitle={fmtDate(r.date)} right={money(r.amount)} onPress={() => other && router.push({ pathname: '/moves/[id]', params: { id: other.id } })} />
+          ))}
+        </>
+      )}
     </Screen>
   );
 }

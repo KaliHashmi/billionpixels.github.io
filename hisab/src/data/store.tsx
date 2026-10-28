@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { buildReconcileIndex, ReconcileIndex } from '../domain/engine';
 import { AccountingError, Account, AnalyticAccount, AppState, ID, Journal, Partner, PaymentTerm, Product, Tax } from '../domain/types';
 import { byId, formatAmount } from '../domain/utils';
+import { useT } from '../i18n';
 import { notify } from '../ui/dialog';
 import { diffStates, isEmptyChange } from './persistence';
 import { storage } from './storage';
@@ -22,6 +23,7 @@ interface StoreValue {
 const StoreContext = createContext<StoreValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   const [state, setState] = useState<AppState | null>(null);
   const [ready, setReady] = useState(false);
   const ref = useRef<AppState | null>(null);
@@ -46,8 +48,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (isEmptyChange(change)) return;
     queue.current = queue.current
       .then(() => storage.apply(change, next))
-      .catch((e) => notify('Saving failed', String(e)));
-  }, []);
+      .catch((e) => notify(t('Saving failed'), String(e)));
+  }, [t]);
 
   const runWith = useCallback(
     <T,>(op: (s: AppState) => { state: AppState; value: T }): T | undefined => {
@@ -58,12 +60,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         commit(res.state);
         return res.value;
       } catch (e) {
-        if (e instanceof AccountingError) notify('Validation Error', e.message);
-        else notify('Unexpected error', e instanceof Error ? e.message : String(e));
+        if (e instanceof AccountingError) notify(t('Validation Error'), t(e.message));
+        else notify(t('Unexpected error'), e instanceof Error ? e.message : String(e));
         return undefined;
       }
     },
-    [commit],
+    [commit, t],
   );
 
   const run = useCallback(
