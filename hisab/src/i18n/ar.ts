@@ -288,6 +288,7 @@ export const ar: Record<string, string> = {
   "Disc. %": "الخصم %",
   "Dividends": "توزيعات الأرباح",
   "Done": "تم",
+  "Download PDF": "تنزيل PDF",
   "Dr": "مدين",
   "Draft": "مسودة",
   "Due": "الاستحقاق",

@@ -71,7 +71,7 @@ export default function TaxReturnScreen() {
         <Row label={t(r.net >= 0 ? 'Net VAT payable' : 'Net VAT refundable')} value={money(Math.abs(r.net))} bold valueStyle={{ color: r.net >= 0 ? colors.danger : colors.success }} />
         <ButtonRow>
           <Button small title={t('Close Period')} icon="lock-closed-outline" onPress={close} />
-          <Button small variant="secondary" title="PDF" icon="share-outline" onPress={pdf} />
+          <Button small variant="secondary" title={t('Download PDF')} icon="download-outline" onPress={pdf} />
         </ButtonRow>
         {s.settings.taxLockDate && <Text style={{ color: colors.muted, marginTop: 8 }}>{t('VAT locked until {date}.', { date: fmtDate(s.settings.taxLockDate) })}</Text>}
         <Text style={{ color: colors.muted, marginTop: 8, fontSize: 12 }}>

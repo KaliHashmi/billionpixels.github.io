@@ -55,7 +55,7 @@ export default function PaymentScreen() {
         <Row label={t('Description')} value={p.memo || '—'} />
         <ButtonRow>
           <Button small title={t('Voucher PDF')} icon="share-outline" onPress={() => sharePdf(voucher(), p.name.replace(/\//g, '-')).catch((e) => notify(t('Could not share'), String(e)))} />
-          <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={() => printHtml(voucher()).catch((e) => notify(t('Could not print'), String(e)))} />
+          <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={() => printHtml(voucher(), p.name.replace(/\//g, '-')).catch((e) => notify(t('Could not print'), String(e)))} />
           {move && <Button small variant="secondary" title={t('Journal Entry')} icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
         </ButtonRow>
       </Card>

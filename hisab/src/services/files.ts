@@ -6,26 +6,30 @@ import { Platform } from 'react-native';
 import { AppState } from '../domain/types';
 import { notify } from '../ui/dialog';
 
-/** Browser previews cannot print or download files; the phone apps use the share sheet. */
+import { DownloadDeclined, htmlToPdfBlob, saveFileOnWeb } from './webFiles';
+
+/** Shown when a browser view cannot save files at all. */
 function webUnavailable() {
-  notify('PDF / Print / Export', 'Available in the iPhone and Android app.\nمتاح في تطبيق آيفون وأندرويد.');
+  notify('PDF / Print / Export', 'Downloads are not available in this browser view. They work in the iPhone and Android app.\nالتنزيل غير متاح في هذا المتصفح، وهو متاح في تطبيق آيفون وأندرويد.');
 }
 
-function downloadOnWeb(filename: string, content: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+async function saveOnWeb(filename: string, data: string | Blob, mimeType: string): Promise<void> {
+  try {
+    if (!(await saveFileOnWeb(filename, data, mimeType))) webUnavailable();
+  } catch (e) {
+    if (!(e instanceof DownloadDeclined)) throw e;
+  }
+}
+
+function pdfName(filename: string) {
+  return filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
 }
 
 /** Save a text file and open the system share sheet (email, Drive, Files…). */
 export async function shareTextFile(filename: string, content: string, mimeType: string): Promise<void> {
   if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.top === window.self) downloadOnWeb(filename, content, mimeType);
-    else webUnavailable();
+    // A byte-order mark lets Excel open UTF-8 (Arabic) CSV files correctly.
+    await saveOnWeb(filename, mimeType === 'text/csv' ? `\uFEFF${content}` : content, mimeType);
     return;
   }
   const file = new File(Paths.cache, filename);
@@ -35,20 +39,20 @@ export async function shareTextFile(filename: string, content: string, mimeType:
 
 export async function sharePdf(html: string, filename: string): Promise<void> {
   if (Platform.OS === 'web') {
-    await printHtml(html);
+    await saveOnWeb(pdfName(filename), await htmlToPdfBlob(html), 'application/pdf');
     return;
   }
   const { uri } = await Print.printToFileAsync({ html });
-  const target = new File(Paths.cache, filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
+  const target = new File(Paths.cache, pdfName(filename));
   if (target.exists) target.delete();
   await new File(uri).move(target);
   await Sharing.shareAsync(target.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: filename });
 }
 
-export async function printHtml(html: string): Promise<void> {
-  // Embedded previews (iframes) cannot open the print dialog.
+export async function printHtml(html: string, filename = 'Document'): Promise<void> {
+  // Embedded previews (iframes) cannot open the print dialog: hand over a PDF to print instead.
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.top !== window.self) {
-    webUnavailable();
+    await sharePdf(html, filename);
     return;
   }
   await Print.printAsync({ html });

@@ -435,7 +435,7 @@ function ReportView({ report, preset, extra }: { report: string; preset?: Preset
         {data.note && <Text style={{ color: colors.muted, marginTop: space.md }}>{data.note}</Text>}
       </Card>
       <ButtonRow>
-        <Button small variant="secondary" title="PDF" icon="document-outline" onPress={exportPdf} />
+        <Button small variant="secondary" title={t('Download PDF')} icon="download-outline" onPress={exportPdf} />
         <Button small variant="secondary" title="CSV / Excel" icon="grid-outline" onPress={exportCsv} />
         {extra.accountId && <Button small variant="ghost" title={t('All accounts')} onPress={() => router.setParams({ accountId: '' })} />}
       </ButtonRow>

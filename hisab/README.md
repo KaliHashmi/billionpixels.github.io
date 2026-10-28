@@ -74,7 +74,7 @@ npm install
 npm start            # development variant (press i / a, or scan with a dev build)
 npm run start:uat    # run the UAT variant
 npm run start:prod   # run the production variant
-npm run web          # browser preview (localStorage instead of SQLite)
+npm run web          # browser preview (localStorage instead of SQLite; PDFs are generated in the browser and downloaded)
 ```
 
 Checks: `npm run typecheck`, `npm run lint`, `npm test` (accounting engine, Oman features, persistence, and a test that fails if any UI string lacks an Arabic translation).

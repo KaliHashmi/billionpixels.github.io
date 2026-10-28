@@ -105,7 +105,7 @@ export default function MoveScreen() {
       if (id) router.replace({ pathname: '/moves/[id]', params: { id } });
     },
     pdf: () => sharePdf(invoiceHtml(s, draft), `${draft.name === '/' ? 'Draft' : draft.name.replace(/\//g, '-')}`).catch((e) => notify(t('Could not share'), String(e))),
-    print: () => printHtml(invoiceHtml(s, draft)).catch((e) => notify(t('Could not print'), String(e))),
+    print: () => printHtml(invoiceHtml(s, draft), draft.name.replace(/\//g, '-')).catch((e) => notify(t('Could not print'), String(e))),
   };
 
   const badge = moveBadge(draft, invoice ? invoiceStatus(s, draft, lk.reconcileIndex) : undefined);
@@ -133,7 +133,7 @@ export default function MoveScreen() {
             {editable && dirty && <Button small variant="secondary" title={t('Save')} icon="save-outline" onPress={actions.save} />}
             {draft.state === 'posted' && invoice && <PostedInvoiceActions move={draft} />}
             {draft.state !== 'draft' && draft.origin === 'manual' && <Button small variant="secondary" title={t('Reset to Draft')} icon="arrow-undo-outline" onPress={actions.reset} />}
-            {invoice && <Button small variant="secondary" title="PDF" icon="share-outline" onPress={actions.pdf} />}
+            {invoice && <Button small variant="secondary" title={t('Download PDF')} icon="download-outline" onPress={actions.pdf} />}
             {invoice && <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={actions.print} />}
             {stored && draft.origin === 'manual' && <Button small variant="secondary" title={t('Duplicate')} icon="copy-outline" onPress={actions.duplicate} />}
             {draft.state === 'posted' && draft.moveType === 'entry' && draft.origin === 'manual' && (

@@ -115,7 +115,7 @@ export function invoiceHtml(s: AppState, move: Move): string {
     [move.moveType.startsWith('out') ? 'Invoice Number' : 'Reference', move.state === 'draft' ? translate('en', 'Draft') : move.name],
     ['Invoice Date', formatDateIn('en', move.invoiceDate ?? move.date)],
     move.dueDate ? ['Due Date', formatDateIn('en', move.dueDate)] : undefined,
-    move.ref ? ['Customer Reference', move.ref] : undefined,
+    move.ref ? [move.moveType.startsWith('out') ? 'Customer Reference' : 'Bill Reference', move.ref] : undefined,
     original ? ['Original Invoice', `${original.name} (${formatDateIn('en', original.invoiceDate ?? original.date)})`] : undefined,
   ].filter(Boolean) as [string, string][];
   return doc(`
@@ -137,7 +137,7 @@ export function invoiceHtml(s: AppState, move: Move): string {
     </table>
     <p class="muted">${esc(amountInWords(totals.total, s.settings.currency, 'en'))}<br/><span class="ar">${esc(amountInWords(totals.total, s.settings.currency, 'ar'))}</span></p>
     ${move.narration ? `<h2>${bi('Terms and Conditions / Notes')}</h2><div>${esc(move.narration).replace(/\n/g, '<br/>')}</div>` : ''}
-    <div class="footer">${esc(s.settings.invoiceFooter)}</div>
+    ${move.moveType.startsWith('out') ? `<div class="footer">${esc(s.settings.invoiceFooter)}</div>` : ''}
   `);
 }
 
