@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Pressable } from 'react-native';
+import { Platform, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ColorValue } from 'react-native';
 import { useT } from '../../i18n';
 import { colors } from '../../ui/theme';
@@ -15,6 +16,9 @@ const tab = (title: string, icon: IconName) => ({
 
 export default function TabsLayout() {
   const { t } = useT();
+  const insets = useSafeAreaInsets();
+  // Room for the icon plus a full line of text: Arabic letters reach lower than Latin ones and were clipped.
+  const bottom = Math.max(insets.bottom, Platform.OS === 'web' ? 6 : 8);
   return (
     <Tabs
       screenOptions={{
@@ -22,6 +26,8 @@ export default function TabsLayout() {
         headerTintColor: '#fff',
         headerTitleStyle: { fontWeight: '700' },
         tabBarActiveTintColor: colors.primary,
+        tabBarStyle: { height: 58 + bottom, paddingTop: 0, paddingBottom: bottom },
+        tabBarLabelStyle: { fontSize: 11, lineHeight: 16 },
         sceneStyle: { backgroundColor: colors.bg },
         headerRight: () => (
           <Pressable accessibilityLabel={t('My Account')} hitSlop={10} onPress={() => router.push('/account')} style={{ paddingHorizontal: 16 }}>

@@ -254,7 +254,7 @@ export const ar: Record<string, string> = {
   "Customers": "العملاء",
   "Daily Cash Closing": "الإقفال اليومي للصندوق",
   "Daily Operations": "العمليات اليومية",
-  "Dashboard": "لوحة المعلومات",
+  "Dashboard": "لوحة التحكم",
   "Data": "البيانات",
   "Database": "قاعدة البيانات",
   "Date": "التاريخ",
