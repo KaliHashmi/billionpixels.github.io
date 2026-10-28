@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>body{margin:0}</style></head><body><title>Hisab</title>
+<meta name="description" content="Hisab accounting app">
+<style>
+  :root { --bg: #F4F5F7; color-scheme: light; }
+  html, body { height: 100%; }
+  body { overflow: hidden; background: var(--bg); }
+  #root { display: flex; height: 100%; flex: 1; }
+  #boot { margin: auto; font: 15px system-ui, sans-serif; color: #714B67; }
+</style>
+<div id="root"><p id="boot">Loading Hisab…</p></div>
+<script>
+  (function () {
+    // Run from whatever path the page is served at: the app's router and files are relative to it.
+    // On the public site the app lives under /hisab-uat/ or /hisab-app/, also when a deep link is reloaded.
+    var m = location.pathname.match(/^(.*\/hisab-(?:uat|app))(\/|$)/);
+    var base = m ? m[1] : location.pathname.replace(/[^/]*$/, '').replace(/\/$/, '');
+    self.__HB__ = base;
+    var s = document.createElement('script');
+    s.src = base + '/js/hisab.js';
+    s.onerror = function () { document.getElementById('boot').textContent = 'Hisab could not load. Reload the page.'; };
+    document.body.appendChild(s);
+  })();
+</script>
+</body></html>
