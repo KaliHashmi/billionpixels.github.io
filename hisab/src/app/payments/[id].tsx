@@ -1,8 +1,8 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
-import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
-import { bounceCheque, cancelPayment, chequeStatus, clearCheque, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
+import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
+import { bounceCheque, chequeStatus, clearCheque, deletePayment, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
 import { today } from '../../domain/utils';
 import { useT } from '../../i18n';
 import { voucherHtml } from '../../services/documents';
@@ -18,6 +18,7 @@ export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useBooks();
   const { run } = useStore();
+  const can = usePermissions();
   const lk = useLookups();
   const money = useMoney();
   const { t, fmtDate } = useT();
@@ -31,6 +32,15 @@ export default function PaymentScreen() {
   const inbound = p.paymentType === 'inbound';
   const cheque = p.method === 'cheque' ? chequeStatus(s, p) : undefined;
   const voucher = () => voucherHtml(s, p);
+  const remove = async () => {
+    const ok = await confirm(
+      t('Delete'),
+      t('Delete {name} permanently? Its journal entries are removed and the invoices it paid become due again. This cannot be undone.', { name: p.name }),
+      t('Delete'),
+      true,
+    );
+    if (ok && run((x) => deletePayment(x, p.id), { requires: 'deleteDocuments' })) router.back();
+  };
 
   return (
     <Screen>
@@ -57,10 +67,14 @@ export default function PaymentScreen() {
           <Button small title={t('Voucher PDF')} icon="share-outline" onPress={() => sharePdf(voucher(), p.name.replace(/\//g, '-')).catch((e) => notify(t('Could not share'), String(e)))} />
           <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={() => printHtml(voucher(), p.name.replace(/\//g, '-')).catch((e) => notify(t('Could not print'), String(e)))} />
           {move && <Button small variant="secondary" title={t('Journal Entry')} icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: move.id } })} />}
+          {p.state === 'posted' && can.editDocuments && (
+            <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={() => router.push({ pathname: '/payments/new', params: { editId: p.id } })} />
+          )}
+          {can.deleteDocuments && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={remove} />}
         </ButtonRow>
       </Card>
 
-      {cheque === 'pending' && (
+      {cheque === 'pending' && can.create && (
         <Card>
           <SectionTitle>{t('Cheque Clearance')}</SectionTitle>
           <Text style={{ color: colors.muted, marginVertical: 8 }}>{t('Use this only if you do not reconcile bank statements; otherwise match the cheque in Bank Reconciliation.')}</Text>
@@ -79,18 +93,8 @@ export default function PaymentScreen() {
           </ButtonRow>
         </Card>
       )}
-      {cheque === 'cleared' && p.clearingMoveId && (
-        <Button small variant="secondary" title={t('Undo Clearance')} icon="arrow-undo-outline" onPress={() => run((x) => unclearCheque(x, p.id))} />
-      )}
-      {p.state === 'posted' && cheque !== 'cleared' && (
-        <Button
-          small
-          variant="ghost"
-          title={t('Cancel Payment')}
-          onPress={async () => {
-            if (await confirm(t('Cancel Payment'), t('The payment will be unreconciled from its invoices and its journal entry cancelled.'), t('Cancel Payment'), true)) run((x) => cancelPayment(x, p.id));
-          }}
-        />
+      {cheque === 'cleared' && p.clearingMoveId && can.editDocuments && (
+        <Button small variant="secondary" title={t('Undo Clearance')} icon="arrow-undo-outline" onPress={() => run((x) => unclearCheque(x, p.id), { requires: 'editDocuments' })} />
       )}
       {p.partnerType !== 'other' && (
         <>

@@ -53,7 +53,9 @@ export default function UserForm() {
         <TextField label={t('Username')} value={username} onChange={setUsername} required autoCapitalize="none" editable={!existing} />
         <SelectField label={t('Role')} value={role} allowClear={false} options={roleOptions} onChange={(v) => v && setRole(v as UserRole)} />
         <Text style={{ color: colors.muted, fontSize: 12, marginBottom: space.md }}>
-          {t('Administrators manage users and settings. Accountants record transactions. Viewers can only see the books and reports.')}
+          {t(
+            'Administrators manage users and settings and can edit or delete issued invoices, bills, vouchers, payroll and VAT closings. Accountants record transactions and can delete those documents but not edit them. Viewers can only see the books and reports.',
+          )}
         </Text>
         {existing && existing.id !== me?.id && <SwitchField label={t('Active')} value={active} onChange={setActive} />}
         {!existing && <NewPasswordFields password={password} confirm={confirm} onPassword={setPassword} onConfirm={setConfirm} />}

@@ -1,7 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState as RNAppState } from 'react-native';
-import { canEdit, login as checkLogin } from '../domain/auth';
+import { canDeleteDocuments, canEdit, canEditDocuments, login as checkLogin } from '../domain/auth';
 import { buildReconcileIndex, ReconcileIndex } from '../domain/engine';
 import { AccountingError, Account, AnalyticAccount, AppState, ID, Journal, Partner, PaymentTerm, Product, Tax, User } from '../domain/types';
 import { byId, formatAmount } from '../domain/utils';
@@ -19,6 +19,8 @@ export const randomBytes = (n: number) => Crypto.getRandomBytes(n);
 interface RunOptions {
   /** Allowed for read-only users too (login bookkeeping, own password). */
   allowReadOnly?: boolean;
+  /** Changing or removing an issued document: checked against canEditDocuments / canDeleteDocuments. */
+  requires?: 'editDocuments' | 'deleteDocuments';
 }
 
 interface StoreValue {
@@ -101,6 +103,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         notify(t('Read-only access'), t('Your account can view the books but not change them.'));
         return undefined;
       }
+      if (current.users.length > 0 && opts?.requires === 'editDocuments' && !canEditDocuments(role)) {
+        notify(t('Not allowed'), t('Only an administrator can edit issued documents.'));
+        return undefined;
+      }
+      if (current.users.length > 0 && opts?.requires === 'deleteDocuments' && !canDeleteDocuments(role)) {
+        notify(t('Not allowed'), t('Your account cannot delete documents.'));
+        return undefined;
+      }
       try {
         const res = op(current);
         commit(res.state);
@@ -156,6 +166,17 @@ export function useStore(): StoreValue {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error('useStore must be used inside StoreProvider');
   return ctx;
+}
+
+/** What the signed-in user may do. Everything is allowed before the first user exists. */
+export function usePermissions() {
+  const { state, user } = useStore();
+  const open = !state || state.users.length === 0;
+  return {
+    create: open || canEdit(user?.role),
+    editDocuments: open || canEditDocuments(user?.role),
+    deleteDocuments: open || canDeleteDocuments(user?.role),
+  };
 }
 
 /** The current books. Only use below the onboarding gate. */

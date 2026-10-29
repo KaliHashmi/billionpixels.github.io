@@ -4,6 +4,9 @@ import {
   buildReconcileIndex,
   cancelPayment,
   chequeStatus,
+  deleteMove,
+  deletePayment,
+  editPayment,
   clearCheque,
   invoiceStatus,
   isInvoice,
@@ -23,7 +26,7 @@ import {
   undoStatementReconciliation,
 } from '../src/domain/engine';
 import { bankReconciliation, cashPosition, partnerOutstanding, unallocated, vatReturn } from '../src/domain/management';
-import { closeCashDay, newPayrollRun, payPayroll, postPayroll, savePayrollRun } from '../src/domain/operations';
+import { closeCashDay, deletePayrollRun, newPayrollRun, payPayroll, postPayroll, resetPayroll, savePayrollRun } from '../src/domain/operations';
 import { agedBalance, balanceSheet, dashboard, profitAndLoss, trialBalance } from '../src/domain/reports';
 import { createDemoCompany } from '../src/domain/seed';
 import { AccountingError, AppState, MoveType, PaymentMethod } from '../src/domain/types';
@@ -119,7 +122,7 @@ for (const seed of [1, 7, 42]) {
     for (let step = 0; step < 250; step++) {
       const before = s;
       const date = addDays(today(), -Math.floor(r() * 120));
-      const op = pick(['invoice', 'invoice', 'bill', 'pay', 'pay', 'refund', 'reset', 'cancelPay', 'cheque', 'statement', 'undoStatement', 'outstanding', 'payroll', 'cashClose', 'other']);
+      const op = pick(['invoice', 'invoice', 'bill', 'pay', 'pay', 'refund', 'reset', 'cancelPay', 'cheque', 'statement', 'undoStatement', 'outstanding', 'payroll', 'cashClose', 'other', 'deleteDoc', 'deletePay', 'editPay', 'editPayroll']);
       try {
         switch (op) {
           case 'invoice':
@@ -215,6 +218,39 @@ for (const seed of [1, 7, 42]) {
             const run = newPayrollRun(s, month);
             s = postPayroll(savePayrollRun(s, run), run.id);
             if (r() < 0.8) s = payPayroll(s, run.id, bank.id, run.date);
+            break;
+          }
+          case 'deleteDoc': {
+            const docs = s.moves.filter((m) => m.origin === 'manual' || m.origin === 'tax_closing');
+            if (docs.length) s = deleteMove(s, pick(docs).id);
+            break;
+          }
+          case 'deletePay':
+            if (s.payments.length) s = deletePayment(s, pick(s.payments).id);
+            break;
+          case 'editPay': {
+            const p = s.payments.filter((x) => x.state === 'posted');
+            if (!p.length) break;
+            const pay = pick(p);
+            s = editPayment(s, pay.id, {
+              paymentType: pay.paymentType,
+              partnerType: pay.partnerType,
+              partnerId: pay.partnerId,
+              amount: round(pay.amount * (0.5 + r()), 3) || 1,
+              date: addDays(pay.date, Math.floor(r() * 5)),
+              journalId: pay.journalId,
+              memo: 'edited',
+              method: pay.method,
+              chequeNumber: pay.chequeNumber,
+              counterpartAccountId: pay.counterpartAccountId,
+              taxId: pay.taxId,
+            }).state;
+            break;
+          }
+          case 'editPayroll': {
+            if (!s.payrollRuns.length) break;
+            const run = pick(s.payrollRuns);
+            s = r() < 0.5 ? deletePayrollRun(s, run.id) : postPayroll(resetPayroll(s, run.id), run.id);
             break;
           }
           case 'cashClose':

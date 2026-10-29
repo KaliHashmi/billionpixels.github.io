@@ -280,8 +280,25 @@ export function postMove(state: AppState, moveId: ID): AppState {
     next = seq.state;
     move = { ...move, name: seq.name };
   }
-  move = { ...move, state: 'posted', postedAt: new Date().toISOString() };
-  return { ...next, moves: replace(next.moves, move) };
+  const rematch = move.rematchLineIds;
+  move = { ...move, state: 'posted', postedAt: new Date().toISOString(), rematchLineIds: undefined };
+  next = { ...next, moves: replace(next.moves, move) };
+  return rematch?.length ? rematchPayments(next, move, rematch) : next;
+}
+
+/** After an edited invoice is posted again, match the payments and credits it had before (as far as they still fit). */
+function rematchPayments(state: AppState, move: Move, lineIds: ID[]): AppState {
+  const { decimals } = state.settings;
+  const idx = buildReconcileIndex(state.reconciles);
+  for (const term of move.lines.filter((l) => l.kind === 'payment_term')) {
+    const others = lineIds.filter((id) => {
+      const found = state.moves.find((m) => m.state === 'posted' && m.id !== move.id && m.lines.some((l) => l.id === id));
+      const line = found?.lines.find((l) => l.id === id);
+      return !!line && line.accountId === term.accountId && line.partnerId === term.partnerId && !isZero(lineResidual(line, idx, decimals), decimals);
+    });
+    if (others.length) state = reconcileLines(state, [term.id, ...others], move.date);
+  }
+  return state;
 }
 
 export function resetToDraft(state: AppState, moveId: ID): AppState {
@@ -290,8 +307,47 @@ export function resetToDraft(state: AppState, moveId: ID): AppState {
   if (move.origin === 'payment') throw new AccountingError('Cancel the payment instead of resetting its entry.');
   if (move.origin === 'statement') throw new AccountingError('Undo the bank reconciliation instead.');
   checkLockDate(state, move.date);
+  // Remember what was matched with the invoice so re-posting it keeps it paid.
+  const rematchLineIds = isInvoice(move.moveType)
+    ? state.reconciles
+        .filter((r) => r.debitMoveId === moveId || r.creditMoveId === moveId)
+        .map((r) => (r.debitMoveId === moveId ? r.creditLineId : r.debitLineId))
+        .filter((id, i, all) => all.indexOf(id) === i)
+    : undefined;
   const next = unreconcileMove(state, moveId);
-  return { ...next, moves: replace(next.moves, { ...move, state: 'draft' }) };
+  return { ...next, moves: replace(next.moves, { ...move, state: 'draft', rematchLineIds: rematchLineIds?.length ? rematchLineIds : undefined }) };
+}
+
+const DELETE_ELSEWHERE: Partial<Record<Move['origin'], string>> = {
+  payment: 'Delete the payment voucher instead.',
+  statement: 'Undo the bank reconciliation instead.',
+  cheque: 'Undo the cheque clearance from its payment instead.',
+  payroll: 'Delete the payroll instead.',
+  asset: 'Manage this entry from its asset.',
+  cash_closing: 'Reopen the cash day instead.',
+};
+
+/**
+ * Permanently remove an invoice, bill, credit note, journal entry or VAT closing, posted or not.
+ * Its matches are undone, so payments on it become unallocated credits again.
+ */
+export function deleteMove(state: AppState, moveId: ID): AppState {
+  const move = getMove(state, moveId);
+  const elsewhere = DELETE_ELSEWHERE[move.origin];
+  if (elsewhere) throw new AccountingError(elsewhere);
+  const credit = state.moves.find((m) => m.reversedEntryId === moveId && m.state !== 'cancel');
+  if (credit) throw new AccountingError('A credit note or reversal refers to this document. Delete it first.');
+  if (move.state === 'posted') checkLockDate(state, move.date, move.origin !== 'tax_closing' && move.lines.some((l) => l.taxId || l.taxIds?.length));
+  let next = unreconcileMove(state, moveId);
+  next = { ...next, moves: next.moves.filter((m) => m.id !== moveId) };
+  if (move.origin === 'tax_closing' && move.state === 'posted' && state.settings.taxLockDate === move.date) {
+    // The VAT lock came from this closing: fall back to the latest remaining one.
+    const latest = next.moves
+      .filter((m) => m.origin === 'tax_closing' && m.state === 'posted')
+      .reduce<string | undefined>((d, m) => (!d || m.date > d ? m.date : d), undefined);
+    next = { ...next, settings: { ...next.settings, taxLockDate: latest } };
+  }
+  return next;
 }
 
 export function cancelMove(state: AppState, moveId: ID): AppState {
@@ -381,7 +437,8 @@ function findLine(state: AppState, lineId: ID): { move: Move; line: MoveLine } {
 export function reconcileLines(state: AppState, lineIds: ID[], date = today()): AppState {
   const { decimals } = state.settings;
   const idx = buildReconcileIndex(state.reconciles);
-  const items = lineIds.map((id) => findLine(state, id));
+  // A line listed twice would be matched twice.
+  const items = [...new Set(lineIds)].map((id) => findLine(state, id));
   if (items.some((i) => i.move.state !== 'posted')) throw new AccountingError('Only posted journal items can be reconciled.');
   const accountIds = new Set(items.map((i) => i.line.accountId));
   if (accountIds.size > 1) throw new AccountingError('Journal items must belong to the same account to be reconciled.');
@@ -528,7 +585,14 @@ export function liquidityAccountFor(state: AppState, journal: Journal, inbound: 
   return inbound ? st.outstandingReceiptsAccountId : st.outstandingPaymentsAccountId;
 }
 
-export function registerPayment(state: AppState, input: PaymentInput): { state: AppState; payment: Payment } {
+/** Number and ids an edited payment keeps. */
+interface PaymentIdentity {
+  paymentId: ID;
+  moveId: ID;
+  name: string;
+}
+
+export function registerPayment(state: AppState, input: PaymentInput, keep?: PaymentIdentity): { state: AppState; payment: Payment } {
   const { decimals } = state.settings;
   const amount = round(input.amount, decimals);
   if (!(amount > 0)) throw new AccountingError('The payment amount must be positive.');
@@ -572,11 +636,11 @@ export function registerPayment(state: AppState, input: PaymentInput): { state: 
     lines.push({ id: counterpartLineId, accountId: counterpart, partnerId: input.partnerId, label, ...dc(-s * amount), kind: 'payment_term', dateMaturity: input.date });
   }
 
-  const seq = nextSequence(state, inbound ? 'RV' : 'PV', input.date);
+  const seq = keep ? { state, name: keep.name } : nextSequence(state, inbound ? 'RV' : 'PV', input.date);
   let next = seq.state;
-  const paymentId = newId();
+  const paymentId = keep?.paymentId ?? newId();
   const move: Move = {
-    id: newId(),
+    id: keep?.moveId ?? newId(),
     moveType: 'entry',
     name: seq.name,
     state: 'posted',
@@ -718,6 +782,63 @@ export function cancelPayment(state: AppState, paymentId: ID): AppState {
     moves: replace(next.moves, { ...move, state: 'cancel' }),
     payments: replace(next.payments, { ...payment, state: 'cancel' }),
   };
+}
+
+/** Why a payment cannot be edited or deleted right now, if anything. */
+function paymentBankMatchError(state: AppState, payment: Payment): string | undefined {
+  const move = state.moves.find((m) => m.id === payment.moveId);
+  if (!move) return undefined;
+  const liquidity = new Set(move.lines.filter((l) => l.kind === 'other').map((l) => l.id));
+  const clearing = payment.clearingMoveId;
+  const matched = state.reconciles.some((r) => (liquidity.has(r.debitLineId) || liquidity.has(r.creditLineId)) && r.debitMoveId !== clearing && r.creditMoveId !== clearing);
+  return matched ? 'This payment is matched with a bank statement line. Undo the bank reconciliation first.' : undefined;
+}
+
+/** Permanently remove a receipt or payment voucher with its journal entries; the invoices it paid become due again. */
+export function deletePayment(state: AppState, paymentId: ID): AppState {
+  const payment = state.payments.find((p) => p.id === paymentId);
+  if (!payment) throw new AccountingError('Payment not found.');
+  const blocked = paymentBankMatchError(state, payment);
+  if (blocked) throw new AccountingError(blocked);
+  if (payment.state === 'posted') checkLockDate(state, payment.date);
+  let next = payment.clearingMoveId ? unclearCheque(state, paymentId) : state;
+  next = unreconcileMove(next, payment.moveId);
+  return {
+    ...next,
+    moves: next.moves.filter((m) => m.id !== payment.moveId),
+    payments: next.payments.filter((p) => p.id !== paymentId),
+  };
+}
+
+/** The invoices and bills a payment is currently matched with. */
+export function paymentMatchedMoveIds(state: AppState, payment: Payment): ID[] {
+  const ids = state.reconciles
+    .filter((r) => r.debitMoveId === payment.moveId || r.creditMoveId === payment.moveId)
+    .map((r) => (r.debitMoveId === payment.moveId ? r.creditMoveId : r.debitMoveId));
+  return [...new Set(ids)].filter((id) => id !== payment.clearingMoveId && state.moves.some((m) => m.id === id && isInvoice(m.moveType)));
+}
+
+/**
+ * Change a posted payment in place: it keeps its voucher number and is matched again with the
+ * invoices it settled (or the ones given in `input.moveIds`).
+ */
+export function editPayment(state: AppState, paymentId: ID, input: PaymentInput): { state: AppState; payment: Payment } {
+  const payment = state.payments.find((p) => p.id === paymentId);
+  if (!payment) throw new AccountingError('Payment not found.');
+  if (payment.state !== 'posted') throw new AccountingError('Cancelled or bounced payments cannot be edited.');
+  if (payment.clearingMoveId) throw new AccountingError('Undo the cheque clearance before editing this payment.');
+  const blocked = paymentBankMatchError(state, payment);
+  if (blocked) throw new AccountingError(blocked);
+  if (input.paymentType !== payment.paymentType) throw new AccountingError('A receipt cannot be changed into a payment. Delete it and create a new one.');
+  checkLockDate(state, payment.date);
+  const previous = paymentMatchedMoveIds(state, payment).filter((id) => getMove(state, id).partnerId === input.partnerId);
+  let next = unreconcileMove(state, payment.moveId);
+  next = { ...next, moves: next.moves.filter((m) => m.id !== payment.moveId), payments: next.payments.filter((p) => p.id !== paymentId) };
+  const moveIds = (input.moveIds ?? previous).filter((id) => next.moves.some((m) => m.id === id && m.state === 'posted'));
+  const res = registerPayment(next, { ...input, moveIds: input.partnerType === 'other' ? undefined : moveIds }, { paymentId, moveId: payment.moveId, name: payment.name });
+  // Keep the payment in its original position in the list.
+  const order = state.payments.map((p) => (p.id === paymentId ? res.payment : p));
+  return { state: { ...res.state, payments: order }, payment: res.payment };
 }
 
 /** Customer credits / vendor debits that can be applied to an invoice. */

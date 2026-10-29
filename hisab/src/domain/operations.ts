@@ -212,7 +212,7 @@ export function postPayroll(state: AppState, runId: ID): AppState {
   const general = state.journals.find((j) => j.type === 'general' && j.active);
   if (!general) throw new AccountingError('No miscellaneous journal configured.');
   const res = postedMove(state, general.id, run.date, label, lines, 'payroll', run.id);
-  return { ...res.state, payrollRuns: res.state.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'posted', moveId: res.move.id } : r)) };
+  return { ...res.state, payrollRuns: res.state.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'posted', moveId: res.move.id, issued: true } : r)) };
 }
 
 /** Pay net salaries from a bank (bank transfer / WPS) or cash journal. */
@@ -252,10 +252,10 @@ export function resetPayroll(state: AppState, runId: ID): AppState {
   };
 }
 
+/** Remove a payroll; a posted or paid one has its journal entries removed first. */
 export function deletePayrollRun(state: AppState, runId: ID): AppState {
-  const run = state.payrollRuns.find((r) => r.id === runId);
-  if (run && run.state !== 'draft') throw new AccountingError('Reset the payroll to draft before deleting it.');
-  return { ...state, payrollRuns: state.payrollRuns.filter((r) => r.id !== runId) };
+  const next = resetPayroll(state, runId);
+  return { ...next, payrollRuns: next.payrollRuns.filter((r) => r.id !== runId) };
 }
 
 /** Number of calendar months touched by a period (used to scale monthly budgets). */

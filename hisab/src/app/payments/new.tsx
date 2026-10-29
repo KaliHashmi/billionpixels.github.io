@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
-import { invoiceStatus, PAYMENT_METHOD_LABELS, registerPayment } from '../../domain/engine';
+import { editPayment, invoiceStatus, PAYMENT_METHOD_LABELS, paymentMatchedMoveIds, registerPayment } from '../../domain/engine';
 import { PaymentMethod } from '../../domain/types';
 import { today } from '../../domain/utils';
 import { accountOptions, journalOptions, partnerOptions, taxOptions } from '../../features/entities';
@@ -14,16 +14,22 @@ import { colors, space } from '../../ui/theme';
 type PartnerType = 'customer' | 'supplier' | 'other';
 
 export default function RegisterPayment() {
-  const params = useLocalSearchParams<{ moveId?: string; partnerType?: PartnerType; direction?: 'inbound' | 'outbound'; journalId?: string }>();
+  const params = useLocalSearchParams<{ moveId?: string; partnerType?: PartnerType; direction?: 'inbound' | 'outbound'; journalId?: string; editId?: string }>();
   const s = useBooks();
   const lk = useLookups();
   const { runWith } = useStore();
   const money = useMoney();
   const { t } = useT();
+  // Editing an existing voucher: the form starts from its current values.
+  const editing = params.editId ? s.payments.find((p) => p.id === params.editId) : undefined;
+  const matchedNames = editing ? paymentMatchedMoveIds(s, editing).map((id) => s.moves.find((m) => m.id === id)?.name ?? '') : [];
+  const editAnalytic = editing ? s.moves.find((m) => m.id === editing.moveId)?.lines.find((l) => l.kind === 'product')?.analyticAccountId : undefined;
   const move = params.moveId ? s.moves.find((m) => m.id === params.moveId) : undefined;
   const st = move ? invoiceStatus(s, move) : undefined;
-  const initialType: PartnerType = move ? (move.moveType.startsWith('out') ? 'customer' : 'supplier') : params.partnerType ?? 'customer';
-  const defaultDirection = move
+  const initialType: PartnerType = editing ? editing.partnerType : move ? (move.moveType.startsWith('out') ? 'customer' : 'supplier') : params.partnerType ?? 'customer';
+  const defaultDirection = editing
+    ? editing.paymentType
+    : move
     ? move.moveType === 'out_invoice' || move.moveType === 'in_refund'
       ? 'inbound'
       : 'outbound'
@@ -31,46 +37,56 @@ export default function RegisterPayment() {
   const journals = journalOptions(s, ['bank', 'cash'], t);
   const [partnerType, setPartnerType] = useState<PartnerType>(initialType);
   const [paymentType, setPaymentType] = useState<'inbound' | 'outbound'>(defaultDirection);
-  const [partnerId, setPartnerId] = useState<string | undefined>(move?.partnerId);
-  const [journalId, setJournalId] = useState<string | undefined>(params.journalId ?? (initialType === 'other' ? s.journals.find((j) => j.type === 'cash')?.id : undefined) ?? journals[0]?.value);
-  const [method, setMethod] = useState<PaymentMethod>('bank_transfer');
-  const [amount, setAmount] = useState(st?.residual ?? 0);
-  const [date, setDate] = useState(today());
-  const [memo, setMemo] = useState(move ? move.name : '');
-  const [chequeNumber, setChequeNumber] = useState('');
-  const [chequeBank, setChequeBank] = useState('');
-  const [chequeDate, setChequeDate] = useState(today());
-  const [accountId, setAccountId] = useState<string | undefined>();
-  const [taxId, setTaxId] = useState<string | undefined>();
+  const [partnerId, setPartnerId] = useState<string | undefined>(editing ? editing.partnerId : move?.partnerId);
+  const [journalId, setJournalId] = useState<string | undefined>(
+    editing?.journalId ?? params.journalId ?? (initialType === 'other' ? s.journals.find((j) => j.type === 'cash')?.id : undefined) ?? journals[0]?.value,
+  );
+  const [method, setMethod] = useState<PaymentMethod>(editing?.method ?? 'bank_transfer');
+  const [amount, setAmount] = useState(editing?.amount ?? st?.residual ?? 0);
+  const [date, setDate] = useState(editing?.date ?? today());
+  const [memo, setMemo] = useState(editing ? editing.memo : move ? move.name : '');
+  const [chequeNumber, setChequeNumber] = useState(editing?.chequeNumber ?? '');
+  const [chequeBank, setChequeBank] = useState(editing?.chequeBank ?? '');
+  const [chequeDate, setChequeDate] = useState(editing?.chequeDate ?? today());
+  const [accountId, setAccountId] = useState<string | undefined>(editing?.counterpartAccountId);
+  const [taxId, setTaxId] = useState<string | undefined>(editing?.taxId);
   const isCash = journalId ? lk.journals.get(journalId)?.type === 'cash' : false;
   const inbound = paymentType === 'inbound';
 
   const submit = () => {
     if (!journalId) return;
+    const input = {
+      paymentType,
+      partnerType,
+      partnerId,
+      amount,
+      date,
+      journalId,
+      memo,
+      method: isCash ? ('cash' as const) : method,
+      chequeNumber,
+      chequeBank,
+      chequeDate,
+      counterpartAccountId: accountId,
+      taxId,
+      analyticAccountId: editAnalytic,
+      moveIds: move ? [move.id] : undefined,
+    };
+    if (editing) {
+      if (runWith((x) => ({ state: editPayment(x, editing.id, input).state, value: true }), { requires: 'editDocuments' })) router.back();
+      return;
+    }
     const id = runWith((x) => {
-      const r = registerPayment(x, {
-        paymentType,
-        partnerType,
-        partnerId,
-        amount,
-        date,
-        journalId,
-        memo,
-        method: isCash ? 'cash' : method,
-        chequeNumber,
-        chequeBank,
-        chequeDate,
-        counterpartAccountId: accountId,
-        taxId,
-        moveIds: move ? [move.id] : undefined,
-      });
+      const r = registerPayment(x, input);
       return { state: r.state, value: r.payment.id };
     });
     if (id) router.replace({ pathname: '/payments/[id]', params: { id } });
   };
 
   const methods: PaymentMethod[] = inbound ? ['bank_transfer', 'cheque', 'card'] : ['bank_transfer', 'cheque'];
-  const title = t(inbound ? 'Receipt Voucher' : 'Payment Voucher');
+  const title = editing ? t('Edit {name}', { name: editing.name }) : t(inbound ? 'Receipt Voucher' : 'Payment Voucher');
+
+  if (params.editId && editing?.state !== 'posted') return <Text style={{ padding: 20 }}>{t('This payment can no longer be edited.')}</Text>;
 
   return (
     <Screen>
@@ -82,18 +98,30 @@ export default function RegisterPayment() {
           <Row label={t('Amount Due')} value={money(st.residual)} bold />
         </Card>
       )}
+      {editing && (
+        <Card>
+          <Text style={{ fontWeight: '700', fontSize: 16 }}>{editing.name}</Text>
+          <Text style={{ color: colors.muted, marginTop: 4 }}>
+            {matchedNames.length
+              ? t('It keeps its number and stays matched with {names}.', { names: matchedNames.join(', ') })
+              : t('It keeps its number.')}
+          </Text>
+        </Card>
+      )}
       <Card>
         {!move && (
           <>
-            <Segmented
-              label={t('Type')}
-              value={paymentType}
-              onChange={setPaymentType}
-              options={[
-                { value: 'inbound', label: t('Receive Money') },
-                { value: 'outbound', label: t('Pay Money') },
-              ]}
-            />
+            {!editing && (
+              <Segmented
+                label={t('Type')}
+                value={paymentType}
+                onChange={setPaymentType}
+                options={[
+                  { value: 'inbound', label: t('Receive Money') },
+                  { value: 'outbound', label: t('Pay Money') },
+                ]}
+              />
+            )}
             <Segmented
               label={t(inbound ? 'Received from' : 'Paid to')}
               value={partnerType}
@@ -144,7 +172,7 @@ export default function RegisterPayment() {
         {!isCash && method === 'cheque' && (
           <Text style={{ color: colors.muted, marginBottom: space.md }}>{t('The cheque stays pending until it clears (bank reconciliation or "Mark as cleared").')}</Text>
         )}
-        <Button title={t('Confirm')} icon="checkmark" onPress={submit} />
+        <Button title={t(editing ? 'Save Changes' : 'Confirm')} icon="checkmark" onPress={submit} />
       </Card>
     </Screen>
   );

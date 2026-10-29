@@ -136,3 +136,15 @@ export function canEdit(role: UserRole | undefined): boolean {
 export function isAdmin(role: UserRole | undefined): boolean {
   return role === 'admin';
 }
+
+/**
+ * Issued documents (invoices, bills, credit notes, vouchers, payroll, VAT closings):
+ * administrators edit and delete them, accountants may only delete them, viewers neither.
+ */
+export function canEditDocuments(role: UserRole | undefined): boolean {
+  return role === 'admin';
+}
+
+export function canDeleteDocuments(role: UserRole | undefined): boolean {
+  return role === 'admin' || role === 'accountant';
+}

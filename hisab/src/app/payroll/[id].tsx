@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { useBooks, useMoney, useStore } from '../../data/store';
+import { useBooks, useMoney, usePermissions, useStore } from '../../data/store';
 import { deletePayrollRun, payPayroll, payrollTotals, postPayroll, recomputePayslip, resetPayroll, savePayrollRun } from '../../domain/operations';
 import { today } from '../../domain/utils';
 import { journalOptions } from '../../features/entities';
@@ -17,6 +17,7 @@ export default function PayrollRunScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useBooks();
   const { run } = useStore();
+  const can = usePermissions();
   const money = useMoney();
   const { t, fmtDate, lang } = useT();
   const stored = s.payrollRuns.find((r) => r.id === id);
@@ -26,10 +27,27 @@ export default function PayrollRunScreen() {
   if (!stored) return null;
   const draft = stored.state === 'draft';
   const tot = payrollTotals(stored);
+  // Accountants may prepare a payroll until it is first posted; after that only administrators change it.
+  const editable = draft && (stored.issued ? can.editDocuments : can.create);
   const employees = new Map(s.employees.map((e) => [e.id, e]));
 
   const setSlip = (employeeId: string, patch: { overtime?: number; deductions?: number }) =>
-    run((x) => savePayrollRun(x, { ...stored, payslips: stored.payslips.map((p) => (p.employeeId === employeeId ? recomputePayslip(x, { ...p, ...patch }) : p)) }));
+    run(
+      (x) => savePayrollRun(x, { ...stored, payslips: stored.payslips.map((p) => (p.employeeId === employeeId ? recomputePayslip(x, { ...p, ...patch }) : p)) }),
+      stored.issued ? { requires: 'editDocuments' } : undefined,
+    );
+  const edit = async () => {
+    const ok = await confirm(
+      t('Edit'),
+      t('The payroll goes back to draft and its journal entries (and salary payment, if any) are removed. Post it again when you are done.'),
+      t('Edit'),
+    );
+    if (ok) run((x) => resetPayroll(x, stored.id), { requires: 'editDocuments' });
+  };
+  const remove = async () => {
+    const message = draft ? t('Delete this payroll?') : t('Delete this payroll and its journal entries (and salary payment, if any)? This cannot be undone.');
+    if ((await confirm(t('Delete'), message, t('Delete'), true)) && run((x) => deletePayrollRun(x, stored.id), { requires: 'deleteDocuments' })) router.back();
+  };
 
   const sheet = () =>
     sharePdf(
@@ -65,24 +83,15 @@ export default function PayrollRunScreen() {
         <Row label={t('Net salaries to pay')} value={money(tot.net)} bold />
         <Row label={t('Total cost to company')} value={money(tot.cost)} />
         <ButtonRow>
-          {draft && <Button small title={t('Post Payroll')} icon="checkmark" onPress={() => run((x) => postPayroll(x, stored.id))} />}
+          {draft && can.create && <Button small title={t('Post Payroll')} icon="checkmark" onPress={() => run((x) => postPayroll(x, stored.id))} />}
           <Button small variant="secondary" title={t('Salary Sheet PDF')} icon="share-outline" onPress={sheet} />
           {stored.moveId && <Button small variant="secondary" title={t('Journal Entry')} icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: stored.moveId! } })} />}
-          {!draft && <Button small variant="ghost" title={t('Reset to Draft')} onPress={() => run((x) => resetPayroll(x, stored.id))} />}
-          {draft && (
-            <Button
-              small
-              variant="ghost"
-              title={t('Delete')}
-              onPress={async () => {
-                if ((await confirm(t('Delete'), t('Delete this payroll?'), t('Delete'), true)) && run((x) => deletePayrollRun(x, stored.id))) router.back();
-              }}
-            />
-          )}
+          {!draft && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={edit} />}
+          {can.deleteDocuments && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={remove} />}
         </ButtonRow>
       </Card>
 
-      {stored.state === 'posted' && (
+      {stored.state === 'posted' && can.create && (
         <Card>
           <SectionTitle>{t('Pay Salaries')}</SectionTitle>
           <SelectField label={t('Pay from')} value={journalId} allowClear={false} options={banks} onChange={(v) => v && setJournalId(v)} />
@@ -100,7 +109,7 @@ export default function PayrollRunScreen() {
             <Text style={{ color: colors.muted, marginBottom: space.sm }}>{[e?.position, e ? t(e.nationality === 'omani' ? 'Omani' : 'Expatriate') : ''].filter(Boolean).join(' · ')}</Text>
             <Row label={t('Basic')} value={money(p.basic, false)} />
             <Row label={t('Allowances')} value={money(p.allowances, false)} />
-            {draft ? (
+            {editable ? (
               <View style={{ flexDirection: 'row', gap: space.sm }}>
                 <NumberField compact label={t('Overtime')} value={p.overtime} onChange={(v) => setSlip(p.employeeId, { overtime: v })} />
                 <NumberField compact label={t('Deductions')} value={p.deductions} onChange={(v) => setSlip(p.employeeId, { deductions: v })} />

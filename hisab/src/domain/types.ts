@@ -170,6 +170,8 @@ export interface Move {
   invoiceLines: InvoiceLine[];
   lines: MoveLine[];
   reversedEntryId?: ID;
+  /** Payments and credits that were matched before the entry was reset to draft; matched again when it is re-posted. */
+  rematchLineIds?: ID[];
   origin: MoveOrigin;
   originId?: ID;
   createdAt: string;
@@ -291,6 +293,8 @@ export interface PayrollRun {
   payslips: Payslip[];
   moveId?: ID;
   paymentMoveId?: ID;
+  /** Posted at least once: from then on only administrators may change it. */
+  issued?: boolean;
 }
 
 export interface CashClosing {

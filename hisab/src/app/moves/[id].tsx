@@ -2,12 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
+import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
 import {
   applyOutstanding,
-  cancelMove,
   computeDueDate,
-  deleteDraft,
+  deleteMove,
   duplicateMove,
   invoiceStatus,
   isInvoice,
@@ -50,6 +49,7 @@ export default function MoveScreen() {
   const { run, runWith } = useStore();
   const s = useBooks();
   const lk = useLookups();
+  const can = usePermissions();
   const { t } = useT();
   const stored = params.id !== 'new' ? s.moves.find((m) => m.id === params.id) : undefined;
 
@@ -72,7 +72,11 @@ export default function MoveScreen() {
     return <Text style={{ padding: 20 }}>{t('This entry no longer exists.')}</Text>;
   }
 
-  const editable = draft.state === 'draft';
+  // A document that is still being prepared (no number yet) can be filled in by anyone who records
+  // transactions; once issued, only administrators may change it.
+  const issued = draft.name !== '/';
+  const editable = draft.state === 'draft' && (issued ? can.editDocuments : can.create);
+  const deletable = !!stored && can.deleteDocuments && (draft.origin === 'manual' || draft.origin === 'tax_closing');
   const invoice = isInvoice(draft.moveType);
   const sale = isSaleDoc(draft.moveType);
   const update = (patch: Partial<Move>) => {
@@ -81,7 +85,7 @@ export default function MoveScreen() {
   };
 
   const persist = (op: (st: AppState) => AppState) => {
-    const ok = run((st) => op(dirty || !stored ? saveDraft(st, draft) : st));
+    const ok = run((st) => op(dirty || !stored ? saveDraft(st, draft) : st), stored && dirty && issued ? { requires: 'editDocuments' } : undefined);
     if (ok && params.id === 'new') router.setParams({ id: draft.id });
     return ok;
   };
@@ -89,13 +93,20 @@ export default function MoveScreen() {
   const actions = {
     save: () => persist((st) => st),
     confirm: () => persist((st) => postMove(st, draft.id)),
-    reset: () => run((st) => resetToDraft(st, draft.id)),
-    cancel: async () => {
-      if (await confirm(t('Cancel entry'), t('Cancelled entries are kept for audit but have no accounting impact.'), t('Cancel Entry'), true)) persist((st) => cancelMove(st, draft.id));
+    edit: async () => {
+      const ok = await confirm(
+        t('Edit {name}', { name: draft.name }),
+        t('The document goes back to draft so you can change it. It keeps its number; confirm it again when you are done, and its payments are matched again.'),
+        t('Edit'),
+      );
+      if (ok) run((st) => resetToDraft(st, draft.id), { requires: 'editDocuments' });
     },
     remove: async () => {
-      if (!stored) return router.back();
-      if ((await confirm(t('Delete'), t('Delete this draft permanently?'), t('Delete'), true)) && run((st) => deleteDraft(st, draft.id))) router.back();
+      const message =
+        draft.state === 'posted'
+          ? t('Delete {name} permanently? Its journal entries are removed and any payments on it become unallocated. This cannot be undone.', { name: draft.name })
+          : t('Delete this document permanently? This cannot be undone.');
+      if ((await confirm(t('Delete'), message, t('Delete'), true)) && run((st) => deleteMove(st, draft.id), { requires: 'deleteDocuments' })) router.back();
     },
     duplicate: () => {
       const id = runWith((st) => {
@@ -129,18 +140,17 @@ export default function MoveScreen() {
         )}
         <View style={{ marginTop: space.md }}>
           <ButtonRow>
-            {editable && <Button small title={t('Confirm')} icon="checkmark" onPress={actions.confirm} />}
+            {draft.state === 'draft' && can.create && <Button small title={t('Confirm')} icon="checkmark" onPress={actions.confirm} />}
             {editable && dirty && <Button small variant="secondary" title={t('Save')} icon="save-outline" onPress={actions.save} />}
-            {draft.state === 'posted' && invoice && <PostedInvoiceActions move={draft} />}
-            {draft.state !== 'draft' && draft.origin === 'manual' && <Button small variant="secondary" title={t('Reset to Draft')} icon="arrow-undo-outline" onPress={actions.reset} />}
+            {draft.state === 'posted' && invoice && can.create && <PostedInvoiceActions move={draft} />}
+            {draft.state !== 'draft' && draft.origin === 'manual' && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={actions.edit} />}
             {invoice && <Button small variant="secondary" title={t('Download PDF')} icon="download-outline" onPress={actions.pdf} />}
             {invoice && <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={actions.print} />}
-            {stored && draft.origin === 'manual' && <Button small variant="secondary" title={t('Duplicate')} icon="copy-outline" onPress={actions.duplicate} />}
-            {draft.state === 'posted' && draft.moveType === 'entry' && draft.origin === 'manual' && (
+            {stored && draft.origin === 'manual' && can.create && <Button small variant="secondary" title={t('Duplicate')} icon="copy-outline" onPress={actions.duplicate} />}
+            {draft.state === 'posted' && draft.moveType === 'entry' && draft.origin === 'manual' && can.create && (
               <Button small variant="secondary" title={t('Reverse')} icon="swap-horizontal-outline" onPress={() => router.push({ pathname: '/moves/reverse', params: { id: draft.id } })} />
             )}
-            {editable && draft.name !== '/' && <Button small variant="ghost" title={t('Cancel Entry')} onPress={actions.cancel} />}
-            {editable && draft.name === '/' && <Button small variant="ghost" title={t('Delete')} onPress={actions.remove} />}
+            {deletable && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={actions.remove} />}
           </ButtonRow>
         </View>
       </Card>
@@ -349,6 +359,7 @@ function InvoiceLines({ draft, update, editable, sale }: { draft: Move; update: 
 function PaymentsWidget({ move }: { move: Move }) {
   const s = useBooks();
   const { run } = useStore();
+  const can = usePermissions();
   const money = useMoney();
   const { t, fmtDate: formatDate } = useT();
   const st = invoiceStatus(s, move);
@@ -373,19 +384,23 @@ function PaymentsWidget({ move }: { move: Move }) {
           <Pressable style={{ flex: 1 }} onPress={() => openOther(other)}>
             <Row label={`${t('Paid on')} ${formatDate(r.date)} · ${other?.name ?? ''}`} value={money(r.amount)} valueStyle={{ color: colors.accent }} />
           </Pressable>
-          <Pressable
-            hitSlop={8}
-            onPress={async () => {
-              if (await confirm(t('Unreconcile'), t('Remove this payment from the invoice? The payment stays as an outstanding credit.'), t('Unreconcile'))) run((x) => unreconcilePair(x, move.id, other!.id));
-            }}
-          >
-            <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
-          </Pressable>
+          {can.editDocuments && (
+            <Pressable
+              hitSlop={8}
+              accessibilityLabel={t('Unreconcile')}
+              onPress={async () => {
+                if (await confirm(t('Unreconcile'), t('Remove this payment from the invoice? The payment stays as an outstanding credit.'), t('Unreconcile')))
+                  run((x) => unreconcilePair(x, move.id, other!.id), { requires: 'editDocuments' });
+              }}
+            >
+              <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
+            </Pressable>
+          )}
         </View>
       ))}
       <Divider />
       <Row label={t('Amount Due')} value={money(st.residual)} bold />
-      {outstanding.length > 0 && st.residual > 0 && (
+      {outstanding.length > 0 && st.residual > 0 && can.create && (
         <>
           <Text style={{ marginTop: space.md, fontWeight: '700', color: colors.accent }}>{t(move.moveType.startsWith('out') ? 'Outstanding credits' : 'Outstanding debits')}</Text>
           {outstanding.map((o) => (
