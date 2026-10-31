@@ -1,5 +1,5 @@
 """Turn an Expo web export (built with baseUrl /__HB__) into a page that runs from any path."""
-import base64, glob, os, re, shutil, sys
+import base64, glob, hashlib, os, re, shutil, sys
 
 src, out, title, desc = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 shutil.rmtree(out, ignore_errors=True)
@@ -29,6 +29,8 @@ left = [m.start() for m in re.finditer('__HB__', js) if not js[max(0, m.start() 
 print('unrewritten', len(left), [js[i - 40:i + 30] for i in left][:3])
 os.makedirs(os.path.join(out, 'js'))
 open(os.path.join(out, 'js/hisab.js'), 'w', encoding='utf-8').write(js)
+# A new build gets a new script URL, so phones never keep running a cached older version.
+build = hashlib.sha1(js.encode('utf-8')).hexdigest()[:12]
 
 page = f'''<title>{title}</title>
 <meta name="description" content="{desc}">
@@ -48,7 +50,7 @@ page = f'''<title>{title}</title>
     var base = m ? m[1] : location.pathname.replace(/[^/]*$/, '').replace(/\\/$/, '');
     self.__HB__ = base;
     var s = document.createElement('script');
-    s.src = base + '/js/hisab.js';
+    s.src = base + '/js/hisab.js?v={build}';
     s.onerror = function () {{ document.getElementById('boot').textContent = 'Hisab could not load. Reload the page.'; }};
     document.body.appendChild(s);
   }})();

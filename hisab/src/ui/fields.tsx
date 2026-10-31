@@ -158,11 +158,30 @@ export function SwitchField({ label, value, onChange, hint }: { label: string; v
         <Text style={[s.label, { marginBottom: 0 }]}>{label}</Text>
         {!!hint && <Text style={s.hint}>{hint}</Text>}
       </View>
-      {/* The web switch positions its knob from the left, so in Arabic it would sit outside the track. */}
-      <View style={Platform.OS === 'web' ? { direction: 'ltr' } : undefined}>
-        <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.primary, false: colors.border }} />
-      </View>
+      {Platform.OS === 'web' ? <WebSwitch value={value} onChange={onChange} label={label} /> : <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.primary, false: colors.border }} />}
     </View>
+  );
+}
+
+/**
+ * The browser switch of react-native-web mixes logical and physical offsets, which puts the knob
+ * outside the track in Arabic on some browsers. This one lays the knob out with flexbox in a fixed
+ * left-to-right track, mirrored for Arabic like the native switch.
+ */
+function WebSwitch({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
+  const { rtl } = useT();
+  const onSide = rtl ? 'flex-start' : 'flex-end';
+  return (
+    <Pressable
+      role="switch"
+      aria-label={label}
+      aria-checked={value}
+      onPress={() => onChange(!value)}
+      hitSlop={8}
+      style={[s.webTrack, { backgroundColor: value ? colors.primary : colors.border, justifyContent: value ? onSide : rtl ? 'flex-end' : 'flex-start' }]}
+    >
+      <View style={s.webThumb} />
+    </Pressable>
   );
 }
 
@@ -373,6 +392,8 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
 }
 
 const s = StyleSheet.create({
+  webTrack: { direction: 'ltr', flexDirection: 'row', alignItems: 'center', width: 44, height: 26, borderRadius: 13, paddingHorizontal: 3 },
+  webThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', boxShadow: '0px 1px 3px rgba(0,0,0,0.35)' },
   field: { marginBottom: space.md },
   label: { fontSize: 13, fontWeight: '600', color: colors.muted, marginBottom: 6 },
   hint: { fontSize: 12, color: colors.muted, marginTop: 2 },
