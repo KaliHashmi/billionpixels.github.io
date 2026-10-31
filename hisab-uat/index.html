@@ -16,7 +16,7 @@
     var base = m ? m[1] : location.pathname.replace(/[^/]*$/, '').replace(/\/$/, '');
     self.__HB__ = base;
     var s = document.createElement('script');
-    s.src = base + '/js/hisab.js';
+    s.src = base + '/js/hisab.js?v=6e3937cd5553';
     s.onerror = function () { document.getElementById('boot').textContent = 'Hisab could not load. Reload the page.'; };
     document.body.appendChild(s);
   })();
