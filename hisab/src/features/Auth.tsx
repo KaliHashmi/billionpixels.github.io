@@ -4,13 +4,13 @@ import { Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ENV } from '../config/env';
 import { storage } from '../data/storage';
-import { randomBytes, useStore } from '../data/store';
-import { addUser, changePassword, MIN_PASSWORD_LENGTH } from '../domain/auth';
+import { KEEP_SIGNED_IN_PREF, randomBytes, useStore } from '../data/store';
+import { addUser, changePassword, KEEP_SIGNED_IN_DAYS, MIN_PASSWORD_LENGTH } from '../domain/auth';
 import { AccountingError } from '../domain/types';
 import { useT } from '../i18n';
 import { Button, Card, Screen } from '../ui/components';
 import { notify } from '../ui/dialog';
-import { Segmented, TextField } from '../ui/fields';
+import { Segmented, SwitchField, TextField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
 
 export const BIOMETRIC_PREF = `biometric:${ENV.databaseName}`;
@@ -52,11 +52,17 @@ export function LoginScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [bioUser, setBioUser] = useState<string | null>(null);
+  const [keep, setKeep] = useState(true);
+  const changeKeep = (v: boolean) => {
+    setKeep(v);
+    storage.setPref(KEEP_SIGNED_IN_PREF, v ? '1' : '0').catch(() => undefined);
+  };
 
   // Once per visit: prefill the last user and offer biometric unlock if this device enabled it.
   const users = state?.users;
   useEffect(() => {
     storage.getPref('lastUser').then((u) => u && setUsername((cur) => cur || u)).catch(() => undefined);
+    storage.getPref(KEEP_SIGNED_IN_PREF).then((v) => v === '0' && setKeep(false)).catch(() => undefined);
     (async () => {
       const id = await storage.getPref(BIOMETRIC_PREF);
       if (!id || !users?.some((u) => u.id === id && u.active)) return;
@@ -69,7 +75,7 @@ export function LoginScreen() {
     setBusy(true);
     // Let the spinner render before the (CPU-bound) password check.
     setTimeout(() => {
-      const err = login(username, password);
+      const err = login(username, password, keep);
       setBusy(false);
       if (err) {
         setError(t(err));
@@ -80,7 +86,7 @@ export function LoginScreen() {
 
   const biometric = async () => {
     const res = await LocalAuthentication.authenticateAsync({ promptMessage: t('Unlock Hisab'), cancelLabel: t('Cancel') });
-    if (res.success && bioUser) startSession(bioUser);
+    if (res.success && bioUser) startSession(bioUser, keep);
   };
 
   const demo = ENV.allowDemoData && state?.users.some((u) => u.username === 'admin') && state.settings.companyName.includes('Demo');
@@ -92,6 +98,7 @@ export function LoginScreen() {
         <Text style={{ color: colors.muted, marginBottom: space.md }}>{state?.settings.companyName}</Text>
         <TextField label={t('Username')} value={username} onChange={setUsername} autoCapitalize="none" />
         <TextField label={t('Password')} value={password} onChange={setPassword} secure autoCapitalize="none" onSubmit={submit} />
+        <SwitchField label={t('Keep me signed in')} value={keep} onChange={changeKeep} hint={t('For {n} days on this device. Turn off on shared devices.', { n: KEEP_SIGNED_IN_DAYS })} />
         {!!error && <Text style={{ color: colors.danger, marginBottom: space.md }}>{error}</Text>}
         <Button title={t(busy ? 'Signing in…' : 'Sign in')} icon="log-in-outline" onPress={submit} disabled={busy || !username || !password} />
         {bioUser && <Button title={t('Unlock with Face ID / fingerprint')} icon="finger-print-outline" variant="secondary" onPress={biometric} style={{ marginTop: space.sm }} />}
@@ -116,7 +123,7 @@ export function CreateAdminScreen() {
       const r = addUser(s, { username, name, role: 'admin', password }, randomBytes);
       return { state: r.state, value: r.user.id };
     });
-    if (id) startSession(id);
+    if (id) startSession(id, true);
   };
   return (
     <Shell>

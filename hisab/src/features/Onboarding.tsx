@@ -50,7 +50,7 @@ export default function Onboarding() {
     try {
       const company = createCompany({ companyName: companyName.trim(), currency, vatRate, country, fiscalYearLastMonth: Number(lastMonth) });
       const { state, user } = addUser(company, { username, name: adminName || companyName, role: 'admin', password }, randomBytes);
-      startSession(user.id);
+      startSession(user.id, true);
       replace(state);
     } catch (e) {
       notify(t('Validation Error'), t(e instanceof Error ? e.message : String(e)));

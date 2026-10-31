@@ -97,6 +97,30 @@ export function login(state: AppState, usernameInput: string, password: string, 
   return { ok: true, state: replaceUser(state, updated), user: updated };
 }
 
+/** "Keep me signed in" lasts this long on a device, renewed each time the app is opened. */
+export const KEEP_SIGNED_IN_DAYS = 30;
+
+/** A remembered sign-in, stored on the device. Tied to the password: a new password ends it. */
+export interface SavedSession {
+  userId: ID;
+  /** The user's password salt when the session started (a new password gets a new salt). */
+  salt: string;
+  until: string;
+}
+
+export function saveSession(user: User, now = new Date()): SavedSession {
+  return { userId: user.id, salt: user.salt, until: new Date(now.getTime() + KEEP_SIGNED_IN_DAYS * 86400000).toISOString() };
+}
+
+/** The user a remembered sign-in still belongs to, if it is valid. */
+export function restoreSession(state: AppState, saved: SavedSession | null | undefined, now = new Date()): User | undefined {
+  if (!saved || typeof saved.until !== 'string' || !(new Date(saved.until) > now)) return undefined;
+  const user = state.users.find((u) => u.id === saved.userId);
+  if (!user || !user.active || user.salt !== saved.salt) return undefined;
+  if (user.lockedUntil && new Date(user.lockedUntil) > now) return undefined;
+  return user;
+}
+
 export function changePassword(state: AppState, userId: ID, current: string, next: string, random: RandomBytes = insecureRandom): AppState {
   const user = state.users.find((u) => u.id === userId);
   if (!user) throw new AccountingError('User not found.');

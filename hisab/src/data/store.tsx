@@ -1,7 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState as RNAppState } from 'react-native';
-import { canDeleteDocuments, canEdit, canEditDocuments, login as checkLogin } from '../domain/auth';
+import { ENV } from '../config/env';
+import { canDeleteDocuments, canEdit, canEditDocuments, login as checkLogin, restoreSession, SavedSession, saveSession } from '../domain/auth';
 import { buildReconcileIndex, ReconcileIndex } from '../domain/engine';
 import { AccountingError, Account, AnalyticAccount, AppState, ID, Journal, Partner, PaymentTerm, Product, Tax, User } from '../domain/types';
 import { byId, formatAmount } from '../domain/utils';
@@ -10,8 +11,20 @@ import { notify } from '../ui/dialog';
 import { diffStates, isEmptyChange } from './persistence';
 import { storage } from './storage';
 
-/** Lock the app after this long in the background. */
+/** Lock the app after this long in the background (unless the user chose to stay signed in). */
 const AUTO_LOCK_MS = 5 * 60 * 1000;
+/** The remembered sign-in of this variant's books. */
+const SESSION_PREF = `session:${ENV.databaseName}`;
+/** The last choice of the "Keep me signed in" switch. */
+export const KEEP_SIGNED_IN_PREF = 'keepSignedIn';
+
+function readSession(raw: string | null): SavedSession | null {
+  try {
+    return raw ? (JSON.parse(raw) as SavedSession) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Secure random bytes for password salts. */
 export const randomBytes = (n: number) => Crypto.getRandomBytes(n);
@@ -28,9 +41,10 @@ interface StoreValue {
   state: AppState | null;
   /** Signed-in user (always set below the login gate). */
   user: User | null;
-  login: (username: string, password: string) => string | undefined;
+  /** `keep`: stay signed in on this device ("Keep me signed in"). */
+  login: (username: string, password: string, keep?: boolean) => string | undefined;
   /** Sign in a user already verified another way (new company, biometrics). */
-  startSession: (userId: string) => void;
+  startSession: (userId: string, keep?: boolean) => void;
   logout: () => void;
   /**
    * Apply a domain operation. Errors are shown to the user and `false` is returned.
@@ -53,19 +67,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const userRef = useRef<string | null>(null);
   const backgroundAt = useRef<number | null>(null);
+  const kept = useRef(false);
   const user = (userId && state?.users.find((u) => u.id === userId && u.active)) || null;
 
-  const setSession = useCallback((id: string | null) => {
+  const setSession = useCallback((id: string | null, keep = false) => {
     userRef.current = id;
     setUserId(id);
+    kept.current = !!id && keep;
+    const u = id ? ref.current?.users.find((x) => x.id === id) : undefined;
+    storage.setPref(SESSION_PREF, kept.current && u ? JSON.stringify(saveSession(u)) : '').catch(() => undefined);
   }, []);
+
+  // A password change while signed in (own change or forced change) keeps the remembered sign-in.
+  const salt = user?.salt;
+  useEffect(() => {
+    if (kept.current && salt && userRef.current) setSession(userRef.current, true);
+  }, [salt, setSession]);
 
   useEffect(() => {
     const sub = RNAppState.addEventListener('change', (status) => {
       if (status === 'background' || status === 'inactive') {
         backgroundAt.current ??= Date.now();
       } else if (status === 'active') {
-        if (backgroundAt.current && Date.now() - backgroundAt.current > AUTO_LOCK_MS) setSession(null);
+        if (!kept.current && backgroundAt.current && Date.now() - backgroundAt.current > AUTO_LOCK_MS) setSession(null);
         backgroundAt.current = null;
       }
     });
@@ -75,13 +99,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     storage
       .load()
-      .then((s) => {
+      .then(async (s) => {
         ref.current = s;
         setState(s);
+        // Pick up "Keep me signed in" from an earlier visit (and extend it).
+        const saved = s ? restoreSession(s, readSession(await storage.getPref(SESSION_PREF).catch(() => null))) : undefined;
+        if (saved) setSession(saved.id, true);
       })
       .catch((e) => notify('Could not open the database', String(e)))
       .finally(() => setReady(true));
-  }, []);
+  }, [setSession]);
 
   const commit = useCallback((next: AppState) => {
     const prev = ref.current;
@@ -130,13 +157,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const login = useCallback(
-    (username: string, password: string): string | undefined => {
+    (username: string, password: string, keep = false): string | undefined => {
       const current = ref.current;
       if (!current) return 'No company';
       const res = checkLogin(current, username, password);
       commit(res.state);
       if (!res.ok) return res.error;
-      setSession(res.user.id);
+      setSession(res.user.id, keep);
       storage.setPref('lastUser', res.user.username).catch(() => undefined);
       return undefined;
     },

@@ -1,4 +1,4 @@
-import { addUser, changePassword, login, resetPassword, updateUser } from '../src/domain/auth';
+import { addUser, changePassword, login, resetPassword, restoreSession, saveSession, updateUser } from '../src/domain/auth';
 import { createCompany } from '../src/domain/template';
 
 function company() {
@@ -50,4 +50,22 @@ it('keeps at least one administrator and blocks deactivated users', () => {
   const { state: s1, user: sara } = addUser(s0, { username: 'sara', name: 'Sara', role: 'accountant', password: 'secret123' });
   const s2 = updateUser(s1, sara.id, { active: false });
   expect(login(s2, 'sara', 'secret123')).toMatchObject({ ok: false, error: expect.stringMatching(/deactivated/) });
+});
+
+it('keeps a user signed in for 30 days unless the account or password changes', () => {
+  const { state, user } = company();
+  const now = new Date('2026-10-01T10:00:00Z');
+  const saved = saveSession(user, now);
+  expect(restoreSession(state, saved, new Date('2026-10-30T10:00:00Z'))?.id).toBe(user.id);
+  expect(restoreSession(state, saved, new Date('2026-11-01T10:00:01Z'))).toBeUndefined();
+  expect(restoreSession(state, null, now)).toBeUndefined();
+  expect(restoreSession(state, { ...saved, until: 'garbage' }, now)).toBeUndefined();
+  expect(restoreSession(state, { ...saved, userId: 'someone-else' }, now)).toBeUndefined();
+  // A new password (own change or administrator reset) ends remembered sign-ins.
+  const changed = changePassword(state, user.id, 'secret123', 'newpass123');
+  expect(restoreSession(changed, saved, now)).toBeUndefined();
+  const second = addUser(state, { username: 'acc', name: 'Acc', role: 'accountant', password: 'secret123' });
+  const accSaved = saveSession(second.user, now);
+  expect(restoreSession(resetPassword(second.state, second.user.id, 'temp12345'), accSaved, now)).toBeUndefined();
+  expect(restoreSession(updateUser(second.state, second.user.id, { active: false }), accSaved, now)).toBeUndefined();
 });
