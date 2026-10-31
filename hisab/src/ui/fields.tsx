@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useMemo, useState } from 'react';
-import { FlatList, KeyboardTypeOptions, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { FlatList, KeyboardTypeOptions, Modal, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDays, isValidISODate, today } from '../domain/utils';
 import { useT } from '../i18n';
@@ -158,7 +158,10 @@ export function SwitchField({ label, value, onChange, hint }: { label: string; v
         <Text style={[s.label, { marginBottom: 0 }]}>{label}</Text>
         {!!hint && <Text style={s.hint}>{hint}</Text>}
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.primary, false: colors.border }} />
+      {/* The web switch positions its knob from the left, so in Arabic it would sit outside the track. */}
+      <View style={Platform.OS === 'web' ? { direction: 'ltr' } : undefined}>
+        <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.primary, false: colors.border }} />
+      </View>
     </View>
   );
 }

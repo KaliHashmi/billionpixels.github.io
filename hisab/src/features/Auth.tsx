@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ENV } from '../config/env';
 import { storage } from '../data/storage';
 import { KEEP_SIGNED_IN_PREF, randomBytes, useStore } from '../data/store';
-import { addUser, changePassword, KEEP_SIGNED_IN_DAYS, MIN_PASSWORD_LENGTH } from '../domain/auth';
+import { addUser, changePassword, MIN_PASSWORD_LENGTH } from '../domain/auth';
 import { AccountingError } from '../domain/types';
 import { useT } from '../i18n';
 import { Button, Card, Screen } from '../ui/components';
@@ -98,7 +98,7 @@ export function LoginScreen() {
         <Text style={{ color: colors.muted, marginBottom: space.md }}>{state?.settings.companyName}</Text>
         <TextField label={t('Username')} value={username} onChange={setUsername} autoCapitalize="none" />
         <TextField label={t('Password')} value={password} onChange={setPassword} secure autoCapitalize="none" onSubmit={submit} />
-        <SwitchField label={t('Keep me signed in')} value={keep} onChange={changeKeep} hint={t('For {n} days on this device. Turn off on shared devices.', { n: KEEP_SIGNED_IN_DAYS })} />
+        <SwitchField label={t('Keep me signed in')} value={keep} onChange={changeKeep} />
         {!!error && <Text style={{ color: colors.danger, marginBottom: space.md }}>{error}</Text>}
         <Button title={t(busy ? 'Signing in…' : 'Sign in')} icon="log-in-outline" onPress={submit} disabled={busy || !username || !password} />
         {bioUser && <Button title={t('Unlock with Face ID / fingerprint')} icon="finger-print-outline" variant="secondary" onPress={biometric} style={{ marginTop: space.sm }} />}

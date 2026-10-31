@@ -382,7 +382,6 @@ export const ar: Record<string, string> = {
   "Fixed Assets": "الأصول الثابتة",
   "Fixed assets & depreciation": "الأصول الثابتة والإهلاك",
   "Follow-up": "متابعة التحصيل",
-  "For {n} days on this device. Turn off on shared devices.": "لمدة {n} يوماً على هذا الجهاز. أوقفه على الأجهزة المشتركة.",
   "Forgot your password? Ask your administrator to reset it.": "نسيت كلمة المرور؟ اطلب من مدير النظام إعادة تعيينها.",
   "From": "من",
   "Fuel & Transport": "الوقود والنقل",
