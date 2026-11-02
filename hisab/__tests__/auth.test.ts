@@ -1,4 +1,4 @@
-import { addUser, changePassword, deleteUser, login, resetPassword, restoreSession, saveSession, updateUser } from '../src/domain/auth';
+import { addUser, changePassword, deleteOwnAccount, deleteUser, login, resetPassword, restoreSession, saveSession, updateUser } from '../src/domain/auth';
 import { createCompany } from '../src/domain/template';
 
 function company() {
@@ -79,4 +79,15 @@ it('permanently deletes users, but never yourself or the last administrator', ()
   expect(() => deleteUser(s1, owner.id, owner.id)).toThrow(/your own user/);
   expect(() => deleteUser(s1, owner.id, sara.id)).toThrow(/active administrator/);
   expect(() => deleteUser(s1, 'missing', owner.id)).toThrow(/not found/);
+});
+
+it('lets any user delete their own account with their password, except the last administrator', () => {
+  const { state: s0, user: owner } = company();
+  const { state: s1, user: sara } = addUser(s0, { username: 'sara', name: 'Sara', role: 'viewer', password: 'secret123' });
+  expect(() => deleteOwnAccount(s1, sara.id, 'wrong')).toThrow(/password is incorrect/);
+  const s2 = deleteOwnAccount(s1, sara.id, 'secret123');
+  expect(s2.users.map((u) => u.username)).toEqual(['admin']);
+  expect(() => deleteOwnAccount(s2, owner.id, 'secret123')).toThrow(/only administrator/);
+  const { state: s3 } = addUser(s2, { username: 'omar', name: 'Omar', role: 'admin', password: 'secret123' });
+  expect(deleteOwnAccount(s3, owner.id, 'secret123').users.map((u) => u.username)).toEqual(['omar']);
 });

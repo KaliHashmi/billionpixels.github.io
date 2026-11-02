@@ -8,7 +8,7 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 - Store readiness:
   - Bilingual public pages: privacy policy, delete your data, and support.
   - Privacy Policy and Support links on the welcome, sign-in and account screens.
-  - Administrators can permanently delete users.
+  - Every user can delete their own account (My Account, confirmed with their password); administrators can delete other users.
   - Delete Company now also erases saved sign-in details.
   - iOS privacy manifest.
   - Unused Android storage, overlay and microphone permissions are blocked.

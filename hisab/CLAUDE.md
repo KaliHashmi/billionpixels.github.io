@@ -67,7 +67,7 @@ The app is listed as **"Data Not Collected"** (App Store) and **"No data collect
   - Show an explicit consent screen that names the provider (App Store guideline 5.1.2(i)).
   - Add an in-app "report AI content" option (Google Play generative-AI policy).
 - **Accounts:** any sign-in the app creates must be deletable in the app (App Store 5.1.1(v); Google Play account deletion).
-  - Today: `deleteUser`, and Settings › Delete Company.
+  - Today: `deleteOwnAccount` (My Account), `deleteUser` (admins), and Settings › Delete Company.
   - Keep `site/delete-data.html` accurate.
 - **Payments:** digital features sold in the app must use Apple/Google in-app purchase (App Store 3.1.1). Stripe and other web checkouts are only for physical goods or services.
 - **Images, icons, fonts:** use only assets we made or that carry a licence allowing commercial use. Record the licence in `docs/ARCHITECTURE.md`.

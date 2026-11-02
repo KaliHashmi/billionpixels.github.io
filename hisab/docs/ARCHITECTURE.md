@@ -47,7 +47,7 @@ hisab/
 - **Web preview:** the whole book is kept in `localStorage`.
 - **Nothing is sent over the network.** Files leave the device only through the system share sheet, when the user exports something.
 - **Passwords:** PBKDF2-HMAC-SHA256 with a random salt. Lockout after 5 failed attempts.
-- **Delete Company** (`storage.clear()`) erases records, settings and saved sign-in preferences. **Delete User** (`deleteUser`) removes a user's credentials. Accounting records never reference users.
+- **Delete Company** (`storage.clear()`) erases records, settings and saved sign-in preferences. **Delete My Account** (`deleteOwnAccount`) and **Delete User** (`deleteUser`) remove a user's credentials. Accounting records never reference users.
 
 ## Third-party assets and licences
 

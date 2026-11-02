@@ -28,7 +28,7 @@ Last reviewed: November 2026.
 | --- | --- | --- |
 | **2.1 App Completeness** | The reviewer must be able to reach every feature. If a sign-in is required, give them working credentials. | Sign-in is local. The reviewer creates a company and administrator on the first screen. Explain this in the review notes (below). |
 | **4.2 Minimum Functionality** | The app is not a thin website or chatbot wrapper. | A native accounting app with offline ledger, PDFs and reports. ✅ |
-| **5.1.1(v) Account deletion** | Apps that create accounts must offer deletion inside the app. | Admin: Users & Access › **Delete User**, and Settings › **Delete Company** (erases everything). ✅ |
+| **5.1.1(v) Account deletion** | Apps that create accounts must offer deletion inside the app. | Every user: My Account › **Delete My Account** (password confirmation). Admin: Users & Access › **Delete User**, and Settings › **Delete Company** (erases everything). ✅ |
 | **5.1.1 / 5.1.2 Privacy** | Privacy policy link in the app and in App Store Connect. No data shared (including with AI) without consent. | Policy linked on the welcome, sign-in and account screens. No data leaves the device. No AI. ✅ |
 | **3.1.1 In-App Purchase** | Digital features must be sold through Apple IAP. | Nothing is sold. If subscriptions are added, use IAP (RevenueCat or StoreKit). |
 | **2.3 Accurate metadata** | Screenshots show the real app; the description has no false claims. | Take screenshots from the production build. |
@@ -56,8 +56,9 @@ How to review:
 2. You are signed in as administrator with full access.
 3. To see role restrictions, go to My Account › Users & Access and create an Accountant
    or Viewer user, then sign out and sign in as that user.
-4. Account deletion: My Account › Users & Access › (user) › Delete User,
-   or My Account › Settings › Delete Company to erase all data.
+4. Account deletion: My Account › Delete My Account (any user, confirms with password);
+   admins can also delete other users (Users & Access) or erase everything
+   (My Account › Settings › Delete Company).
 5. Language: the English / العربية switch is at the top of the sign-in screen
    (Arabic uses a right-to-left layout).
 
@@ -91,7 +92,7 @@ First reviews usually take 1–3 days. A rejection plus a fix and resubmission a
 | Requirement | Hisab |
 | --- | --- |
 | **Privacy policy URL** in Play Console *and* inside the app | ✅ Same URL as Apple; linked in the app |
-| **Account deletion**: in-app path *and* a web URL | ✅ In app (Delete User / Delete Company) + `…/hisab/delete-data/` |
+| **Account deletion**: in-app path *and* a web URL | ✅ In app (Delete My Account / Delete User / Delete Company) + `…/hisab/delete-data/` |
 | **Target API level**: new apps and updates must target Android 16 (API 36) since 31 Aug 2026 | ✅ Expo SDK 58 targets API 36 by default |
 | **Data safety form** completed | Answers below |
 | **Closed testing**: *personal* developer accounts created after 13 Nov 2023 need **12 testers opted in for 14 consecutive days** before production access | Plan for it (below). *Organisation* accounts (with a D-U-N-S number) are exempt |

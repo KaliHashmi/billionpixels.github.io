@@ -167,6 +167,17 @@ export function deleteUser(state: AppState, userId: ID, actorId: ID | undefined)
   return { ...state, users: state.users.filter((u) => u.id !== userId) };
 }
 
+/** Any user can delete their own account after confirming their password (App Store 5.1.1(v)). */
+export function deleteOwnAccount(state: AppState, userId: ID, password: string): AppState {
+  const user = state.users.find((u) => u.id === userId);
+  if (!user) throw new AccountingError('User not found.');
+  if (!safeEqual(hashPassword(password, user.salt, user.iterations), user.passwordHash)) throw new AccountingError('The password is incorrect.');
+  if (user.role === 'admin' && user.active && activeAdmins(state, userId) === 0) {
+    throw new AccountingError('You are the only administrator. Make another user an administrator first, or delete the company in Settings.');
+  }
+  return { ...state, users: state.users.filter((u) => u.id !== userId) };
+}
+
 export function canEdit(role: UserRole | undefined): boolean {
   return role === 'admin' || role === 'accountant';
 }
