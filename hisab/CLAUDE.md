@@ -9,6 +9,7 @@ Hisab (حساب) is an offline, bilingual (English/Arabic) accounting app for sm
 | Task | Command |
 | --- | --- |
 | All checks (run before every commit) | `npm run verify`: typecheck, lint and Jest |
+| Browser tests (before pushing UI changes) | `npm run test:e2e`: builds the UAT web app and runs `e2e/` with Playwright |
 | Dev server | `npm start` · `npm run start:uat` · `npm run web` |
 | Browser previews and public pages | `npm run build:web` writes the output to `web-site/` (see `docs/RELEASE.md`) |
 | Store builds | `npm run build:uat` · `npm run build:prod` · `npm run submit:prod` |
@@ -50,7 +51,7 @@ These are adapted from the Karpathy guidelines; the plugin is enabled in `.claud
 
 1. `npm run verify` is green.
 2. New domain behaviour has a Jest test. A bug fix comes with a test that reproduces the bug.
-3. UI changes have been checked in the web build, in English **and** Arabic (RTL), for each role (admin, accountant, viewer).
+3. UI changes pass `npm run test:e2e`. New flows get a test in `e2e/`, covering English **and** Arabic (RTL) and each role (admin, accountant, viewer) where it matters.
 4. New strings are translated in `src/i18n/ar.ts`.
 5. Commits are small and say *why*. Push only to the working branch; never open a PR unless asked.
 

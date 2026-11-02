@@ -67,6 +67,8 @@ npm run start:prod   # run the production variant
 npm run web          # browser preview (localStorage instead of SQLite; PDFs are generated in the browser and downloaded)
 ```
 
+Browser tests: `npm run test:e2e` (Playwright) checks sign-in, roles, edit/delete permissions, account deletion, PDF download and that every screen opens for each role in English and Arabic.
+
 Checks: `npm run verify` runs `typecheck`, `lint` and `test` (accounting engine, Oman features, persistence, and a test that fails if any UI string lacks an Arabic translation).
 
 Translations live in `src/i18n/ar.ts` (keys are the English text). Switching to Arabic flips the native layout to right-to-left after an app restart.

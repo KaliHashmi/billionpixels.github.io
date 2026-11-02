@@ -21,5 +21,7 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 - Arabic-safe switches.
 
 ### Changed
+- Accounting engine and reports split into focused modules (no behaviour change).
+- Browser tests (Playwright) in `e2e/`, run by CI on every push.
 - Test tooling moved to `devDependencies`.
 - `npm run verify` runs all checks.

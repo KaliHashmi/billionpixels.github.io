@@ -23,6 +23,7 @@ hisab/
   docs/                architecture, release, store checklist, new-app playbook
   site/                public pages (privacy, delete data, support) built into the Pages site
   scripts/             web build and Pages packaging
+  e2e/                 Playwright browser tests against the UAT web build (roles, deletion, PDF, every screen EN/AR)
   __tests__/           Jest: engine, Oman VAT/payroll, roles, edit/delete, persistence, i18n, randomized stress test
   src/
     config/env.ts      variant flags, database name, public page URLs

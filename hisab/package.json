@@ -17,7 +17,9 @@
     "submit:prod": "eas submit --profile production --platform all",
     "lint": "expo lint",
     "verify": "npm run typecheck && npm run lint && npm test -- --ci",
-    "build:web": "bash scripts/build-web.sh"
+    "build:web": "bash scripts/build-web.sh",
+    "build:e2e": "APP_VARIANT=uat CI=1 expo export --platform web --output-dir dist --clear",
+    "test:e2e": "npm run build:e2e && playwright test"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -45,6 +47,7 @@
     "react-native-web": "~0.21.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
     "eslint": "^9.0.0",

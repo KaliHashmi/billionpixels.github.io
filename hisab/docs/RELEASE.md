@@ -16,7 +16,7 @@ The variant comes from `APP_VARIANT`, which the EAS profiles in `eas.json` set.
 ## Branches and commits
 
 - Work happens on a feature branch. `main` holds the GitHub Pages site (the web previews and public pages) and receives merged work.
-- Small commits that explain *why*. Run `npm run verify` before each commit; CI runs the same checks on every push that touches `hisab/`.
+- Small commits that explain *why*. Run `npm run verify` before each commit; CI runs the same checks, plus the browser tests, on every push that touches `hisab/`.
 - Tag store releases as `hisab-vX.Y.Z`.
 
 ## Versioning
@@ -26,7 +26,7 @@ The variant comes from `APP_VARIANT`, which the EAS profiles in `eas.json` set.
 
 ## Release steps
 
-1. `npm run verify`.
+1. `npm run verify` and `npm run test:e2e`.
 2. `npm run build:uat`, then testers validate. You can also publish the browser previews (below).
 3. Fix, and repeat until UAT signs off.
 4. Bump `version`, update `CHANGELOG.md`, commit.
