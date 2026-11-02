@@ -80,7 +80,7 @@ export default function ReverseScreen() {
         </Text>
         <TextField label={t('Reason')} required={isSaleDoc(move.moveType)} value={reason} onChange={setReason} placeholder={t('e.g. Damaged goods')} />
         <DateField label={t('Reversal Date')} value={date} onChange={setDate} />
-        <Button title={intent ? title : isEntry ? t('Reverse') : `${t('Create')} ${title}`} icon="checkmark" onPress={submit} />
+        <Button testID="reverse-submit" title={intent ? title : isEntry ? t('Reverse') : `${t('Create')} ${title}`} icon="checkmark" onPress={submit} />
       </Card>
     </Screen>
   );

@@ -173,6 +173,7 @@ export function Button({
   disabled,
   style,
   small,
+  testID,
 }: {
   title: string;
   onPress: () => void;
@@ -181,12 +182,15 @@ export function Button({
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   small?: boolean;
+  /** Stable handle for automated tests. */
+  testID?: string;
 }) {
   const bg = variant === 'primary' ? colors.primary : variant === 'danger' ? colors.danger : variant === 'secondary' ? '#fff' : 'transparent';
   const fg = variant === 'primary' || variant === 'danger' ? '#fff' : colors.primary;
   return (
     <Pressable
       accessibilityRole="button"
+      testID={testID}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

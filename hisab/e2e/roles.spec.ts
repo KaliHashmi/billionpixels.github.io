@@ -38,11 +38,13 @@ test('accountant cancels an issued invoice with a credit note; both stay on reco
   await openPostedInvoice(page);
   const name = (await page.getByText(/^INV\/\d{4}\/\d+$/).first().textContent())!;
   await page.getByText('Cancel with Credit Note', { exact: true }).filter({ visible: true }).first().click();
-  await page.getByText('Cancel with Credit Note', { exact: true }).filter({ visible: true }).last().click(); // no reason yet
+  const submit = page.getByTestId('reverse-submit');
+  await expect(page.getByPlaceholder('e.g. Damaged goods')).toBeVisible(); // the credit-note screen has opened
+  await submit.click(); // no reason yet
   await expect(page.getByText('Enter the reason for the credit note.')).toBeVisible();
   await page.getByText('OK', { exact: true }).last().click();
   await page.getByPlaceholder('e.g. Damaged goods').fill('Order cancelled by customer');
-  await page.getByText('Cancel with Credit Note', { exact: true }).filter({ visible: true }).last().click();
+  await submit.click();
   await expect(page.getByText(/^RINV\/\d{4}\/\d+$/).first()).toBeVisible();
   await page.goto('/moves?type=out_invoice');
   await expect(page.getByText(name, { exact: true })).toHaveCount(1); // the original invoice is kept
@@ -55,7 +57,7 @@ test('administrator sees cancellations in the audit log', async ({ page }) => {
   const name = (await page.getByText(/^INV\/\d{4}\/\d+$/).first().textContent())!;
   await page.getByText('Cancel with Credit Note', { exact: true }).filter({ visible: true }).first().click();
   await page.getByPlaceholder('e.g. Damaged goods').fill('Duplicate invoice');
-  await page.getByText('Cancel with Credit Note', { exact: true }).filter({ visible: true }).last().click();
+  await page.getByTestId('reverse-submit').click();
   await expect(page.getByText(/^RINV\/\d{4}\/\d+$/).first()).toBeVisible();
   await page.goto('/audit');
   await expect(page.getByText('Cancelled with credit note')).toBeVisible();
