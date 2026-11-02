@@ -1,0 +1,10 @@
+# Repository guide
+
+This repository holds two things:
+
+- `hisab/`: the Hisab accounting app (Expo / React Native). **Read `hisab/CLAUDE.md` before working on it.** It covers the commands, the architecture, the definition of done, and the store and legal guardrails.
+- Root files (`index.html`, `app.js.txt`, `styles.css .txt`): the original Billion Pixels page. Leave them alone unless asked.
+
+Branches:
+- Development happens on feature branches. Never push to another branch without permission.
+- `main` is served by GitHub Pages. It also carries the built Hisab web previews (`hisab-uat/`, `hisab-app/`), the public pages (`hisab/`) and `404.html`, all produced by `hisab/scripts/build-web.sh`.
