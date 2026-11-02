@@ -1,0 +1,20 @@
+/* Hisab public pages. System fonts only: nothing is loaded from third-party servers. */
+:root{--brand:#714B67;--text:#1f2328;--muted:#5b616b;--bg:#f7f5f6;--card:#fff;--border:#e4dfe2}
+@media (prefers-color-scheme:dark){:root{--text:#e8e6e7;--muted:#a9a3a7;--bg:#18161a;--card:#221f24;--border:#3a3439}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}
+header{background:var(--brand);color:#fff;padding:20px 16px}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header a{color:#fff;text-decoration:none;font-weight:700;font-size:20px}
+nav a{font-size:14px;font-weight:600;margin-inline-start:14px;opacity:.9}
+.wrap{max-width:820px;margin:0 auto}
+main{padding:24px 16px 48px}
+section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:20px}
+h1{font-size:26px;margin:0 0 4px}
+h2{font-size:18px;margin:22px 0 6px}
+p,li{color:var(--text)}
+.meta{color:var(--muted);font-size:14px;margin:0 0 12px}
+a{color:var(--brand)}
+@media (prefers-color-scheme:dark){a{color:#d8a9cc}}
+[dir=rtl]{font-family:system-ui,"Segoe UI",Tahoma,"Geeza Pro","Noto Naskh Arabic",Arial,sans-serif}
+footer{color:var(--muted);font-size:13px;text-align:center;padding:0 16px 32px}
