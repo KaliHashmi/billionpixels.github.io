@@ -13,6 +13,8 @@
 
 ## Folder map
 
+Keep files focused: when a file passes ~400 lines, split it by topic behind the same entry point, as `engine.ts` and `reports.ts` do.
+
 ```
 hisab/
   app.config.ts        Expo config per variant (development / uat / production), privacy manifest, permissions
@@ -26,9 +28,13 @@ hisab/
     config/env.ts      variant flags, database name, public page URLs
     domain/            accounting engine (pure)
       types.ts           data model
-      engine.ts          posting, payments, reconciliation, reversals, edit/delete
+      engine.ts          entry point; re-exports engine/
+      engine/            core.ts (lookups, lock dates, sequences) · reconcile.ts (matching, invoice status)
+                         documents.ts (post, reset, delete, reverse) · payments.ts (vouchers, cheques) · bank.ts (statements)
       operations.ts      cash closing, payroll
-      reports.ts         P&L, balance sheet, ledgers, aged balances, VAT, dashboard
+      reports.ts         entry point; re-exports reports/
+      reports/           base.ts (items, trial balance) · statements.ts (P&L, balance sheet, cash flow)
+                         ledgers.ts (ledgers, aged, audit) · vat.ts (tax report, closing) · dashboard.ts
       management.ts      weekly/monthly owner packs, Oman VAT return
       auth.ts            users, PBKDF2 passwords, lockout, roles, remembered sign-in, user deletion
       branding.ts        company stamp and signature
