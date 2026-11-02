@@ -19,6 +19,7 @@ export const COLLECTIONS: CollectionName[] = [
   'payrollRuns',
   'cashClosings',
   'users',
+  'auditLog',
 ];
 
 export const SCHEMA_VERSION = 1;

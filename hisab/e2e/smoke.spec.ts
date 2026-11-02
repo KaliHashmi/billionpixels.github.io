@@ -13,7 +13,7 @@ const REPORTS = [
   'journal-audit', 'aged-receivable', 'aged-payable', 'customer-outstanding', 'supplier-outstanding', 'cash-position',
   'pending', 'unallocated', 'cheques', 'bank-reconciliation', 'vat', 'expenses', 'budget', 'payroll', 'analytic',
 ];
-const ADMIN = ['/settings', '/users', '/stamp'];
+const ADMIN = ['/settings', '/users', '/stamp', '/audit'];
 
 for (const lang of ['en', 'ar'] as const) {
   for (const user of ['admin', 'accountant', 'owner'] as DemoUser[]) {

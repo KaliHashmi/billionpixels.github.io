@@ -163,6 +163,8 @@ export interface Move {
   /** Accounting date. */
   date: string;
   invoiceDate?: string;
+  /** Date of supply, printed on the tax invoice when it differs from the invoice date. */
+  supplyDate?: string;
   dueDate?: string;
   paymentTermId?: ID;
   ref: string;
@@ -170,6 +172,8 @@ export interface Move {
   invoiceLines: InvoiceLine[];
   lines: MoveLine[];
   reversedEntryId?: ID;
+  /** Why a credit note or reversal was issued (printed on the tax credit note). */
+  reason?: string;
   /** Payments and credits that were matched before the entry was reset to draft; matched again when it is re-posted. */
   rematchLineIds?: ID[];
   origin: MoveOrigin;
@@ -289,7 +293,7 @@ export interface PayrollRun {
   /** yyyy-mm */
   month: string;
   date: string;
-  state: 'draft' | 'posted' | 'paid';
+  state: 'draft' | 'posted' | 'paid' | 'cancel';
   payslips: Payslip[];
   moveId?: ID;
   paymentMoveId?: ID;
@@ -366,6 +370,12 @@ export interface Settings {
   /** Social insurance rates in percent of gross salary. */
   siEmployeeRate: number;
   siEmployerRate: number;
+  /** Employer-only contribution for insured expatriate staff, in percent. */
+  siExpatEmployerRate?: number;
+  /** Maximum monthly contribution wage (OMR 3,000 in Oman); 0 or unset = no ceiling. */
+  siWageCeiling?: number;
+  /** When the default rates were last checked against official sources (YYYY-MM-DD). */
+  siRatesCheckedOn?: string;
   defaultSaleTaxId?: ID;
   defaultPurchaseTaxId?: ID;
   defaultPaymentTermId?: ID;
@@ -387,6 +397,19 @@ export interface Settings {
   onboarded: boolean;
 }
 
+/** Who changed what and when: cancellations, corrections, edits of issued documents, user deletion. */
+export interface AuditEntry {
+  id: ID;
+  /** ISO timestamp. */
+  at: string;
+  userId?: ID;
+  /** Name kept as text so the entry survives the user being deleted. */
+  user: string;
+  action: string;
+  /** Document number or name the action concerns. */
+  ref: string;
+}
+
 export interface AppState {
   settings: Settings;
   accounts: Account[];
@@ -406,6 +429,7 @@ export interface AppState {
   payrollRuns: PayrollRun[];
   cashClosings: CashClosing[];
   users: User[];
+  auditLog: AuditEntry[];
   sequences: Record<string, number>;
 }
 

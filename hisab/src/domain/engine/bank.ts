@@ -159,9 +159,10 @@ export function undoStatementReconciliation(state: AppState, statementLineId: ID
   if (!sl || !sl.reconciled || !sl.moveId) return state;
   checkLockDate(state, sl.date);
   const next = unreconcileMove(state, sl.moveId);
+  // The bank entry stays in the books, cancelled; matching the line again creates a new one.
   return {
     ...next,
-    moves: next.moves.filter((m) => m.id !== sl.moveId),
+    moves: next.moves.map((m) => (m.id === sl.moveId ? { ...m, state: 'cancel' as const } : m)),
     statementLines: replace(next.statementLines, { ...sl, reconciled: false, moveId: undefined }),
   };
 }

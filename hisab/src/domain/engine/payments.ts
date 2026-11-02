@@ -230,7 +230,8 @@ export function unclearCheque(state: AppState, paymentId: ID): AppState {
   const move = getMove(state, payment.clearingMoveId);
   checkLockDate(state, move.date);
   const next = unreconcileMove(state, move.id);
-  return { ...next, moves: next.moves.filter((m) => m.id !== move.id), payments: replace(next.payments, { ...payment, clearingMoveId: undefined }) };
+  // The clearing entry stays in the books, cancelled.
+  return { ...next, moves: replace(next.moves, { ...move, state: 'cancel' }), payments: replace(next.payments, { ...payment, clearingMoveId: undefined }) };
 }
 
 /** A returned/bounced cheque: the payment is cancelled and the invoices become due again. */
@@ -268,22 +269,6 @@ function paymentBankMatchError(state: AppState, payment: Payment): string | unde
   const clearing = payment.clearingMoveId;
   const matched = state.reconciles.some((r) => (liquidity.has(r.debitLineId) || liquidity.has(r.creditLineId)) && r.debitMoveId !== clearing && r.creditMoveId !== clearing);
   return matched ? 'This payment is matched with a bank statement line. Undo the bank reconciliation first.' : undefined;
-}
-
-/** Permanently remove a receipt or payment voucher with its journal entries; the invoices it paid become due again. */
-export function deletePayment(state: AppState, paymentId: ID): AppState {
-  const payment = state.payments.find((p) => p.id === paymentId);
-  if (!payment) throw new AccountingError('Payment not found.');
-  const blocked = paymentBankMatchError(state, payment);
-  if (blocked) throw new AccountingError(blocked);
-  if (payment.state === 'posted') checkLockDate(state, payment.date);
-  let next = payment.clearingMoveId ? unclearCheque(state, paymentId) : state;
-  next = unreconcileMove(next, payment.moveId);
-  return {
-    ...next,
-    moves: next.moves.filter((m) => m.id !== payment.moveId),
-    payments: next.payments.filter((p) => p.id !== paymentId),
-  };
 }
 
 /** The invoices and bills a payment is currently matched with. */

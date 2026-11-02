@@ -2,7 +2,7 @@ import { router, Stack } from 'expo-router';
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useBooks, useMoney, usePermissions, useStore } from '../data/store';
-import { deleteMove } from '../domain/engine';
+import { cancelIssuedMove } from '../domain/engine';
 import { Move } from '../domain/types';
 import { vatReturn, VatReturnLine } from '../domain/management';
 import { postTaxClosing } from '../domain/reports';
@@ -32,21 +32,21 @@ export default function TaxReturnScreen() {
   const removeClosing = async (m: Move) => {
     const p = periodOf(m);
     const ok = await confirm(
-      t('Delete'),
-      t('Delete the VAT closing {name} for {from} – {to}? The period is reopened for VAT changes. This cannot be undone.', { name: m.name, from: fmtDate(p.from), to: fmtDate(p.to) }),
-      t('Delete'),
+      t('Cancel Closing'),
+      t('Cancel the VAT closing {name} for {from} – {to}? It stays on record marked cancelled and the period is reopened. If the return was already submitted to the Tax Authority, correct it there too (voluntary disclosure).', { name: m.name, from: fmtDate(p.from), to: fmtDate(p.to) }),
+      t('Cancel Closing'),
       true,
     );
-    if (ok) run((st) => deleteMove(st, m.id), { requires: 'deleteDocuments' });
+    if (ok) run((st) => cancelIssuedMove(st, m.id), { requires: 'deleteDocuments', audit: { action: 'Cancelled VAT closing', ref: m.name } });
   };
   const recalculate = async (m: Move) => {
     const p = periodOf(m);
     const ok = await confirm(
       t('Edit'),
-      t('Replace the VAT closing {name} with one recalculated from the current invoices and bills of {from} – {to}?', { name: m.name, from: fmtDate(p.from), to: fmtDate(p.to) }),
+      t('Replace the VAT closing {name} with one recalculated from the current invoices and bills of {from} – {to}? The old closing stays on record marked cancelled. If the return was already submitted to the Tax Authority, correct it there too (voluntary disclosure).', { name: m.name, from: fmtDate(p.from), to: fmtDate(p.to) }),
       t('Recalculate'),
     );
-    if (ok && run((st) => postTaxClosing(deleteMove(st, m.id), p.from, p.to), { requires: 'editDocuments' })) notify(t('Saved'), t('The VAT closing was recalculated.'));
+    if (ok && run((st) => postTaxClosing(cancelIssuedMove(st, m.id), p.from, p.to), { requires: 'editDocuments', audit: { action: 'Recalculated VAT closing', ref: m.name } })) notify(t('Saved'), t('The VAT closing was recalculated.'));
   };
 
   const close = async () => {
@@ -115,7 +115,7 @@ export default function TaxReturnScreen() {
               {(can.editDocuments || can.deleteDocuments) && (
                 <ButtonRow>
                   {can.editDocuments && <Button small variant="secondary" title={t('Recalculate')} icon="refresh-outline" onPress={() => recalculate(m)} />}
-                  {can.deleteDocuments && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={() => removeClosing(m)} />}
+                  {can.deleteDocuments && <Button small variant="danger" title={t('Cancel Closing')} icon="close-circle-outline" onPress={() => removeClosing(m)} />}
                 </ButtonRow>
               )}
             </View>

@@ -44,13 +44,24 @@ Payroll: employees (Omani / expatriate, basic + housing/transport/other allowanc
 
 ## Oman compliance
 
-- **Tax invoices** carry the content required by the Oman VAT law: the words "Tax Invoice", supplier name, address and VATIN, customer name and VATIN, sequential invoice number, invoice date, description, quantity, unit price, taxable amount, VAT rate and VAT amount per line, totals with and without VAT in OMR. Credit notes reference the original invoice. Documents are bilingual (English/Arabic).
-- **VAT treatments** per tax: standard (5%), zero-rated (incl. exports), exempt, out of scope, reverse charge on imported services, and deferred import VAT. Reverse-charge taxes post both input and output VAT without changing the amount paid to the vendor.
-- **VAT return** groups supplies, reverse-charge VAT, imports and recoverable input VAT for the period; a closing entry moves the balance to VAT payable and sets the VAT lock date.
-- **Lock dates** prevent changes to closed periods; posted entries are immutable (reset to draft or reverse).
-- **Social insurance** defaults to 8% employee / 12.5% employer of gross salary for insured Omani staff (including Job Security Fund contributions). Confirm current Social Protection Fund rates and adjust them in Settings.
+Hisab is built to help a business keep Oman-compliant books. It is **not approved by the Oman Tax Authority**, and the business remains responsible for its returns. The full legal review, with sources and the points to confirm with a tax adviser, is in [docs/OMAN_COMPLIANCE.md](docs/OMAN_COMPLIANCE.md).
 
-Not included yet: integration with the Oman Tax Authority e-invoicing programme (Fawtara). When the OTA publishes the technical specification and onboarding applies to your business, invoices will need to be transmitted in the required electronic format. Always confirm VAT return box mapping and payroll rates with your tax adviser.
+- **Records are never erased.** Issued tax invoices and credit notes are corrected only with a tax credit note (with its reason). Bills, entries, vouchers, payroll and VAT closings are cancelled and kept, never deleted. Oman law requires records to be kept for 10 years. Only drafts that were never numbered can be deleted. Every cancellation, correction and edit of an issued document is written to the **Audit Log**.
+- **Tax invoices** show:
+  - the words "Tax Invoice" in English and Arabic;
+  - the supplier's and customer's names, addresses and VATINs;
+  - a sequential number, the issue date, and the date of supply when it differs;
+  - per line: description, quantity, unit price, taxable amount, VAT rate and VAT amount;
+  - totals with and without VAT in OMR.
+  Credit notes reference the original invoice and state the reason. Drafts are marked "not a tax document".
+- **VAT treatments** per tax: standard (5%), zero-rated (incl. exports), exempt, out of scope, reverse charge on imported services, and deferred import VAT.
+- **VAT return** groups the period's figures. A closing entry moves the balance to VAT payable and locks the period.
+- **Social insurance** defaults are the Social Protection Fund rates published for 2026:
+  - Omani staff: 8% employee and 14.5% employer;
+  - insured expatriates: 2% employer;
+  - OMR 3,000 ceiling on the contribution wage.
+  All are editable, with a "rates last checked" date. Confirm them with the Fund.
+- **E-invoicing (Fawtara)** is not integrated yet. VAT-registered businesses must use an approved provider from 1 April 2027 (supplies above OMR 5m) or 1 October 2027 (all others). The app warns about this in Settings.
 
 ## Environments: UAT and production
 
@@ -95,4 +106,4 @@ These are deliberate scope limits of this version; consider them before a wide p
 - **E-invoicing** (Oman Fawtara, Saudi ZATCA) is not integrated yet.
 - No live bank feeds or bill OCR; bank statements are entered manually or imported from CSV (`date, label, amount` or `date, description, debit, credit`; dates as `YYYY-MM-DD`).
 - No budgets, recurring entries or multi-step payment terms (installments) yet.
-- No end-of-service gratuity accrual or payslip-per-employee PDF yet.
+- No end-of-service gratuity calculation, WPS salary file or payslip-per-employee PDF yet.

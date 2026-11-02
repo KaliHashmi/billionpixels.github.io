@@ -4,8 +4,8 @@ import { AppState as RNAppState } from 'react-native';
 import { ENV } from '../config/env';
 import { canDeleteDocuments, canEdit, canEditDocuments, login as checkLogin, restoreSession, SavedSession, saveSession } from '../domain/auth';
 import { buildReconcileIndex, ReconcileIndex } from '../domain/engine';
-import { AccountingError, Account, AnalyticAccount, AppState, ID, Journal, Partner, PaymentTerm, Product, Tax, User } from '../domain/types';
-import { byId, formatAmount } from '../domain/utils';
+import { AccountingError, Account, AnalyticAccount, AppState, AuditEntry, ID, Journal, Partner, PaymentTerm, Product, Tax, User } from '../domain/types';
+import { byId, formatAmount, newId } from '../domain/utils';
 import { useT } from '../i18n';
 import { notify } from '../ui/dialog';
 import { diffStates, isEmptyChange } from './persistence';
@@ -34,6 +34,8 @@ interface RunOptions {
   allowReadOnly?: boolean;
   /** Changing or removing an issued document: checked against canEditDocuments / canDeleteDocuments. */
   requires?: 'editDocuments' | 'deleteDocuments';
+  /** Recorded in the audit log with the signed-in user and time when the change succeeds. */
+  audit?: { action: string; ref: string };
 }
 
 interface StoreValue {
@@ -140,6 +142,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       try {
         const res = op(current);
+        if (opts?.audit) {
+          const actor = current.users.find((u) => u.id === userRef.current);
+          const entry: AuditEntry = { id: newId(), at: new Date().toISOString(), userId: actor?.id, user: actor ? `${actor.name} (${actor.username})` : '—', action: opts.audit.action, ref: opts.audit.ref };
+          res.state = { ...res.state, auditLog: [...(res.state.auditLog ?? []), entry] };
+        }
         commit(res.state);
         return res.value;
       } catch (e) {

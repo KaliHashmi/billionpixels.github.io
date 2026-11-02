@@ -48,7 +48,7 @@ export default function PayrollList() {
               title={fmtDate(r.month)}
               subtitle={`${r.payslips.length} ${t('employees')} · ${t('Net')} ${money(tot.net)}`}
               right={money(tot.cost)}
-              badge={<Badge label={t(r.state === 'draft' ? 'Draft' : r.state === 'posted' ? 'Posted' : 'Paid')} tone={r.state === 'paid' ? 'paid' : r.state} />}
+              badge={<Badge label={t({ draft: 'Draft', posted: 'Posted', paid: 'Paid', cancel: 'Cancelled' }[r.state])} tone={r.state === 'paid' ? 'paid' : r.state} />}
               onPress={() => router.push({ pathname: '/payroll/[id]', params: { id: r.id } })}
             />
           );

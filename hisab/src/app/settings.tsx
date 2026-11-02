@@ -55,7 +55,7 @@ export default function SettingsScreen() {
   };
 
   const reset = async () => {
-    if (!(await confirm(t('Delete company'), t('This permanently deletes all accounting data on this device. Export a backup first!'), t('Delete Everything'), true))) return;
+    if (!(await confirm(t('Delete company'), t('This permanently deletes all accounting data on this device. Oman law requires you to keep accounting and VAT records for 10 years: export a backup first and keep it safe.'), t('Delete Everything'), true))) return;
     if (!(await confirm(t('Are you absolutely sure?'), t('All invoices, bills, payments and settings will be erased.'), t('Yes, erase'), true))) return;
     await replace(null);
   };
@@ -103,6 +103,11 @@ export default function SettingsScreen() {
         <TextField label={t('VAT Registration Number (VATIN)')} value={form.companyTaxId} onChange={(v) => set({ companyTaxId: v.toUpperCase() })} autoCapitalize="characters" />
         <SelectField label={t('Default Sales Tax')} value={form.defaultSaleTaxId} options={taxOptions(s, 'sale', t)} onChange={(v) => set({ defaultSaleTaxId: v })} />
         <SelectField label={t('Default Purchase Tax')} value={form.defaultPurchaseTaxId} options={taxOptions(s, 'purchase', t)} onChange={(v) => set({ defaultPurchaseTaxId: v })} />
+        {form.country === 'OM' && form.vatRegistered && (
+          <Text style={{ color: colors.warning, fontWeight: '600', marginTop: space.sm }}>
+            {t('E-invoicing (Fawtara): VAT-registered businesses must issue invoices through a Tax Authority approved e-invoicing provider from 1 April 2027 (annual supplies above OMR 5 million) or 1 October 2027 (all others), or earlier if the Tax Authority selected you. Hisab is not an approved e-invoicing provider yet: from your date, issue tax invoices through an approved provider.')}
+          </Text>
+        )}
       </Card>
 
       <Card>
@@ -122,9 +127,17 @@ export default function SettingsScreen() {
 
       <Card>
         <SectionTitle>{t('Payroll')}</SectionTitle>
-        <Text style={{ color: colors.muted, marginVertical: space.sm }}>{t('Social insurance rates in % of gross salary for insured (Omani) employees. Confirm the current rates with the Social Protection Fund.')}</Text>
-        <NumberField label={t('Employee contribution (%)')} value={form.siEmployeeRate} onChange={(v) => set({ siEmployeeRate: v })} />
-        <NumberField label={t('Employer contribution (%)')} value={form.siEmployerRate} onChange={(v) => set({ siEmployerRate: v })} />
+        <Text style={{ color: colors.muted, marginVertical: space.sm }}>
+          {t('Social Protection Fund contributions, in % of the contribution wage (gross salary up to the ceiling). Rates change by law: confirm them with the Social Protection Fund before running payroll.')}
+        </Text>
+        <Text style={{ color: form.siRatesCheckedOn ? colors.muted : colors.warning, marginBottom: space.sm, fontWeight: '600' }}>
+          {form.siRatesCheckedOn ? t('Rates last checked: {date}', { date: form.siRatesCheckedOn }) : t('These rates have not been checked against the current law. Review them now.')}
+        </Text>
+        <NumberField label={t('Omani employee contribution (%)')} value={form.siEmployeeRate} onChange={(v) => set({ siEmployeeRate: v })} />
+        <NumberField label={t('Omani employer contribution (%)')} value={form.siEmployerRate} onChange={(v) => set({ siEmployerRate: v })} />
+        <NumberField label={t('Expatriate employer contribution (%)')} value={form.siExpatEmployerRate ?? 0} onChange={(v) => set({ siExpatEmployerRate: v })} />
+        <NumberField label={t('Contribution wage ceiling (OMR, 0 = none)')} value={form.siWageCeiling ?? 0} onChange={(v) => set({ siWageCeiling: v })} />
+        <Button small variant="secondary" icon="checkmark-done-outline" title={t('I have confirmed these rates today')} onPress={() => set({ siRatesCheckedOn: today() })} />
       </Card>
 
       <Card>
@@ -152,7 +165,7 @@ export default function SettingsScreen() {
       <Card>
         <SectionTitle>{t('Data')}</SectionTitle>
         <Text style={{ color: colors.muted, marginVertical: space.sm }}>
-          {t('Your books are stored on this device. Export a backup regularly and keep it somewhere safe (email, Drive, iCloud). Keep your accounting and VAT records for the period required by law.')}
+          {t('Your books are stored on this device. Export a backup regularly and keep it somewhere safe (email, Drive, iCloud). Oman law requires you to keep accounting and VAT records (invoices, credit notes, ledgers) for 10 years.')}
         </Text>
         <ButtonRow>
           <Button small title={t('Export Backup')} icon="cloud-upload-outline" onPress={backup} />

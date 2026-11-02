@@ -336,7 +336,7 @@ export interface PayrollReportRow {
 
 export function payrollReport(state: AppState, from: string, to: string): { runs: PayrollRun[]; rows: PayrollReportRow[]; totals: ReturnType<typeof payrollTotals> } {
   const d = state.settings.decimals;
-  const runs = state.payrollRuns.filter((r) => r.state !== 'draft' && r.date >= from && r.date <= to).sort((a, b) => a.month.localeCompare(b.month));
+  const runs = state.payrollRuns.filter((r) => (r.state === 'posted' || r.state === 'paid') && r.date >= from && r.date <= to).sort((a, b) => a.month.localeCompare(b.month));
   const employees = byId(state.employees);
   const rows = new Map<ID, PayrollReportRow>();
   for (const run of runs) {

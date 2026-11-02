@@ -76,6 +76,13 @@ The app is listed as **"Data Not Collected"** (App Store) and **"No data collect
 - **Encryption:** password hashing only, so `usesNonExemptEncryption: false` stays correct. Adding custom encryption of data changes that answer.
 - **Permissions:** request only what a feature uses. Every iOS permission needs a clear purpose string in `app.config.ts`.
 
+## Oman records rules (see docs/OMAN_COMPLIANCE.md)
+
+- A document that has a number is never erased. Drafts never numbered may be deleted; everything else is cancelled (kept) or, for sales tax documents, corrected with a credit note that states its reason. `__tests__/stress.test.ts` enforces this.
+- Record user-visible changes to issued documents in the audit log (`run(..., { audit })`).
+- Payroll and VAT rules change by decree. Update the defaults, `SI_RATES_CHECKED_ON` and the compliance doc together, with sources.
+- Never market or label Hisab as "OTA approved" or "Fawtara certified".
+
 ## Never
 
 - Edit `ios/` or `android/`. They are generated; configure through `app.config.ts` and plugins.

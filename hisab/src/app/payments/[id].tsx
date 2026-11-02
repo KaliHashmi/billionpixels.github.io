@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
-import { bounceCheque, chequeStatus, clearCheque, deletePayment, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
+import { bounceCheque, cancelPayment, chequeStatus, clearCheque, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
 import { today } from '../../domain/utils';
 import { useT } from '../../i18n';
 import { voucherHtml } from '../../services/documents';
@@ -32,14 +32,15 @@ export default function PaymentScreen() {
   const inbound = p.paymentType === 'inbound';
   const cheque = p.method === 'cheque' ? chequeStatus(s, p) : undefined;
   const voucher = () => voucherHtml(s, p);
-  const remove = async () => {
+  // Vouchers are part of the books: cancelling keeps the voucher (marked CANCELLED) and undoes its effect.
+  const cancel = async () => {
     const ok = await confirm(
-      t('Delete'),
-      t('Delete {name} permanently? Its journal entries are removed and the invoices it paid become due again. This cannot be undone.', { name: p.name }),
-      t('Delete'),
+      t('Cancel Voucher'),
+      t('Cancel {name}? It stays in the books marked CANCELLED, its journal entry no longer counts, and the invoices it paid become due again.', { name: p.name }),
+      t('Cancel Voucher'),
       true,
     );
-    if (ok && run((x) => deletePayment(x, p.id), { requires: 'deleteDocuments' })) router.back();
+    if (ok) run((x) => cancelPayment(x, p.id), { requires: 'deleteDocuments', audit: { action: 'Cancelled voucher', ref: p.name } });
   };
 
   return (
@@ -70,7 +71,7 @@ export default function PaymentScreen() {
           {p.state === 'posted' && can.editDocuments && (
             <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={() => router.push({ pathname: '/payments/new', params: { editId: p.id } })} />
           )}
-          {can.deleteDocuments && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={remove} />}
+          {p.state === 'posted' && can.deleteDocuments && <Button small variant="danger" title={t('Cancel Voucher')} icon="close-circle-outline" onPress={cancel} />}
         </ButtonRow>
       </Card>
 

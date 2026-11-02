@@ -115,8 +115,11 @@ export function invoiceHtml(s: AppState, move: Move): string {
   const partner = s.partners.find((p) => p.id === move.partnerId);
   const totals = computeInvoiceTotals(move.invoiceLines, taxes, d);
   const st = invoiceStatus(s, move);
-  const title = docTitle(s, move);
+  // A draft is not a tax invoice: it has no number yet and must not look like one.
+  const draftDoc = move.state === 'draft';
+  const title = draftDoc ? `Draft ${docTitle(s, move).replace(/^Tax /, '')} – not a tax document` : docTitle(s, move);
   const original = move.reversedEntryId ? s.moves.find((m) => m.id === move.reversedEntryId) : undefined;
+  const creditedBy = s.moves.filter((m) => m.reversedEntryId === move.id && m.state === 'posted').map((m) => m.name);
   const rows = move.invoiceLines
     .map((l, i) => {
       const lt = totals.lines[i];
@@ -136,13 +139,18 @@ export function invoiceHtml(s: AppState, move: Move): string {
   const meta = [
     [move.moveType.startsWith('out') ? 'Invoice Number' : 'Reference', move.state === 'draft' ? translate('en', 'Draft') : move.name],
     ['Invoice Date', formatDateIn('en', move.invoiceDate ?? move.date)],
+    move.supplyDate && move.supplyDate !== (move.invoiceDate ?? move.date) ? ['Date of Supply', formatDateIn('en', move.supplyDate)] : undefined,
     move.dueDate ? ['Due Date', formatDateIn('en', move.dueDate)] : undefined,
     move.ref ? [move.moveType.startsWith('out') ? 'Customer Reference' : 'Bill Reference', move.ref] : undefined,
     original ? ['Original Invoice', `${original.name} (${formatDateIn('en', original.invoiceDate ?? original.date)})`] : undefined,
+    original && move.reason ? ['Reason', move.reason] : undefined,
+    creditedBy.length ? ['Credited by', creditedBy.join(', ')] : undefined,
   ].filter(Boolean) as [string, string][];
+  const stamp = move.state === 'cancel' ? 'CANCELLED' : creditedBy.length ? 'CREDITED' : '';
   return doc(`
     <div class="header">${companyBlock(s)}${partnerBlock(partner, move.moveType.startsWith('out') ? 'Customer' : 'Vendor')}</div>
     <div class="title"><h1>${esc(title.toUpperCase())}</h1><h1 class="ar">${esc(translate('ar', title))}</h1></div>
+    ${stamp ? `<div style="color:#D9534F;font-weight:800;font-size:18px;margin:6px 0">${stamp} · ${esc(translate('ar', stamp === 'CANCELLED' ? 'Cancelled' : 'Credited'))}</div>` : ''}
     <div class="meta">${meta.map(([k, v]) => `<div><b>${bi(k)}</b>${esc(v)}</div>`).join('')}</div>
     <table>
       <thead><tr>
@@ -159,7 +167,7 @@ export function invoiceHtml(s: AppState, move: Move): string {
     </table>
     <p class="muted">${esc(amountInWords(totals.total, s.settings.currency, 'en'))}<br/><span class="ar">${esc(amountInWords(totals.total, s.settings.currency, 'ar'))}</span></p>
     ${move.narration ? `<h2>${bi('Terms and Conditions / Notes')}</h2><div>${esc(move.narration).replace(/\n/g, '<br/>')}</div>` : ''}
-    ${move.state === 'cancel' ? '' : sealHtml(s, move.moveType.startsWith('out') ? 'sales' : 'purchases', move.state === 'draft')}
+    ${move.state === 'cancel' ? '' : sealHtml(s, move.moveType.startsWith('out') ? 'sales' : 'purchases', draftDoc)}
     ${move.moveType.startsWith('out') ? `<div class="footer">${esc(s.settings.invoiceFooter)}</div>` : ''}
   `);
 }

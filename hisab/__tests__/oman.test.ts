@@ -134,18 +134,19 @@ it('runs payroll with social insurance for Omani staff only', () => {
   const emp = (p: Partial<Employee>): Employee => ({ id: newId(), name: 'E', code: '', position: '', nationality: 'omani', basicSalary: 1000, housingAllowance: 0, transportAllowance: 0, otherAllowance: 0, socialInsurance: true, bankName: '', iban: '', joinDate: D, active: true, ...p });
   let s: AppState = { ...s0, employees: [emp({ name: 'Omani' }), emp({ name: 'Expat', nationality: 'expat', socialInsurance: false, basicSalary: 500 })] };
   const run = newPayrollRun(s, '2026-03');
-  expect(run.payslips[0]).toMatchObject({ siEmployee: 80, siEmployer: 125, net: 920 });
+  expect(run.payslips[0]).toMatchObject({ siEmployee: 80, siEmployer: 145, net: 920 });
   expect(run.payslips[1]).toMatchObject({ siEmployee: 0, net: 500 });
   s = postPayroll(savePayrollRun(s, run), run.id);
   s = payPayroll(s, run.id, bank.id, '2026-03-31');
   const tb = trialBalance(s, '2026-01-01', '2026-12-31');
   expect(tb.totals.debit).toBe(tb.totals.credit);
   expect(tb.rows.find((r) => r.account.code === '611000')!.end).toBe(1500);
-  expect(tb.rows.find((r) => r.account.code === '230100')!.end).toBe(-205);
+  expect(tb.rows.find((r) => r.account.code === '230100')!.end).toBe(-225);
   expect(tb.rows.find((r) => r.account.code === '230000')!.end).toBe(0);
   expect(payrollReport(s, '2026-03-01', '2026-03-31').totals.net).toBe(1420);
+  // Editing an issued payroll keeps its entries on record, cancelled.
   s = resetPayroll(s, run.id);
-  expect(s.moves.filter((m) => m.origin === 'payroll')).toHaveLength(0);
+  expect(s.moves.filter((m) => m.origin === 'payroll').map((m) => m.state)).toEqual(['cancel', 'cancel']);
 });
 
 it('compares budget and actual', () => {

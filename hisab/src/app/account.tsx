@@ -49,7 +49,7 @@ export default function AccountScreen() {
     );
     if (!sure) return;
     const { id, username } = user;
-    if (!run((s) => deleteOwnAccount(s, id, deletePassword), { allowReadOnly: true })) return;
+    if (!run((s) => deleteOwnAccount(s, id, deletePassword), { allowReadOnly: true, audit: { action: 'Deleted own account', ref: username } })) return;
     // Forget everything this device remembered about the deleted user.
     if ((await storage.getPref('lastUser').catch(() => null)) === username) await storage.setPref('lastUser', '').catch(() => undefined);
     if ((await storage.getPref(BIOMETRIC_PREF).catch(() => null)) === id) await storage.setPref(BIOMETRIC_PREF, '').catch(() => undefined);

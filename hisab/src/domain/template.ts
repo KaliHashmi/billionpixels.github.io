@@ -174,6 +174,9 @@ const SETTINGS_ACCOUNTS: [keyof Settings, string][] = [
   ['employeeAdvancesAccountId', '141100'],
 ];
 
+/** Date the default Social Protection Fund rates were last checked. */
+export const SI_RATES_CHECKED_ON = '2026-11-02';
+
 export function createCompany(setup: CompanySetup): AppState {
   const currency = CURRENCIES.find((c) => c.code === setup.currency) ?? CURRENCIES[0];
   const accounts: Account[] = ACCOUNTS.map(([code, name, type, reconcile]) => ({
@@ -223,9 +226,14 @@ export function createCompany(setup: CompanySetup): AppState {
     defaultSaleTaxId: taxes[0].id,
     defaultPurchaseTaxId: taxes[1].id,
     defaultPaymentTermId: paymentTerms[2].id,
-    // Common Oman rates (incl. Job Security Fund); always confirm current Social Protection Fund rates.
+    // Social Protection Fund rates as published for 2026 (Omani: 8% employee, 14.5% employer incl. the
+    // 1% sick-leave branch from 19 July 2026; expatriates: employer-only maternity 1% + sick leave 1%;
+    // contribution wage capped at OMR 3,000). See docs/OMAN_COMPLIANCE.md. Users must confirm them.
     siEmployeeRate: oman ? 8 : 0,
-    siEmployerRate: oman ? 12.5 : 0,
+    siEmployerRate: oman ? 14.5 : 0,
+    siExpatEmployerRate: oman ? 2 : 0,
+    siWageCeiling: oman ? 3000 : 0,
+    siRatesCheckedOn: oman ? SI_RATES_CHECKED_ON : undefined,
     onboarded: true,
   } as Settings;
   for (const [key, code] of SETTINGS_ACCOUNTS) (settings as unknown as Record<string, string>)[key] = acc(code);
@@ -249,6 +257,7 @@ export function createCompany(setup: CompanySetup): AppState {
     payrollRuns: [],
     cashClosings: [],
     users: [],
+    auditLog: [],
     sequences: {},
   };
 }

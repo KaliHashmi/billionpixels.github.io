@@ -5,8 +5,10 @@ import { Pressable, Text, View } from 'react-native';
 import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
 import {
   applyOutstanding,
+  cancelIssuedMove,
   computeDueDate,
   deleteMove,
+  isIssuedTaxDocument,
   duplicateMove,
   invoiceStatus,
   isInvoice,
@@ -76,7 +78,14 @@ export default function MoveScreen() {
   // transactions; once issued, only administrators may change it.
   const issued = draft.name !== '/';
   const editable = draft.state === 'draft' && (issued ? can.editDocuments : can.create);
-  const deletable = !!stored && can.deleteDocuments && (draft.origin === 'manual' || draft.origin === 'tax_closing');
+  // Oman law: a numbered document is kept. Only a never-numbered draft can be erased; issued sales
+  // documents are corrected or cancelled with a credit note, other issued documents are cancelled.
+  const taxDoc = isIssuedTaxDocument(draft);
+  const ownEntry = !!stored && (draft.origin === 'manual' || draft.origin === 'tax_closing');
+  const deletable = ownEntry && !issued && draft.state === 'draft' && can.deleteDocuments;
+  const cancellable = ownEntry && issued && !taxDoc && draft.state !== 'cancel' && can.deleteDocuments;
+  const credited = s.moves.some((m) => m.reversedEntryId === draft.id && m.state === 'posted');
+  const creditable = !!stored && taxDoc && draft.state === 'posted' && !credited && can.deleteDocuments;
   const invoice = isInvoice(draft.moveType);
   const sale = isSaleDoc(draft.moveType);
   const update = (patch: Partial<Move>) => {
@@ -96,17 +105,22 @@ export default function MoveScreen() {
     edit: async () => {
       const ok = await confirm(
         t('Edit {name}', { name: draft.name }),
-        t('The document goes back to draft so you can change it. It keeps its number; confirm it again when you are done, and its payments are matched again.'),
+        t('The document goes back to draft so you can change it. It keeps its number; confirm it again when you are done, and its payments are matched again. The change is recorded in the audit log.'),
         t('Edit'),
       );
-      if (ok) run((st) => resetToDraft(st, draft.id), { requires: 'editDocuments' });
+      if (ok) run((st) => resetToDraft(st, draft.id), { requires: 'editDocuments', audit: { action: 'Edited issued document', ref: draft.name } });
     },
     remove: async () => {
-      const message =
-        draft.state === 'posted'
-          ? t('Delete {name} permanently? Its journal entries are removed and any payments on it become unallocated. This cannot be undone.', { name: draft.name })
-          : t('Delete this document permanently? This cannot be undone.');
-      if ((await confirm(t('Delete'), message, t('Delete'), true)) && run((st) => deleteMove(st, draft.id), { requires: 'deleteDocuments' })) router.back();
+      if ((await confirm(t('Delete'), t('Delete this draft? It was never issued, so nothing is kept.'), t('Delete'), true)) && run((st) => deleteMove(st, draft.id), { requires: 'deleteDocuments' })) router.back();
+    },
+    cancel: async () => {
+      const ok = await confirm(
+        t('Cancel {name}', { name: draft.name }),
+        t('The document stays in the books marked CANCELLED and no longer affects any balance. Records are kept for 10 years under Oman law.'),
+        t('Cancel Document'),
+        true,
+      );
+      if (ok) run((st) => cancelIssuedMove(st, draft.id), { requires: 'deleteDocuments', audit: { action: 'Cancelled document', ref: draft.name } });
     },
     duplicate: () => {
       const id = runWith((st) => {
@@ -143,7 +157,10 @@ export default function MoveScreen() {
             {draft.state === 'draft' && can.create && <Button small title={t('Confirm')} icon="checkmark" onPress={actions.confirm} />}
             {editable && dirty && <Button small variant="secondary" title={t('Save')} icon="save-outline" onPress={actions.save} />}
             {draft.state === 'posted' && invoice && can.create && <PostedInvoiceActions move={draft} />}
-            {draft.state !== 'draft' && draft.origin === 'manual' && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={actions.edit} />}
+            {draft.state === 'posted' && draft.origin === 'manual' && !taxDoc && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={actions.edit} />}
+            {draft.state === 'posted' && draft.moveType === 'out_invoice' && !credited && can.editDocuments && (
+              <Button small variant="secondary" title={t('Correct')} icon="create-outline" onPress={() => router.push({ pathname: '/moves/reverse', params: { id: draft.id, intent: 'correct' } })} />
+            )}
             {invoice && <Button small variant="secondary" title={t('Download PDF')} icon="download-outline" onPress={actions.pdf} />}
             {invoice && <Button small variant="secondary" title={t('Print')} icon="print-outline" onPress={actions.print} />}
             {stored && draft.origin === 'manual' && can.create && <Button small variant="secondary" title={t('Duplicate')} icon="copy-outline" onPress={actions.duplicate} />}
@@ -151,6 +168,10 @@ export default function MoveScreen() {
               <Button small variant="secondary" title={t('Reverse')} icon="swap-horizontal-outline" onPress={() => router.push({ pathname: '/moves/reverse', params: { id: draft.id } })} />
             )}
             {deletable && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={actions.remove} />}
+            {cancellable && <Button small variant="danger" title={t('Cancel Document')} icon="close-circle-outline" onPress={actions.cancel} />}
+            {creditable && (
+              <Button small variant="danger" title={t('Cancel with Credit Note')} icon="close-circle-outline" onPress={() => router.push({ pathname: '/moves/reverse', params: { id: draft.id, intent: 'cancel' } })} />
+            )}
           </ButtonRow>
         </View>
       </Card>
@@ -242,6 +263,15 @@ function InvoiceHeader({ draft, update, editable, sale }: { draft: Move; update:
         onChange={(v) => update({ invoiceDate: v, date: sale ? v : draft.date === invoiceDate ? v : draft.date })}
       />
       {!sale && <DateField label={t('Accounting Date')} value={draft.date} editable={editable} onChange={(v) => update({ date: v })} />}
+      {sale && (
+        <TextField
+          label={t('Date of Supply (if different)')}
+          value={draft.supplyDate ?? ''}
+          editable={editable}
+          placeholder="YYYY-MM-DD"
+          onChange={(v) => update({ supplyDate: v.trim() || undefined })}
+        />
+      )}
       <SelectField
         label={t('Payment Terms')}
         value={draft.paymentTermId}

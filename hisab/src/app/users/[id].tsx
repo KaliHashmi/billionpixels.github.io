@@ -53,7 +53,7 @@ export default function UserForm() {
       t('Delete'),
       true,
     );
-    if (sure && run((x) => deleteUser(x, existing.id, me?.id))) router.back();
+    if (sure && run((x) => deleteUser(x, existing.id, me?.id), { audit: { action: 'Deleted user', ref: existing.username } })) router.back();
   };
 
   return (

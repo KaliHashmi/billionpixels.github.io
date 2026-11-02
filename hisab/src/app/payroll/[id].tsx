@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useBooks, useMoney, usePermissions, useStore } from '../../data/store';
-import { deletePayrollRun, payPayroll, payrollTotals, postPayroll, recomputePayslip, resetPayroll, savePayrollRun } from '../../domain/operations';
+import { cancelPayrollRun, deletePayrollRun, payPayroll, payrollTotals, postPayroll, recomputePayslip, resetPayroll, savePayrollRun } from '../../domain/operations';
 import { today } from '../../domain/utils';
 import { journalOptions } from '../../features/entities';
 import { useT } from '../../i18n';
@@ -12,6 +12,8 @@ import { Badge, Button, ButtonRow, Card, Divider, Row, Screen, SectionTitle } fr
 import { confirm, notify } from '../../ui/dialog';
 import { DateField, NumberField, SelectField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
+
+const PAYROLL_STATE = { draft: 'Draft', posted: 'Posted', paid: 'Paid', cancel: 'Cancelled' } as const;
 
 export default function PayrollRunScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,14 +41,24 @@ export default function PayrollRunScreen() {
   const edit = async () => {
     const ok = await confirm(
       t('Edit'),
-      t('The payroll goes back to draft and its journal entries (and salary payment, if any) are removed. Post it again when you are done.'),
+      t('The payroll goes back to draft. Its journal entries (and salary payment, if any) stay in the books marked cancelled; posting it again creates new ones. The change is recorded in the audit log.'),
       t('Edit'),
     );
-    if (ok) run((x) => resetPayroll(x, stored.id), { requires: 'editDocuments' });
+    if (ok) run((x) => resetPayroll(x, stored.id), { requires: 'editDocuments', audit: { action: 'Edited issued payroll', ref: `Payroll ${stored.month}` } });
   };
+  // Payroll that was posted is a wage record: it is cancelled and kept, never erased.
   const remove = async () => {
-    const message = draft ? t('Delete this payroll?') : t('Delete this payroll and its journal entries (and salary payment, if any)? This cannot be undone.');
-    if ((await confirm(t('Delete'), message, t('Delete'), true)) && run((x) => deletePayrollRun(x, stored.id), { requires: 'deleteDocuments' })) router.back();
+    if (stored.issued) {
+      const ok = await confirm(
+        t('Cancel Payroll'),
+        t('Cancel this payroll? It stays on record marked cancelled, and its journal entries (and salary payment, if any) are cancelled too.'),
+        t('Cancel Payroll'),
+        true,
+      );
+      if (ok) run((x) => cancelPayrollRun(x, stored.id), { requires: 'deleteDocuments', audit: { action: 'Cancelled payroll', ref: `Payroll ${stored.month}` } });
+      return;
+    }
+    if ((await confirm(t('Delete'), t('Delete this payroll? It was never posted, so nothing is kept.'), t('Delete'), true)) && run((x) => deletePayrollRun(x, stored.id), { requires: 'deleteDocuments' })) router.back();
   };
 
   const sheet = () =>
@@ -73,7 +85,7 @@ export default function PayrollRunScreen() {
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ fontSize: 18, fontWeight: '800' }}>{fmtDate(stored.month)}</Text>
-          <Badge label={t(stored.state === 'draft' ? 'Draft' : stored.state === 'posted' ? 'Posted' : 'Paid')} tone={stored.state === 'paid' ? 'paid' : stored.state} />
+          <Badge label={t(PAYROLL_STATE[stored.state])} tone={stored.state === 'paid' ? 'paid' : stored.state} />
         </View>
         <Row label={t('Gross salaries')} value={money(tot.gross)} />
         <Row label={t('Employee social insurance')} value={money(tot.siEmployee)} />
@@ -86,8 +98,10 @@ export default function PayrollRunScreen() {
           {draft && can.create && <Button small title={t('Post Payroll')} icon="checkmark" onPress={() => run((x) => postPayroll(x, stored.id))} />}
           <Button small variant="secondary" title={t('Salary Sheet PDF')} icon="share-outline" onPress={sheet} />
           {stored.moveId && <Button small variant="secondary" title={t('Journal Entry')} icon="journal-outline" onPress={() => router.push({ pathname: '/moves/[id]', params: { id: stored.moveId! } })} />}
-          {!draft && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={edit} />}
-          {can.deleteDocuments && <Button small variant="danger" title={t('Delete')} icon="trash-outline" onPress={remove} />}
+          {!draft && stored.state !== 'cancel' && can.editDocuments && <Button small variant="secondary" title={t('Edit')} icon="create-outline" onPress={edit} />}
+          {stored.state !== 'cancel' && can.deleteDocuments && (
+            <Button small variant="danger" title={t(stored.issued ? 'Cancel Payroll' : 'Delete')} icon={stored.issued ? 'close-circle-outline' : 'trash-outline'} onPress={remove} />
+          )}
         </ButtonRow>
       </Card>
 

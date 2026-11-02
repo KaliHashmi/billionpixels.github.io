@@ -73,7 +73,7 @@ export default function RegisterPayment() {
       moveIds: move ? [move.id] : undefined,
     };
     if (editing) {
-      if (runWith((x) => ({ state: editPayment(x, editing.id, input).state, value: true }), { requires: 'editDocuments' })) router.back();
+      if (runWith((x) => ({ state: editPayment(x, editing.id, input).state, value: true }), { requires: 'editDocuments', audit: { action: 'Edited voucher', ref: editing.name } })) router.back();
       return;
     }
     const id = runWith((x) => {

@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { useBooks, useStore } from '../../data/store';
-import { MOVE_TYPE_LABELS, reverseMove } from '../../domain/engine';
+import { correctInvoice, isSaleDoc, MOVE_TYPE_LABELS, reverseMove } from '../../domain/engine';
 import { today } from '../../domain/utils';
 import { useT } from '../../i18n';
 import { Button, Card, Screen } from '../../ui/components';
@@ -10,7 +10,8 @@ import { DateField, Segmented, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
 
 export default function ReverseScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // intent: 'cancel' = full credit note that cancels the document; 'correct' = credit note + new draft copy.
+  const { id, intent } = useLocalSearchParams<{ id: string; intent?: 'cancel' | 'correct' }>();
   const s = useBooks();
   const { runWith } = useStore();
   const { t } = useT();
@@ -20,13 +21,30 @@ export default function ReverseScreen() {
   const [mode, setMode] = useState<'full' | 'partial'>('full');
   if (!move) return null;
   const isEntry = move.moveType === 'entry';
-  const title = t(isEntry ? 'Reverse Entry' : move.moveType === 'out_invoice' ? 'Credit Note' : 'Vendor Credit Note');
+  const fixed = !!intent; // cancel and correct always issue a full credit note
+  const title = t(
+    intent === 'correct' ? 'Correct Invoice' : intent === 'cancel' ? 'Cancel with Credit Note' : isEntry ? 'Reverse Entry' : isSaleDoc(move.moveType) ? 'Credit Note' : 'Vendor Credit Note',
+  );
 
   const submit = () => {
-    const newId = runWith((st) => {
-      const r = reverseMove(st, move.id, { date, reason, post: mode === 'full' });
-      return { state: r.state, value: r.move.id };
-    });
+    if (intent === 'correct') {
+      const draftId = runWith(
+        (st) => {
+          const r = correctInvoice(st, move.id, { date, reason });
+          return { state: r.state, value: r.draft.id };
+        },
+        { requires: 'editDocuments', audit: { action: 'Corrected with credit note and new invoice', ref: move.name } },
+      );
+      if (draftId) router.replace({ pathname: '/moves/[id]', params: { id: draftId } });
+      return;
+    }
+    const newId = runWith(
+      (st) => {
+        const r = reverseMove(st, move.id, { date, reason, post: fixed || mode === 'full' });
+        return { state: r.state, value: r.move.id };
+      },
+      { requires: intent === 'cancel' ? 'deleteDocuments' : undefined, audit: { action: intent === 'cancel' ? 'Cancelled with credit note' : isEntry ? 'Reversed' : 'Credit note issued', ref: move.name } },
+    );
     if (newId) router.replace({ pathname: '/moves/[id]', params: { id: newId } });
   };
 
@@ -37,7 +55,12 @@ export default function ReverseScreen() {
         <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: space.md }}>
           {t(MOVE_TYPE_LABELS[move.moveType])} {move.name}
         </Text>
-        {!isEntry && (
+        {intent === 'correct' && (
+          <Text style={{ color: colors.muted, marginBottom: space.md }}>
+            {t('An issued tax invoice cannot be changed. A full credit note cancels it, and a copy opens as a new draft for the corrected invoice, which gets its own number.')}
+          </Text>
+        )}
+        {!isEntry && !fixed && (
           <Segmented
             label={t('Mode')}
             value={mode}
@@ -50,14 +73,14 @@ export default function ReverseScreen() {
         )}
         <Text style={{ color: colors.muted, marginBottom: space.md }}>
           {t(
-            mode === 'full'
+            fixed || mode === 'full'
               ? 'The reversal is posted and fully reconciled with the original document.'
               : 'A draft is created so you can adjust the lines and amounts before confirming.',
           )}
         </Text>
-        <TextField label={t('Reason')} value={reason} onChange={setReason} placeholder={t('e.g. Damaged goods')} />
+        <TextField label={t('Reason')} required={isSaleDoc(move.moveType)} value={reason} onChange={setReason} placeholder={t('e.g. Damaged goods')} />
         <DateField label={t('Reversal Date')} value={date} onChange={setDate} />
-        <Button title={isEntry ? t('Reverse') : `${t('Create')} ${title}`} icon="checkmark" onPress={submit} />
+        <Button title={intent ? title : isEntry ? t('Reverse') : `${t('Create')} ${title}`} icon="checkmark" onPress={submit} />
       </Card>
     </Screen>
   );

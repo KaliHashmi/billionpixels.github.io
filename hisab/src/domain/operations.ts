@@ -1,4 +1,4 @@
-import { checkLockDate, getJournal, liquidityAccountFor, nextSequence } from './engine';
+import { checkLockDate, getJournal, liquidityAccountFor, nextSequence, unreconcileMove } from './engine';
 import { AccountingError, AppState, CashClosing, Employee, ID, Move, MoveLine, Payslip, PayrollRun } from './types';
 import { isValidISODate, isZero, newId, round } from './utils';
 
@@ -113,10 +113,12 @@ export function reopenCashDay(state: AppState, closingId: ID): AppState {
   const c = state.cashClosings.find((x) => x.id === closingId);
   if (!c) return state;
   checkLockDate(state, c.date);
+  // The closing entry stays in the books, cancelled; closing the day again creates a new one.
+  const next = c.moveId ? unreconcileMove(state, c.moveId) : state;
   return {
-    ...state,
-    moves: c.moveId ? state.moves.filter((m) => m.id !== c.moveId) : state.moves,
-    cashClosings: state.cashClosings.filter((x) => x.id !== closingId),
+    ...next,
+    moves: c.moveId ? next.moves.map((m) => (m.id === c.moveId ? { ...m, state: 'cancel' as const } : m)) : next.moves,
+    cashClosings: next.cashClosings.filter((x) => x.id !== closingId),
   };
 }
 
@@ -128,13 +130,27 @@ export function employeeGross(e: Employee): number {
   return e.basicSalary + e.housingAllowance + e.transportAllowance + e.otherAllowance;
 }
 
+/**
+ * Social Protection Fund contributions on the contribution wage (gross, capped at the ceiling).
+ * Omani staff: employee and employer shares. Expatriates: employer-only branches (maternity,
+ * sick leave and, when it applies, work injury). Rates live in Settings and must be confirmed with the Fund.
+ */
+export function socialInsurance(state: AppState, e: Employee, gross: number): { siEmployee: number; siEmployer: number } {
+  const st = state.settings;
+  if (!e.socialInsurance) return { siEmployee: 0, siEmployer: 0 };
+  const d = st.decimals;
+  const base = st.siWageCeiling ? Math.min(gross, st.siWageCeiling) : gross;
+  if (e.nationality === 'omani') {
+    return { siEmployee: round((base * st.siEmployeeRate) / 100, d), siEmployer: round((base * st.siEmployerRate) / 100, d) };
+  }
+  return { siEmployee: 0, siEmployer: round((base * (st.siExpatEmployerRate ?? 0)) / 100, d) };
+}
+
 export function computePayslip(state: AppState, e: Employee, overtime = 0, deductions = 0): Payslip {
   const d = state.settings.decimals;
   const allowances = round(e.housingAllowance + e.transportAllowance + e.otherAllowance, d);
   const gross = round(e.basicSalary + allowances, d);
-  const insured = e.socialInsurance;
-  const siEmployee = insured ? round((gross * state.settings.siEmployeeRate) / 100, d) : 0;
-  const siEmployer = insured ? round((gross * state.settings.siEmployerRate) / 100, d) : 0;
+  const { siEmployee, siEmployer } = socialInsurance(state, e, gross);
   return {
     employeeId: e.id,
     basic: round(e.basicSalary, d),
@@ -155,7 +171,7 @@ export function recomputePayslip(state: AppState, p: Payslip): Payslip {
 
 export function newPayrollRun(state: AppState, month: string): PayrollRun {
   if (!/^\d{4}-\d{2}$/.test(month)) throw new AccountingError('Month must be YYYY-MM.');
-  if (state.payrollRuns.some((r) => r.month === month)) throw new AccountingError(`Payroll for ${month} already exists.`);
+  if (state.payrollRuns.some((r) => r.month === month && r.state !== 'cancel')) throw new AccountingError(`Payroll for ${month} already exists.`);
   const employees = state.employees.filter((e) => e.active);
   if (!employees.length) throw new AccountingError('Add employees first.');
   const [y, m] = month.split('-').map(Number);
@@ -171,7 +187,7 @@ export function newPayrollRun(state: AppState, month: string): PayrollRun {
 
 export function savePayrollRun(state: AppState, run: PayrollRun): AppState {
   const existing = state.payrollRuns.find((r) => r.id === run.id);
-  if (existing && existing.state !== 'draft') throw new AccountingError('Posted payroll cannot be modified.');
+  if (existing && existing.state !== 'draft') throw new AccountingError(existing.state === 'cancel' ? 'This payroll is cancelled.' : 'Posted payroll cannot be modified.');
   const runs = existing ? state.payrollRuns.map((r) => (r.id === run.id ? run : r)) : [...state.payrollRuns, run];
   return { ...state, payrollRuns: runs };
 }
@@ -236,7 +252,7 @@ export function payPayroll(state: AppState, runId: ID, journalId: ID, date: stri
 
 export function resetPayroll(state: AppState, runId: ID): AppState {
   const run = state.payrollRuns.find((r) => r.id === runId);
-  if (!run || run.state === 'draft') return state;
+  if (!run || run.state === 'draft' || run.state === 'cancel') return state;
   const ids = [run.moveId, run.paymentMoveId].filter(Boolean) as ID[];
   for (const id of ids) {
     const m = state.moves.find((x) => x.id === id);
@@ -245,17 +261,29 @@ export function resetPayroll(state: AppState, runId: ID): AppState {
   if (run.paymentMoveId && state.reconciles.some((r) => r.debitMoveId === run.paymentMoveId || r.creditMoveId === run.paymentMoveId)) {
     throw new AccountingError('The salary payment is matched with a bank statement. Undo that first.');
   }
+  // The issued entries stay in the books, cancelled; posting again creates new ones.
+  let next = state;
+  for (const id of ids) next = unreconcileMove(next, id);
   return {
-    ...state,
-    moves: state.moves.filter((m) => !ids.includes(m.id)),
-    payrollRuns: state.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'draft', moveId: undefined, paymentMoveId: undefined } : r)),
+    ...next,
+    moves: next.moves.map((m) => (ids.includes(m.id) ? { ...m, state: 'cancel' as const } : m)),
+    payrollRuns: next.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'draft', moveId: undefined, paymentMoveId: undefined } : r)),
   };
 }
 
 /** Remove a payroll; a posted or paid one has its journal entries removed first. */
+/** Only a payroll that was never posted can be erased; an issued one is cancelled instead. */
 export function deletePayrollRun(state: AppState, runId: ID): AppState {
+  const run = state.payrollRuns.find((r) => r.id === runId);
+  if (!run) return state;
+  if (run.issued || run.state !== 'draft') throw new AccountingError('An issued payroll is kept as a wage record. Cancel it instead.');
+  return { ...state, payrollRuns: state.payrollRuns.filter((r) => r.id !== runId) };
+}
+
+/** Cancel an issued payroll: its entries are cancelled and the run is kept, marked cancelled. */
+export function cancelPayrollRun(state: AppState, runId: ID): AppState {
   const next = resetPayroll(state, runId);
-  return { ...next, payrollRuns: next.payrollRuns.filter((r) => r.id !== runId) };
+  return { ...next, payrollRuns: next.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'cancel' } : r)) };
 }
 
 /** Number of calendar months touched by a period (used to scale monthly budgets). */

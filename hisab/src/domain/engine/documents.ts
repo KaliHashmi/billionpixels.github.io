@@ -146,6 +146,7 @@ export function postMove(state: AppState, moveId: ID): AppState {
 
   if (isInvoice(move.moveType)) {
     if (!move.partnerId) throw new AccountingError(`A ${isSaleDoc(move.moveType) ? 'customer' : 'vendor'} is required.`);
+    if (move.supplyDate && !isValidISODate(move.supplyDate)) throw new AccountingError('The date of supply must use the YYYY-MM-DD format.');
     if (!move.invoiceLines.length) throw new AccountingError('Add at least one line before confirming.');
     const invoiceDate = move.invoiceDate && isValidISODate(move.invoiceDate) ? move.invoiceDate : move.date;
     const term = state.paymentTerms.find((p) => p.id === move.paymentTermId);
@@ -200,6 +201,7 @@ export function resetToDraft(state: AppState, moveId: ID): AppState {
   if (move.state === 'draft') return state;
   if (move.origin === 'payment') throw new AccountingError('Cancel the payment instead of resetting its entry.');
   if (move.origin === 'statement') throw new AccountingError('Undo the bank reconciliation instead.');
+  if (isIssuedTaxDocument(move)) throw new AccountingError('An issued tax invoice or credit note cannot be changed. Correct it with a credit note.');
   checkLockDate(state, move.date);
   // Remember what was matched with the invoice so re-posting it keeps it paid.
   const rematchLineIds = isInvoice(move.moveType)
@@ -212,28 +214,51 @@ export function resetToDraft(state: AppState, moveId: ID): AppState {
   return { ...next, moves: replace(next.moves, { ...move, state: 'draft', rematchLineIds: rematchLineIds?.length ? rematchLineIds : undefined }) };
 }
 
-const DELETE_ELSEWHERE: Partial<Record<Move['origin'], string>> = {
-  payment: 'Delete the payment voucher instead.',
+const ELSEWHERE: Partial<Record<Move['origin'], string>> = {
+  payment: 'Cancel the payment voucher instead.',
   statement: 'Undo the bank reconciliation instead.',
   cheque: 'Undo the cheque clearance from its payment instead.',
-  payroll: 'Delete the payroll instead.',
+  payroll: 'Cancel the payroll instead.',
   asset: 'Manage this entry from its asset.',
   cash_closing: 'Reopen the cash day instead.',
 };
 
 /**
- * Permanently remove an invoice, bill, credit note, journal entry or VAT closing, posted or not.
- * Its matches are undone, so payments on it become unallocated credits again.
+ * Oman VAT law: issued tax invoices and credit notes are kept (10 years) and corrected only by a
+ * credit note. Any document that has been given a number is part of the books and is never erased.
  */
+export const RETENTION_MESSAGE = 'Issued documents are kept as part of the books (10 years under Oman law). Cancel it or issue a credit note instead.';
+
+/** Sales invoice or credit note that has been issued (numbered): changed only through a credit note. */
+export function isIssuedTaxDocument(move: Move): boolean {
+  return (move.moveType === 'out_invoice' || move.moveType === 'out_refund') && move.name !== '/';
+}
+
+/** Only a document that was never numbered (a draft never confirmed) can be erased. */
 export function deleteMove(state: AppState, moveId: ID): AppState {
   const move = getMove(state, moveId);
-  const elsewhere = DELETE_ELSEWHERE[move.origin];
+  const elsewhere = ELSEWHERE[move.origin];
   if (elsewhere) throw new AccountingError(elsewhere);
-  const credit = state.moves.find((m) => m.reversedEntryId === moveId && m.state !== 'cancel');
-  if (credit) throw new AccountingError('A credit note or reversal refers to this document. Delete it first.');
+  if (move.name !== '/' || move.state !== 'draft') throw new AccountingError(RETENTION_MESSAGE);
+  return { ...state, moves: state.moves.filter((m) => m.id !== moveId) };
+}
+
+/**
+ * Cancel an issued bill, vendor credit note, journal entry or VAT closing: it stays in the books,
+ * marked cancelled, and no longer affects any balance. Sales tax documents need a credit note instead.
+ */
+export function cancelIssuedMove(state: AppState, moveId: ID): AppState {
+  const move = getMove(state, moveId);
+  const elsewhere = ELSEWHERE[move.origin];
+  if (elsewhere) throw new AccountingError(elsewhere);
+  if (move.state === 'cancel') return state;
+  if (isIssuedTaxDocument(move)) throw new AccountingError('An issued tax invoice or credit note is cancelled with a credit note.');
+  if (state.moves.some((m) => m.reversedEntryId === moveId && m.state !== 'cancel')) {
+    throw new AccountingError('A credit note or reversal refers to this document. Cancel it first.');
+  }
   if (move.state === 'posted') checkLockDate(state, move.date, move.origin !== 'tax_closing' && move.lines.some((l) => l.taxId || l.taxIds?.length));
   let next = unreconcileMove(state, moveId);
-  next = { ...next, moves: next.moves.filter((m) => m.id !== moveId) };
+  next = { ...next, moves: replace(next.moves, { ...move, state: 'cancel' }) };
   if (move.origin === 'tax_closing' && move.state === 'posted' && state.settings.taxLockDate === move.date) {
     // The VAT lock came from this closing: fall back to the latest remaining one.
     const latest = next.moves
@@ -242,6 +267,18 @@ export function deleteMove(state: AppState, moveId: ID): AppState {
     next = { ...next, settings: { ...next.settings, taxLockDate: latest } };
   }
   return next;
+}
+
+/**
+ * Correct an issued sales invoice the lawful way: a full credit note (with the reason) cancels it,
+ * and a new draft copy is prepared for the corrected invoice, which gets its own number.
+ */
+export function correctInvoice(state: AppState, moveId: ID, opts: { date: string; reason: string }): { state: AppState; creditNote: Move; draft: Move } {
+  const move = getMove(state, moveId);
+  if (move.moveType !== 'out_invoice' || move.state !== 'posted') throw new AccountingError('Only an issued sales invoice can be corrected this way.');
+  const credit = reverseMove(state, moveId, { ...opts, post: true });
+  const copy = duplicateMove(credit.state, moveId);
+  return { state: copy.state, creditNote: credit.move, draft: copy.move };
 }
 
 export function cancelMove(state: AppState, moveId: ID): AppState {
@@ -263,6 +300,8 @@ export function duplicateMove(state: AppState, moveId: ID): { state: AppState; m
     invoiceLines: src.invoiceLines.map((l) => ({ ...l, id: newId() })),
     lines: isInvoice(src.moveType) ? [] : src.lines.map((l) => ({ ...l, id: newId() })),
     reversedEntryId: undefined,
+    reason: undefined,
+    rematchLineIds: undefined,
     origin: 'manual',
     originId: undefined,
     createdAt: new Date().toISOString(),
@@ -295,6 +334,8 @@ export function reverseMove(state: AppState, moveId: ID, opts: ReverseOptions): 
   const src = getMove(state, moveId);
   if (src.state !== 'posted') throw new AccountingError('Only posted entries can be reversed.');
   if (src.origin === 'payment') throw new AccountingError('Cancel the payment instead of reversing it.');
+  // A tax credit note must state why it was issued.
+  if (isSaleDoc(src.moveType) && !opts.reason.trim()) throw new AccountingError('Enter the reason for the credit note.');
   const reason = opts.reason ? `Reversal of: ${src.name}, ${opts.reason}` : `Reversal of: ${src.name}`;
   let rev: Move = {
     ...src,
@@ -307,6 +348,8 @@ export function reverseMove(state: AppState, moveId: ID, opts: ReverseOptions): 
     dueDate: isInvoice(src.moveType) ? opts.date : undefined,
     paymentTermId: undefined,
     ref: reason,
+    reason: opts.reason.trim() || undefined,
+    supplyDate: undefined,
     invoiceLines: src.invoiceLines.map((l) => ({ ...l, id: newId() })),
     lines: isInvoice(src.moveType)
       ? []

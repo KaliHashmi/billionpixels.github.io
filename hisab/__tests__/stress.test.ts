@@ -4,8 +4,9 @@ import {
   buildReconcileIndex,
   cancelPayment,
   chequeStatus,
+  cancelIssuedMove,
+  correctInvoice,
   deleteMove,
-  deletePayment,
   editPayment,
   clearCheque,
   invoiceStatus,
@@ -26,7 +27,7 @@ import {
   undoStatementReconciliation,
 } from '../src/domain/engine';
 import { bankReconciliation, cashPosition, partnerOutstanding, unallocated, vatReturn } from '../src/domain/management';
-import { closeCashDay, deletePayrollRun, newPayrollRun, payPayroll, postPayroll, resetPayroll, savePayrollRun } from '../src/domain/operations';
+import { cancelPayrollRun, closeCashDay, deletePayrollRun, newPayrollRun, payPayroll, postPayroll, resetPayroll, savePayrollRun } from '../src/domain/operations';
 import { agedBalance, balanceSheet, dashboard, profitAndLoss, trialBalance } from '../src/domain/reports';
 import { createDemoCompany } from '../src/domain/seed';
 import { AccountingError, AppState, MoveType, PaymentMethod } from '../src/domain/types';
@@ -122,7 +123,7 @@ for (const seed of [1, 7, 42]) {
     for (let step = 0; step < 250; step++) {
       const before = s;
       const date = addDays(today(), -Math.floor(r() * 120));
-      const op = pick(['invoice', 'invoice', 'bill', 'pay', 'pay', 'refund', 'reset', 'cancelPay', 'cheque', 'statement', 'undoStatement', 'outstanding', 'payroll', 'cashClose', 'other', 'deleteDoc', 'deletePay', 'editPay', 'editPayroll']);
+      const op = pick(['invoice', 'invoice', 'bill', 'pay', 'pay', 'refund', 'reset', 'cancelPay', 'cheque', 'statement', 'undoStatement', 'outstanding', 'payroll', 'cashClose', 'other', 'deleteDoc', 'correct', 'editPay', 'editPayroll']);
       try {
         switch (op) {
           case 'invoice':
@@ -169,7 +170,8 @@ for (const seed of [1, 7, 42]) {
             break;
           }
           case 'reset': {
-            const posted = s.moves.filter((m) => m.state === 'posted' && m.origin === 'manual' && isInvoice(m.moveType));
+            // Bills can be corrected in place; issued sales documents only through a credit note.
+            const posted = s.moves.filter((m) => m.state === 'posted' && m.origin === 'manual' && (m.moveType === 'in_invoice' || m.moveType === 'in_refund'));
             if (!posted.length) break;
             const m = pick(posted);
             s = resetToDraft(s, m.id);
@@ -221,13 +223,22 @@ for (const seed of [1, 7, 42]) {
             break;
           }
           case 'deleteDoc': {
-            const docs = s.moves.filter((m) => m.origin === 'manual' || m.origin === 'tax_closing');
-            if (docs.length) s = deleteMove(s, pick(docs).id);
+            // Drafts are erased; issued sales documents get a credit note; other issued documents are cancelled.
+            const docs = s.moves.filter((m) => (m.origin === 'manual' || m.origin === 'tax_closing') && m.state !== 'cancel');
+            if (!docs.length) break;
+            const m = pick(docs);
+            if (m.name === '/') s = deleteMove(s, m.id);
+            else if (m.moveType === 'out_invoice' || m.moveType === 'out_refund') s = reverseMove(s, m.id, { date, reason: 'cancel', post: true }).state;
+            else s = cancelIssuedMove(s, m.id);
             break;
           }
-          case 'deletePay':
-            if (s.payments.length) s = deletePayment(s, pick(s.payments).id);
+          case 'correct': {
+            const posted = s.moves.filter((m) => m.state === 'posted' && m.moveType === 'out_invoice' && m.origin === 'manual');
+            if (!posted.length) break;
+            const res = correctInvoice(s, pick(posted).id, { date, reason: 'wrong price' });
+            s = r() < 0.7 ? postMove(res.state, res.draft.id) : res.state;
             break;
+          }
           case 'editPay': {
             const p = s.payments.filter((x) => x.state === 'posted');
             if (!p.length) break;
@@ -250,7 +261,8 @@ for (const seed of [1, 7, 42]) {
           case 'editPayroll': {
             if (!s.payrollRuns.length) break;
             const run = pick(s.payrollRuns);
-            s = r() < 0.5 ? deletePayrollRun(s, run.id) : postPayroll(resetPayroll(s, run.id), run.id);
+            if (run.state === 'draft' && !run.issued) s = deletePayrollRun(s, run.id);
+            else s = r() < 0.5 ? cancelPayrollRun(s, run.id) : postPayroll(resetPayroll(s, run.id), run.id);
             break;
           }
           case 'cashClose':
@@ -278,6 +290,9 @@ for (const seed of [1, 7, 42]) {
         s = before;
       }
       checkInvariants(s, `step ${step} (${op})`);
+      // Oman record keeping: once a document has a number it is never erased.
+      for (const m of before.moves) if (m.name !== "/") expect([op, m.origin, s.moves.some((x) => x.id === m.id && x.name === m.name)]).toEqual([op, m.origin, true]);
+      for (const p of before.payments) expect(s.payments.some((x) => x.id === p.id)).toBe(true);
       replay(records, meta, before, s);
     }
     const reloaded = rebuild(records, meta);

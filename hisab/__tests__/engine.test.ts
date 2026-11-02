@@ -123,15 +123,18 @@ describe('invoicing', () => {
     expect(invoiceStatus(s, s.moves.find((m) => m.id === id)!).paymentState).toBe('reversed');
   });
 
-  it('reset to draft removes reconciliation', () => {
-    const { s: s0, customer } = setup();
-    let { s, id } = invoice(s0, customer.id, 100);
+  it('an issued sales invoice cannot go back to draft; a bill can, keeping its number', () => {
+    const { s: s0, customer, vendor } = setup();
+    const inv = invoice(s0, customer.id, 100);
+    expect(() => resetToDraft(inv.s, inv.id)).toThrow(/credit note/);
+    let { s, id } = invoice(inv.s, vendor.id, 100, 'in_invoice');
     const bank = s.journals.find((j) => j.type === 'bank')!;
-    s = registerPayment(s, { paymentType: 'inbound', partnerType: 'customer', partnerId: customer.id, amount: 115, date: '2026-03-12', journalId: bank.id, memo: '', moveIds: [id] }).state;
+    s = registerPayment(s, { paymentType: 'outbound', partnerType: 'supplier', partnerId: vendor.id, amount: 115, date: '2026-03-12', journalId: bank.id, memo: '', moveIds: [id] }).state;
+    const name = s.moves.find((m) => m.id === id)!.name;
     s = resetToDraft(s, id);
     expect(s.reconciles).toHaveLength(0);
     s = postMove(s, id);
-    expect(s.moves.find((m) => m.id === id)!.name).toBe('INV/2026/00001');
+    expect(s.moves.find((m) => m.id === id)!.name).toBe(name);
   });
 });
 
