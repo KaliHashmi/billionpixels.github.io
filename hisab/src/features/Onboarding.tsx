@@ -15,6 +15,7 @@ import { notify } from '../ui/dialog';
 import { NumberField, Segmented, SelectField, TextField } from '../ui/fields';
 import { NewPasswordFields } from './Auth';
 import { colors, space } from '../ui/theme';
+import { LegalLinks } from '../ui/LegalLinks';
 
 export default function Onboarding() {
   const { replace, startSession } = useStore();
@@ -110,6 +111,7 @@ export default function Onboarding() {
           {t('Version')} {ENV.version}
           {ENV.label ? ` · ${ENV.label}` : ''}
         </Text>
+        <LegalLinks />
       </Screen>
     </SafeAreaView>
   );

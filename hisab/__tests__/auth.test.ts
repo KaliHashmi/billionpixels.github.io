@@ -1,4 +1,4 @@
-import { addUser, changePassword, login, resetPassword, restoreSession, saveSession, updateUser } from '../src/domain/auth';
+import { addUser, changePassword, deleteUser, login, resetPassword, restoreSession, saveSession, updateUser } from '../src/domain/auth';
 import { createCompany } from '../src/domain/template';
 
 function company() {
@@ -68,4 +68,15 @@ it('keeps a user signed in for 30 days unless the account or password changes', 
   const accSaved = saveSession(second.user, now);
   expect(restoreSession(resetPassword(second.state, second.user.id, 'temp12345'), accSaved, now)).toBeUndefined();
   expect(restoreSession(updateUser(second.state, second.user.id, { active: false }), accSaved, now)).toBeUndefined();
+});
+
+it('permanently deletes users, but never yourself or the last administrator', () => {
+  const { state: s0, user: owner } = company();
+  const { state: s1, user: sara } = addUser(s0, { username: 'sara', name: 'Sara', role: 'accountant', password: 'secret123' });
+  const s2 = deleteUser(s1, sara.id, owner.id);
+  expect(s2.users.map((u) => u.username)).toEqual(['admin']);
+  expect(login(s2, 'sara', 'secret123').ok).toBe(false);
+  expect(() => deleteUser(s1, owner.id, owner.id)).toThrow(/your own user/);
+  expect(() => deleteUser(s1, owner.id, sara.id)).toThrow(/active administrator/);
+  expect(() => deleteUser(s1, 'missing', owner.id)).toThrow(/not found/);
 });

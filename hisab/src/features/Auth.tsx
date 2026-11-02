@@ -12,6 +12,7 @@ import { Button, Card, Screen } from '../ui/components';
 import { notify } from '../ui/dialog';
 import { Segmented, SwitchField, TextField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
+import { LegalLinks } from '../ui/LegalLinks';
 
 export const BIOMETRIC_PREF = `biometric:${ENV.databaseName}`;
 
@@ -27,6 +28,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           {!!ENV.label && <Text style={{ color: ENV.bannerColor, fontWeight: '700' }}>{ENV.label}</Text>}
         </View>
         {children}
+        <LegalLinks />
       </Screen>
     </SafeAreaView>
   );

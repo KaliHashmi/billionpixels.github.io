@@ -153,6 +153,20 @@ export function updateUser(state: AppState, userId: ID, patch: { name?: string; 
   return replaceUser(state, next);
 }
 
+/**
+ * Permanently removes a user's sign-in and personal details (App Store 5.1.1(v) / Google Play account deletion).
+ * Accounting records never reference users, so the books are unaffected.
+ */
+export function deleteUser(state: AppState, userId: ID, actorId: ID | undefined): AppState {
+  const user = state.users.find((u) => u.id === userId);
+  if (!user) throw new AccountingError('User not found.');
+  if (userId === actorId) throw new AccountingError('You cannot delete your own user. Ask another administrator, or delete the company in Settings.');
+  if (user.role === 'admin' && user.active && activeAdmins(state, userId) === 0) {
+    throw new AccountingError('At least one active administrator is required.');
+  }
+  return { ...state, users: state.users.filter((u) => u.id !== userId) };
+}
+
 export function canEdit(role: UserRole | undefined): boolean {
   return role === 'admin' || role === 'accountant';
 }

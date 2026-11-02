@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds the browser versions (UAT and production) as a static site in ./web-site:
 #   web-site/hisab-uat/  web-site/hisab-app/  web-site/404.html
+#   web-site/hisab/ (privacy policy, data deletion and support pages; set HISAB_CONTACT_EMAIL to show a contact address)
 # Copy that folder's contents to the root of the GitHub Pages branch to publish.
 set -euo pipefail
 cd "$(dirname "$0")/.."

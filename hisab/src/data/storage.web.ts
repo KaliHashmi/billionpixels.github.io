@@ -36,6 +36,12 @@ export const storage: Storage = {
   async clear() {
     latest = null;
     persist();
+    // Also forget sign-in details kept in this browser (last username, remembered session).
+    try {
+      for (const k of Object.keys(localStorage)) if (k.startsWith('hisab:pref:') && k !== 'hisab:pref:lang') localStorage.removeItem(k);
+    } catch {
+      // Storage unavailable.
+    }
   },
   async getPref(key) {
     try {

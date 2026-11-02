@@ -11,6 +11,7 @@ import { Button, Card, MenuItem, Row, Screen, SectionTitle } from '../ui/compone
 import { notify } from '../ui/dialog';
 import { SwitchField } from '../ui/fields';
 import { colors } from '../ui/theme';
+import { LegalLinks } from '../ui/LegalLinks';
 
 export default function AccountScreen() {
   const { user, logout } = useStore();
@@ -47,6 +48,7 @@ export default function AccountScreen() {
         <Row label={t('Role')} value={t(ROLE_LABELS[user.role])} />
         {user.lastLoginAt && <Row label={t('Last sign-in')} value={fmtDate(user.lastLoginAt.slice(0, 10))} />}
         <Button title={t('Sign out')} icon="log-out-outline" variant="secondary" onPress={logout} style={{ marginTop: 8 }} />
+        {!isAdmin(user.role) && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 8 }}>{t('To delete your user, ask your administrator.')}</Text>}
       </Card>
       {bioAvailable && (
         <Card>
@@ -62,6 +64,7 @@ export default function AccountScreen() {
         </>
       )}
       <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>{t('Hisab locks automatically after 5 minutes in the background.')}</Text>
+      <LegalLinks />
     </Screen>
   );
 }

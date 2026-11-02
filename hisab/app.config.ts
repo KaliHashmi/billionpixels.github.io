@@ -15,6 +15,8 @@ const BUNDLE_ID = process.env.HISAB_BUNDLE_ID ?? 'com.hisab.accounting';
 const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID;
 /** Only for hosted browser previews: a placeholder base path rewritten when the page loads. */
 const WEB_BASE = process.env.HISAB_WEB_BASE;
+/** Hosts the privacy policy, data deletion and support pages linked from the app and the store listings. */
+const SITE_URL = process.env.HISAB_SITE_URL ?? 'https://kalihashmi.github.io/billionpixels.github.io/hisab';
 
 const VARIANTS: Record<Variant, { name: string; suffix: string; scheme: string }> = {
   development: { name: 'Hisab (Dev)', suffix: '.dev', scheme: 'hisab-dev' },
@@ -44,6 +46,19 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         CFBundleLocalizations: ['en', 'ar'],
         CFBundleAllowMixedLocalizations: true,
       },
+      // App Store privacy manifest: no tracking, no data collected. The required-reason APIs below are the ones
+      // React Native and Expo modules use; their own manifests are merged in at build time.
+      privacyManifests: {
+        NSPrivacyTracking: false,
+        NSPrivacyTrackingDomains: [],
+        NSPrivacyCollectedDataTypes: [],
+        NSPrivacyAccessedAPITypes: [
+          { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults', NSPrivacyAccessedAPITypeReasons: ['CA92.1'] },
+          { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp', NSPrivacyAccessedAPITypeReasons: ['C617.1'] },
+          { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime', NSPrivacyAccessedAPITypeReasons: ['35F9.1'] },
+          { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace', NSPrivacyAccessedAPITypeReasons: ['E174.1'] },
+        ],
+      },
     },
     android: {
       package: `${BUNDLE_ID}${v.suffix}`,
@@ -55,6 +70,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      // Files are picked and shared through the system pickers, so no storage, overlay or microphone permission is needed.
+      // Asking only for what the app uses keeps the Play Console permission declarations short.
+      blockedPermissions: [
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.SYSTEM_ALERT_WINDOW',
+        'android.permission.RECORD_AUDIO',
+      ],
     },
     web: {
       favicon: './assets/favicon.png',
@@ -72,6 +95,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       appVariant: VARIANT,
       supportsRTL: true,
+      siteUrl: SITE_URL,
       ...(EAS_PROJECT_ID ? { eas: { projectId: EAS_PROJECT_ID } } : {}),
     },
   };

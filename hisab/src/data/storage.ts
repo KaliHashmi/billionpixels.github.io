@@ -64,6 +64,9 @@ export const storage: Storage = {
   replaceAll: (state: AppState) => write(diffStates(null, state), true),
   async clear() {
     await write({ upserts: [], deletes: [], meta: [] }, true);
+    // Deleting the company also forgets sign-in details kept on this device (last username, remembered session, biometrics).
+    const conn = await db();
+    await conn.runAsync("DELETE FROM meta WHERE key LIKE 'pref:%' AND key <> 'pref:lang'");
   },
   async getPref(key) {
     const conn = await db();

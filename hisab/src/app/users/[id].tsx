@@ -2,12 +2,12 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { randomBytes, useBooks, useStore } from '../../data/store';
-import { addUser, isAdmin, resetPassword, ROLE_LABELS, updateUser } from '../../domain/auth';
+import { addUser, deleteUser, isAdmin, resetPassword, ROLE_LABELS, updateUser } from '../../domain/auth';
 import { UserRole } from '../../domain/types';
 import { NewPasswordFields } from '../../features/Auth';
 import { useT } from '../../i18n';
 import { Button, Card, EmptyState, Screen, SectionTitle } from '../../ui/components';
-import { notify } from '../../ui/dialog';
+import { confirm as ask, notify } from '../../ui/dialog';
 import { SelectField, SwitchField, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
 
@@ -45,6 +45,17 @@ export default function UserForm() {
     }
   };
 
+  const remove = async () => {
+    if (!existing) return;
+    const sure = await ask(
+      t('Delete user'),
+      t('Permanently delete {name} and their sign-in? The books they recorded are kept. This cannot be undone.', { name: existing.name }),
+      t('Delete'),
+      true,
+    );
+    if (sure && run((x) => deleteUser(x, existing.id, me?.id))) router.back();
+  };
+
   return (
     <Screen>
       <Stack.Screen options={{ title: existing ? existing.name : t('New User') }} />
@@ -70,6 +81,7 @@ export default function UserForm() {
           <Button title={t('Set Temporary Password')} variant="secondary" icon="key-outline" onPress={reset} />
         </Card>
       )}
+      {existing && existing.id !== me?.id && <Button title={t('Delete User')} variant="danger" icon="trash-outline" onPress={remove} />}
     </Screen>
   );
 }
