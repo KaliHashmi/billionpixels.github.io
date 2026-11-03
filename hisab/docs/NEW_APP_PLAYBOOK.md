@@ -22,7 +22,7 @@ This is the standard for every new app we build, so each one is delivered clean,
     config/  domain/  data/  services/  i18n/  ui/  features/  app/
   __tests__/
 .github/workflows/<app>.yml    typecheck, lint, test on push; EAS build on dispatch
-.claude/settings.json          shared plugins (expo, karpathy guidelines, claude-code-setup)
+.claude/settings.json          shared plugins (expo, karpathy guidelines, superpowers, claude-code-setup)
 ```
 
 Checklist:
@@ -40,6 +40,7 @@ Checklist:
 - Translate every string from the start (English + Arabic), and check the RTL layout every time.
 - Add a dependency only with `npx expo install`. Prefer Expo modules. Record every third-party asset and its licence.
 - Follow the Karpathy rules in `CLAUDE.md`: think first, keep it simple, make surgical changes, verify every goal.
+- Use the Superpowers workflow for any real change: plan it, write the test first, review your own diff, and check the result (tests, CI, the screen) before saying it is done.
 
 ## 3. Privacy by default
 

@@ -30,7 +30,8 @@ Hisab (حساب) is an offline, bilingual (English/Arabic) accounting app for sm
 
 ## Engineering principles
 
-These are adapted from the Karpathy guidelines; the plugin is enabled in `.claude/settings.json`.
+These are adapted from the Karpathy guidelines. The Karpathy and Superpowers plugins are both enabled in `.claude/settings.json`.
+Superpowers adds the workflow: plan before coding, test first, review your own work, and verify (tests, CI, the screen) before reporting a task as done.
 
 1. **Think before coding.**
    - State your assumptions.
