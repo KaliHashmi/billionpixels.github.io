@@ -18,3 +18,7 @@ a{color:var(--brand)}
 @media (prefers-color-scheme:dark){a{color:#d8a9cc}}
 [dir=rtl]{font-family:system-ui,"Segoe UI",Tahoma,"Geeza Pro","Noto Naskh Arabic",Arial,sans-serif}
 footer{color:var(--muted);font-size:13px;text-align:center;padding:0 16px 32px}
+table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--border);padding:4px 8px;text-align:start}
+pre{white-space:pre-wrap;word-break:break-word;font-size:12px;background:var(--card);border:1px solid var(--border);padding:8px;border-radius:6px}
+h3{font-size:13px;margin:16px 0 4px;word-break:break-word}
