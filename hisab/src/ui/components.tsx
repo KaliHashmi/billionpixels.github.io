@@ -244,6 +244,7 @@ export function SearchBar({ value, onChangeText, placeholder }: { value: string;
     <View style={styles.search}>
       <Ionicons name="search" size={18} color={colors.muted} />
       <TextInput
+        aria-label={placeholder ?? t('Search…')}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder ?? t('Search…')}

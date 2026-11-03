@@ -12,7 +12,8 @@ import { Button, Card, Screen } from '../ui/components';
 import { notify } from '../ui/dialog';
 import { Segmented, SwitchField, TextField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
-import { LegalLinks } from '../ui/LegalLinks';
+import { LegalLinks, TermsConsent } from '../ui/LegalLinks';
+import { acceptTerms } from '../domain/legal';
 
 export const BIOMETRIC_PREF = `biometric:${ENV.databaseName}`;
 
@@ -179,6 +180,27 @@ export function ForcePasswordChangeScreen() {
   return (
     <Shell>
       <ChangePasswordForm forced />
+    </Shell>
+  );
+}
+
+/** Shown to an administrator when the company has not accepted the current Terms of Use (new install of an old backup, or new terms). */
+export function TermsGateScreen() {
+  const { run, user } = useStore();
+  const { t } = useT();
+  const [agreed, setAgreed] = useState(false);
+  const accept = () => {
+    if (!agreed) return notify(t('Terms of Use'), t('Please accept the Terms of Use and the Privacy Policy to continue.'));
+    if (user) run((s) => acceptTerms(s, { id: user.id, name: `${user.name} (${user.username})` }));
+  };
+  return (
+    <Shell>
+      <Card>
+        <Text style={{ fontSize: 17, fontWeight: '700', marginBottom: space.sm }}>{t('Terms of Use')}</Text>
+        <Text style={{ color: colors.text }}>{t('Our Terms of Use and Privacy Policy are new or have changed. Please read them and accept them for your company to continue.')}</Text>
+        <TermsConsent value={agreed} onChange={setAgreed} />
+        <Button title={t('Continue')} icon="checkmark" onPress={accept} />
+      </Card>
     </Shell>
   );
 }

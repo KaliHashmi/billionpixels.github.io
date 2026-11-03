@@ -376,6 +376,8 @@ export interface Settings {
   siWageCeiling?: number;
   /** When the default rates were last checked against official sources (YYYY-MM-DD). */
   siRatesCheckedOn?: string;
+  /** Who accepted which version of the Terms of Use and Privacy Policy, and when. */
+  termsAcceptance?: { version: string; acceptedAt: string; acceptedBy: string };
   defaultSaleTaxId?: ID;
   defaultPurchaseTaxId?: ID;
   defaultPaymentTermId?: ID;

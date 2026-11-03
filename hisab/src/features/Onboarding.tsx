@@ -5,6 +5,7 @@ import { ENV } from '../config/env';
 import { migrate } from '../data/persistence';
 import { randomBytes, useStore } from '../data/store';
 import { addUser } from '../domain/auth';
+import { acceptTerms, needsTermsAcceptance } from '../domain/legal';
 import { createDemoCompany } from '../domain/seed';
 import { COUNTRIES, createCompany, CURRENCIES } from '../domain/template';
 import { useT } from '../i18n';
@@ -15,7 +16,7 @@ import { notify } from '../ui/dialog';
 import { NumberField, Segmented, SelectField, TextField } from '../ui/fields';
 import { NewPasswordFields } from './Auth';
 import { colors, space } from '../ui/theme';
-import { LegalLinks } from '../ui/LegalLinks';
+import { LegalLinks, TermsConsent } from '../ui/LegalLinks';
 
 export default function Onboarding() {
   const { replace, startSession } = useStore();
@@ -29,6 +30,13 @@ export default function Onboarding() {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [agreed, setAgreed] = useState(false);
+
+  /** Every way into the app needs the terms accepted first; the acceptance is recorded in the company. */
+  const mustAgree = () => {
+    if (!agreed) notify(t('Terms of Use'), t('Please accept the Terms of Use and the Privacy Policy to continue.'));
+    return !agreed;
+  };
 
   const chooseCountry = (code: string) => {
     const c = COUNTRIES.find((x) => x.code === code);
@@ -40,6 +48,7 @@ export default function Onboarding() {
   };
 
   const create = () => {
+    if (mustAgree()) return;
     if (!companyName.trim()) {
       notify(t('Company name required'), t('Please enter the name of your company.'));
       return;
@@ -52,16 +61,19 @@ export default function Onboarding() {
       const company = createCompany({ companyName: companyName.trim(), currency, vatRate, country, fiscalYearLastMonth: Number(lastMonth) });
       const { state, user } = addUser(company, { username, name: adminName || companyName, role: 'admin', password }, randomBytes);
       startSession(user.id, true);
-      replace(state);
+      replace(acceptTerms(state, { id: user.id, name: `${user.name} (${user.username})` }));
     } catch (e) {
       notify(t('Validation Error'), t(e instanceof Error ? e.message : String(e)));
     }
   };
 
   const restore = async () => {
+    if (mustAgree()) return;
     try {
       const text = await pickTextFile(['application/json', '*/*']);
-      if (text) await replace(migrate(readBackup(text)));
+      if (!text) return;
+      const restored = migrate(readBackup(text));
+      await replace(needsTermsAcceptance(restored) ? acceptTerms(restored, { name: 'Accepted on this device when restoring a backup' }) : restored);
     } catch (e) {
       notify(t('Restore failed'), t(e instanceof Error ? e.message : String(e)));
     }
@@ -101,11 +113,12 @@ export default function Onboarding() {
           <TextField label={t('Your Name')} value={adminName} onChange={setAdminName} />
           <TextField label={t('Username')} value={username} onChange={setUsername} required autoCapitalize="none" />
           <NewPasswordFields password={password} confirm={confirm} onPassword={setPassword} onConfirm={setConfirm} />
+          <TermsConsent value={agreed} onChange={setAgreed} />
           <Button title={t('Create Company')} icon="checkmark" onPress={create} />
         </Card>
         <Button title={t('Restore from Backup')} icon="cloud-download-outline" variant="secondary" onPress={restore} />
         {ENV.allowDemoData && (
-          <Button title={`${t('Load Demo Company')} (${ENV.label})`} icon="flask-outline" variant="secondary" onPress={() => replace(createDemoCompany())} />
+          <Button title={`${t('Load Demo Company')} (${ENV.label})`} icon="flask-outline" variant="secondary" onPress={() => !mustAgree() && replace(acceptTerms(createDemoCompany(), { name: 'Demo company' }))} />
         )}
         <Text style={{ textAlign: 'center', color: colors.muted, fontSize: 12 }}>
           {t('Version')} {ENV.version}

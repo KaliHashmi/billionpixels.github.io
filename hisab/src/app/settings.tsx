@@ -16,6 +16,7 @@ import { Button, ButtonRow, Card, EmptyState, Row, Screen, SectionTitle } from '
 import { confirm, notify } from '../ui/dialog';
 import { NumberField, Segmented, SelectField, SwitchField, TextField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
+import { LegalLinks, openLink } from '../ui/LegalLinks';
 
 type AccountKey = { [K in keyof Settings]-?: Settings[K] extends string ? K : never }[keyof Settings];
 
@@ -180,6 +181,11 @@ export default function SettingsScreen() {
         <Row label={t('Environment')} value={ENV.variant} valueStyle={{ color: ENV.isProduction ? colors.success : ENV.bannerColor, fontWeight: '700' }} />
         <Row label={t('Database')} value={ENV.databaseName} />
         <Row label={t('Records')} value={`${s.moves.length} ${t('entries')} · ${s.partners.length} ${t('contacts')}`} />
+        {!!s.settings.termsAcceptance && (
+          <Row label={t('Terms accepted')} value={`${s.settings.termsAcceptance.acceptedAt.slice(0, 10)} · ${s.settings.termsAcceptance.acceptedBy}`} />
+        )}
+        <Row label={t('Open-source licences')} value="›" onPress={() => openLink(ENV.links.licenses)} />
+        <LegalLinks />
       </Card>
     </Screen>
   );

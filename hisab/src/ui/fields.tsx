@@ -46,6 +46,7 @@ export function TextField({
     <View style={s.field}>
       <FieldLabel label={label} required={required} />
       <TextInput
+        aria-label={label}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
@@ -91,6 +92,7 @@ export function NumberField({
     <View style={[s.field, compact && { flex: 1 }]}>
       <FieldLabel label={label} required={required} />
       <TextInput
+        aria-label={label}
         value={text}
         editable={editable}
         onChangeText={(t) => {
@@ -123,6 +125,7 @@ export function DateField({ label, value, onChange, required, editable = true }:
       <FieldLabel label={label} required={required} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <TextInput
+          aria-label={label}
           value={text}
           editable={editable}
           onChangeText={set}

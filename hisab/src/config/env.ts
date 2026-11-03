@@ -16,10 +16,12 @@ export const ENV = {
   /** UAT and development builds offer to load demo data during onboarding. */
   allowDemoData: variant !== 'production',
   label: variant === 'production' ? '' : variant === 'uat' ? 'UAT' : 'DEV',
-  bannerColor: variant === 'uat' ? '#E67E22' : '#2C3E50',
+  bannerColor: variant === 'uat' ? '#A84E00' : '#2C3E50',
   /** Store-required public pages (App Store Connect and Play Console ask for these URLs). */
   links: {
     privacy: `${SITE}/privacy/`,
+    terms: `${SITE}/terms/`,
+    licenses: `${SITE}/licenses/`,
     deleteData: `${SITE}/delete-data/`,
     support: `${SITE}/support/`,
   },

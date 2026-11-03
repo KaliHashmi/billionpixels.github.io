@@ -23,6 +23,7 @@ This is the standard for every new app we build, so each one is delivered clean,
   __tests__/
 .github/workflows/<app>.yml    typecheck, lint, test on push; EAS build on dispatch
 .claude/settings.json          shared plugins (expo, karpathy guidelines, superpowers, claude-code-setup)
+.claude/skills/                copy watch-video and legal-launch-checklist from this repo
 ```
 
 Checklist:
@@ -31,6 +32,7 @@ Checklist:
 - [ ] Choose the final bundle id now (`com.<company>.<app>`). It can never change after the first upload.
 - [ ] Add the `verify` script: `typecheck && lint && test`.
 - [ ] Set up CI before writing features.
+- [ ] Run the `legal-launch-checklist` skill and start `docs/LEGAL_CHECKLIST.md`. Re-run it before every release.
 - [ ] Set up the UAT and production variants, each with its own database and app name, so they install side by side.
 
 ## 2. While building

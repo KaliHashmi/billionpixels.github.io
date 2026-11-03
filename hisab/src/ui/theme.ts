@@ -1,17 +1,18 @@
+/** Text colours meet WCAG AA contrast (4.5:1) on white and on `bg`; `e2e/a11y.spec.ts` checks the screens. */
 export const colors = {
   primary: '#714B67',
   primaryDark: '#5A3B52',
-  accent: '#017E84',
+  accent: '#016E73',
   bg: '#F4F5F7',
   card: '#FFFFFF',
   text: '#1F2328',
-  muted: '#6B7280',
+  muted: '#5F6672',
   border: '#E3E5E8',
-  success: '#28A745',
-  warning: '#E6A700',
-  danger: '#D9534F',
-  info: '#17A2B8',
-  draft: '#8A8F98',
+  success: '#1B7430',
+  warning: '#7A5600',
+  danger: '#B02A37',
+  info: '#0E6A7A',
+  draft: '#5F6672',
 };
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 };

@@ -4,6 +4,14 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 
 ## [Unreleased] — 1.0.0 candidate
 
+### Legal launch checklist (35 items, see docs/LEGAL_CHECKLIST.md)
+- Terms of Use page (English and Arabic), linked in the app, the public pages and Settings.
+- "I agree to the Terms of Use and Privacy Policy" checkbox before creating a company, restoring a backup or loading the demo. The accepted version, time and person are recorded and written to the audit log. New terms ask the administrator again.
+- Privacy policy now names the publisher, states there are no cookies, trackers or sub-processors, names the GitHub Pages hosting, and says data is never used to train AI.
+- Business details (FutureX Technical Solutions, Muscat) on the support page and in the terms.
+- Open-source licences page listing every shipped package and its licence text.
+- Accessibility (WCAG 2.1 AA): darker theme colours for contrast, names on every input, and a keyboard-operable checkbox. Automated axe scan and keyboard-only browser test.
+
 ### Oman legal compliance
 - Issued documents are never deleted (10-year retention, VAT Law Art. 100):
   - issued sales invoices and credit notes are corrected or cancelled with a tax credit note, which must give a reason;

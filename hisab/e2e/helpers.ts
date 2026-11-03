@@ -19,6 +19,7 @@ export async function expectNoErrors(page: Page, errors: string[]) {
 export async function loadDemo(page: Page, lang: 'en' | 'ar' = 'en') {
   await page.goto('/');
   if (lang === 'ar') await page.getByText('العربية').first().click();
+  await page.getByTestId('terms-consent').click();
   await page.getByText(lang === 'ar' ? /تحميل شركة تجريبية|Load Demo Company/ : /Load Demo Company/).click();
   await expect(page.getByText(lang === 'ar' ? 'إبقائي مسجلاً' : 'Keep me signed in')).toBeVisible();
 }
@@ -40,7 +41,7 @@ export async function demoSignIn(page: Page, user: DemoUser, lang: 'en' | 'ar' =
 export async function openPostedInvoice(page: Page) {
   await page.goto('/moves?type=out_invoice');
   await page.getByText(/^INV\/\d{4}\/\d+/).first().click();
-  await expect(page.getByText('Download PDF')).toBeVisible();
+  await expect(page.getByText(/^(Download PDF|تنزيل PDF|تحميل PDF)$/)).toBeVisible();
 }
 
 /** Taps a button, then the same-named confirm button in the in-app dialog. */

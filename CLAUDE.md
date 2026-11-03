@@ -13,3 +13,4 @@ Plugins (enabled in `.claude/settings.json` for every session): `expo`, `andrej-
 
 Skills in `.claude/skills/`:
 - `watch-video`: watch and listen to videos and audio. It produces frame sheets plus an Arabic or English transcript.
+- `legal-launch-checklist`: the 35-item legal, privacy, accessibility and licensing checklist. Run it for every new app and before every release.

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoErrors, loadDemo, watchErrors } from './helpers';
 
-test('privacy policy and support links open the public pages in a new tab', async ({ page, context }) => {
+test('terms, privacy policy and support links open the public pages in a new tab', async ({ page, context }) => {
   const errors = watchErrors(page);
   const opened: string[] = [];
   await context.route('https://kalihashmi.github.io/**', (route) => {
@@ -9,9 +9,9 @@ test('privacy policy and support links open the public pages in a new tab', asyn
     return route.fulfill({ body: 'ok' });
   });
   await page.goto('/');
-  for (const [label, path] of [['Privacy Policy', '/hisab/privacy/'], ['Support', '/hisab/support/']] as const) {
+  for (const [label, path] of [['Terms of Use', '/hisab/terms/'], ['Privacy Policy', '/hisab/privacy/'], ['Support', '/hisab/support/']] as const) {
     const popup = context.waitForEvent('page');
-    await page.getByText(label, { exact: true }).click();
+    await page.getByText(label, { exact: true }).last().click();
     await (await popup).close();
     expect(opened.pop()).toContain(path);
   }
