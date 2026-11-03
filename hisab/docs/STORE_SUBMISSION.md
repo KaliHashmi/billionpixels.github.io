@@ -17,7 +17,7 @@ Last reviewed: November 2026.
   - Terms of Use: `…/hisab/terms/`. In App Store Connect, set it as the custom licence agreement (EULA), or keep Apple's standard EULA and link the terms in the description.
   - Open-source licences: `…/hisab/licenses/`
 - [ ] `docs/LEGAL_CHECKLIST.md` was re-run for this release.
-- [ ] A real support email address is set. Build the site with `HISAB_CONTACT_EMAIL=… npm run build:web` and use the same address in both store listings.
+- [x] Support email: **futurex.om@outlook.com** (the company address for all our apps). It is built into the public pages; use the same address in both store listings.
 - [ ] Final bundle id / package is decided. Default: `com.hisab.accounting`, changed with `HISAB_BUNDLE_ID`. **It can never change after the first upload.**
 - [ ] Optional: move the site to your own domain, then set `HISAB_SITE_URL` (app) and `HISAB_SITE_PATH` (site build).
 

@@ -15,7 +15,8 @@ open(os.path.join(out, '404.html'), 'w', encoding='utf-8').write(HEAD + guard + 
 
 # Public pages the stores link to: /hisab/, /hisab/terms/, /hisab/privacy/, /hisab/delete-data/, /hisab/support/, /hisab/licenses/.
 SITE_PATH = os.environ.get('HISAB_SITE_PATH', '/billionpixels.github.io/hisab')
-CONTACT = os.environ.get('HISAB_CONTACT_EMAIL', '')
+# FutureX Technical Solutions' support address, the same for every app we publish.
+CONTACT = os.environ.get('HISAB_CONTACT_EMAIL', 'futurex.om@outlook.com')
 CR = os.environ.get('HISAB_CR_NUMBER', '')  # Commercial Registration number, shown with the business details once known.
 # Keep in step with TERMS_VERSION in src/domain/legal.ts: a new date makes the app ask for acceptance again.
 EFFECTIVE, EFFECTIVE_AR = '3 November 2026', '٣ نوفمبر ٢٠٢٦'

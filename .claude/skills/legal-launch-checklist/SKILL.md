@@ -70,7 +70,7 @@ This is not legal advice. Before a paid launch, have a qualified lawyer in the t
 
 ## Good defaults for our apps (FutureX Technical Solutions)
 
-- Publisher: FutureX Technical Solutions (فيوتشر اكس للحلول التقنية), Al Wizarat, Bausher, Muscat Governorate, Sultanate of Oman. Ask for the CR number and the support email; don't guess them.
+- Publisher: FutureX Technical Solutions (فيوتشر اكس للحلول التقنية), Al Wizarat, Bausher, Muscat Governorate, Sultanate of Oman. Support email for every app: futurex.om@outlook.com. Ask for the CR number; don't guess it.
 - Write the pages bilingually (English and Arabic, with Arabic in right-to-left). The Terms state that the Arabic version prevails, under Omani law and the courts of Muscat.
 - Hisab (`hisab/`) is the reference implementation:
   - `site/terms.html` and `site/privacy.html`;

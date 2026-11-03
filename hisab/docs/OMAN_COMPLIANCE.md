@@ -88,7 +88,7 @@ What Oman law requires of an accounting app, and how Hisab meets it. Review this
 - [ ] Confirm SPF rates on spf.gov.om and update `SI_RATES_CHECKED_ON` in `src/domain/template.ts`.
 - [ ] Store listing and website say "helps you keep Oman-compliant records". They must not say "OTA approved" or "Fawtara certified".
 - [ ] Fawtara integration planned before 1 October 2027.
-- [ ] Support email published on the privacy and support pages.
+- [x] Support email (futurex.om@outlook.com) published on the privacy, terms and support pages.
 
 ---
 

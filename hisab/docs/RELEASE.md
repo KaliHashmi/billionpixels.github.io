@@ -39,7 +39,7 @@ Builds can also run from GitHub: **Actions → Hisab → Run workflow** (choose 
 ## Web previews and public pages (GitHub Pages)
 
 ```bash
-HISAB_CONTACT_EMAIL=support@example.com npm run build:web   # writes web-site/
+npm run build:web   # writes web-site/ (support email futurex.om@outlook.com is the default)
 ```
 
 Copy the contents of `web-site/` to the root of the `main` branch and push. Pages serves:
