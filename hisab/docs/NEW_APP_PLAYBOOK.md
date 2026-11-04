@@ -29,7 +29,7 @@ This is the standard for every new app we build, so each one is delivered clean,
 Checklist:
 
 - [ ] Create from the current Expo template. Read the versioned Expo docs (`AGENTS.md`); never rely on memory.
-- [ ] Publisher details for the store listings and public pages: FutureX Technical Solutions, Al Wizarat, Bausher, Muscat. Support email: **futurex.om@outlook.com**.
+- [ ] Publisher details for the store listings and public pages: FutureX Technical Solutions, Al Wizarat, Bausher, Muscat, CR No. 1685674. Support email: **futurex.om@outlook.com**.
 - [ ] Choose the final bundle id now (`com.<company>.<app>`). It can never change after the first upload.
 - [ ] Add the `verify` script: `typecheck && lint && test`.
 - [ ] Set up CI before writing features.

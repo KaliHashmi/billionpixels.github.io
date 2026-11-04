@@ -17,7 +17,7 @@ open(os.path.join(out, '404.html'), 'w', encoding='utf-8').write(HEAD + guard + 
 SITE_PATH = os.environ.get('HISAB_SITE_PATH', '/billionpixels.github.io/hisab')
 # FutureX Technical Solutions' support address, the same for every app we publish.
 CONTACT = os.environ.get('HISAB_CONTACT_EMAIL', 'futurex.om@outlook.com')
-CR = os.environ.get('HISAB_CR_NUMBER', '')  # Commercial Registration number, shown with the business details once known.
+CR = os.environ.get('HISAB_CR_NUMBER', '1685674')  # FutureX Technical Solutions' Commercial Registration number.
 # Keep in step with TERMS_VERSION in src/domain/legal.ts: a new date makes the app ask for acceptance again.
 EFFECTIVE, EFFECTIVE_AR = '3 November 2026', '٣ نوفمبر ٢٠٢٦'
 mail = f'<a href="mailto:{html.escape(CONTACT)}">{html.escape(CONTACT)}</a>' if CONTACT else ''
@@ -28,6 +28,7 @@ values = {
     'PUBLISHER': 'FutureX Technical Solutions', 'PUBLISHER_AR': 'فيوتشر اكس للحلول التقنية',
     'ADDRESS': 'Al Wizarat, Bausher, Muscat Governorate, Sultanate of Oman', 'ADDRESS_AR': 'حي الوزارات، بوشر، محافظة مسقط، سلطنة عُمان',
     'CR': f'<br>Commercial Registration No. {html.escape(CR)}' if CR else '', 'CR_AR': f'<br>السجل التجاري رقم {html.escape(CR)}' if CR else '',
+    'CR_INLINE': f' (Commercial Registration No. {html.escape(CR)})' if CR else '', 'CR_INLINE_AR': f' (السجل التجاري رقم {html.escape(CR)})' if CR else '',
 }
 
 def licenses_page(app_dir):

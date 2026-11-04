@@ -13,7 +13,7 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 3 | Accept checkbox | **Fixed** | `TermsConsent` on the welcome screen. Create Company, Restore and Load Demo are blocked until it is ticked (`e2e/terms.spec.ts`, English and Arabic) |
 | 4 | Record acceptance | **Fixed** | `src/domain/legal.ts` stores the version, time and who accepted, and writes an audit-log entry. Settings › About shows it. A new `TERMS_VERSION` asks the administrator again (`TermsGateScreen`). Tested in `__tests__/legal.test.ts` |
 | 5 | Separate marketing consent | N/A | No marketing messages are sent |
-| 6 | Business contact details | **Fixed** | Support page and Terms: FutureX Technical Solutions, Al Wizarat, Bausher, Muscat. Support email futurex.om@outlook.com. **Open:** CR number (`HISAB_CR_NUMBER`) |
+| 6 | Business contact details | **Fixed** | Support page and Terms: FutureX Technical Solutions, Al Wizarat, Bausher, Muscat. Support email futurex.om@outlook.com, Commercial Registration No. 1685674 |
 | 7 | Access and deletion | Done | Export Backup / CSV; Delete My Account; delete user; Delete Company; `site/delete-data.html` |
 | 8 | Retention limits | Done | Privacy §6 and §9: data stays until deleted; accounting records are kept for 10 years (Oman) |
 | 9 | Data minimisation | Done | Only the accounting data the user enters. Permissions: biometrics (optional) and the file picker |
@@ -46,5 +46,4 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 
 ## Open items for the owner
 
-- **Commercial Registration number:** shown with the business details (`HISAB_CR_NUMBER`).
 - **Lawyer review:** a licensed Omani lawyer reviews `site/terms.html` and `site/privacy.html` before a paid launch.
