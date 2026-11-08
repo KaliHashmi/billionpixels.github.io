@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../data/store';
@@ -52,9 +52,9 @@ export function useScanActions() {
       }
       if (current && kind === 'expense') {
         // The draft (never numbered) is removed; the photo moves to the cash expense.
-        const s0 = runWith((st) => ({ state: deleteMove(st, current.id), value: attachmentsFor(st, current.id)[0]?.dataUri }));
-        if (s0 === undefined && !item.preview) return;
-        const updated = { ...item, kind, targetId: undefined, preview: s0 ?? item.preview };
+        const removed = runWith((st) => ({ state: deleteMove(st, current.id), value: { photo: attachmentsFor(st, current.id)[0]?.dataUri } }));
+        if (!removed) return;
+        const updated = { ...item, kind, targetId: undefined, preview: removed.photo ?? item.preview };
         scanSession.update(item.id, updated);
         open(updated, true);
         return;
@@ -88,12 +88,15 @@ export function ScanHost() {
   useEffect(() => {
     if (!reading && queued) scanSession.update(queued.id, { status: 'reading', step: 'reading' });
   }, [reading, queued]);
+  // Signing out (or switching user) forgets the list: it is never shown to the next person.
+  useEffect(() => () => scanSession.clear(), [user?.id]);
 
   const onProgress = useCallback(async (step: 'reading' | 'recognising') => {
     if (readingId) scanSession.update(readingId, { step });
   }, [readingId]);
-  const onError = useCallback(async (message: string) => {
-    if (readingId) scanSession.update(readingId, { status: 'failed', source: null, error: message });
+  // The reader's own messages are technical (and English): show one plain message instead.
+  const onError = useCallback(async () => {
+    if (readingId) scanSession.update(readingId, { status: 'failed', source: null, error: 'Could not read this file. Use a PDF, JPG or PNG that is not password-protected.' });
   }, [readingId]);
   const onResult = useCallback(
     async (result: ReaderResult) => {
@@ -101,6 +104,7 @@ export function ScanHost() {
       if (!item) return;
       const done = runWith((st) => {
         const reading = readReceipt(st, result.text);
+        if (reading.warnings.some((w) => w.message === RECEIPT_MESSAGES.noText)) return { state: st, value: { ...item, status: 'failed' as const, source: null, error: RECEIPT_MESSAGES.noText } };
         const kind = classifyDocument(result.text, reading);
         const ready: ScanItem = { ...item, status: 'ready', source: null, text: result.text, preview: result.preview, reading, kind, accountId: suggestAccount(st, result.text, reading.vendorId) };
         if (kind === 'expense') return { state: st, value: ready };
@@ -120,6 +124,7 @@ export function ScanHost() {
 export function ScanButtons({ card }: { card?: boolean }) {
   const can = usePermissions();
   const { t } = useT();
+  const pathname = usePathname();
   if (!can.create) return null;
 
   const start = async (pick: () => Promise<{ dataUri: string; mimeType: string }[]>) => {
@@ -127,7 +132,7 @@ export function ScanButtons({ card }: { card?: boolean }) {
       const files = await pick();
       if (!files.length) return;
       scanSession.add(files);
-      router.push('/scan');
+      if (pathname !== '/scan') router.push('/scan');
     } catch (e) {
       notify(t('Could not open the file'), t(e instanceof Error ? e.message : String(e)));
     }

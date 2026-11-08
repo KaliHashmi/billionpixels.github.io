@@ -6,7 +6,7 @@ const SCREENS = [
   '/', '/customers', '/vendors', '/accounting', '/reports', '/account',
   '/moves?type=out_invoice', '/moves?type=in_invoice', '/moves?type=entry',
   '/payments?partnerType=customer', '/payments?partnerType=supplier',
-  '/bank', '/cashbook', '/cheques', '/cash-closing', '/followups', '/assets', '/budgets', '/payroll', '/tax-return', '/items',
+  '/scan', '/bank', '/cashbook', '/cheques', '/cash-closing', '/followups', '/assets', '/budgets', '/payroll', '/tax-return', '/items',
 ];
 const REPORTS = [
   'profit-loss', 'balance-sheet', 'cash-flow', 'executive-summary', 'trial-balance', 'general-ledger', 'partner-ledger',

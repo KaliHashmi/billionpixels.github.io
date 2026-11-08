@@ -59,7 +59,7 @@ export default function ScanReviewList() {
               subtitle={[item.kind ? t(KIND_LABELS[item.kind]) : '', item.reading?.reference ?? '', item.reading?.date ? fmtDate(item.reading.date) : '', item.error ? t(item.error) : ''].filter(Boolean).join(' · ')}
               right={item.reading?.total !== undefined ? money(item.reading.total) : undefined}
               badge={<Badge label={t(st.label)} tone={st.tone} />}
-              onPress={item.status === 'ready' ? () => open(item) : undefined}
+              onPress={item.status === 'ready' && st.label !== 'Removed' ? () => open(item) : undefined}
             />
           );
         }}

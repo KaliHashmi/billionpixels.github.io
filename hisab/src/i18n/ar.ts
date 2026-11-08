@@ -270,6 +270,7 @@ export const ar: Record<string, string> = {
   "Could not read": "تعذّرت القراءة",
   "Could not read the document": "تعذّرت قراءة المستند",
   "Could not read the photo.": "تعذّرت قراءة الصورة.",
+  "Could not read this file. Use a PDF, JPG or PNG that is not password-protected.": "تعذّرت قراءة هذا الملف. استخدم ملف PDF أو JPG أو PNG غير محمي بكلمة مرور.",
   "Could not share": "تعذرت المشاركة",
   "Could not start text recognition.": "تعذّر تشغيل التعرّف على النص.",
   "Count and close": "الجرد والإقفال",

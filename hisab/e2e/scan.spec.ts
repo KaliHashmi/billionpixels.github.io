@@ -1,5 +1,8 @@
 import { Browser, expect, Page, test } from '@playwright/test';
-import { demoSignIn, expectNoErrors, watchErrors } from './helpers';
+import { demoSignIn, expectNoErrors, signIn, watchErrors } from './helpers';
+
+// The tests run in Node, but the project's TypeScript settings have no Node types.
+declare const Buffer: { from(data: string): Uint8Array };
 
 // Supplier documents made on the fly: Chromium prints real PDFs (with text) and takes photos (screenshots).
 const CSS = 'body{font-family:Arial,sans-serif;padding:40px;font-size:16px}';
@@ -120,4 +123,60 @@ test('viewers cannot scan', async ({ page }) => {
   await page.goto('/moves?type=in_invoice');
   await expect(page.getByText('Upload PDF / Photo', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Scan Paper', { exact: true })).toHaveCount(0);
+});
+
+test('a damaged file or a blank picture is reported as unreadable, and the other files are still read', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin');
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByText('Upload PDF / Photo', { exact: true }).first().click();
+  await (await chooser).setFiles([
+    { name: 'broken.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 this is not really a PDF') },
+    { name: 'blank.png', mimeType: 'image/png', buffer: await photo(browser, '<div style="width:300px;height:200px"></div>') },
+    { name: 'invoice.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, EN) },
+  ]);
+  await expect(page.getByText('Could not read', { exact: true }).filter({ visible: true })).toHaveCount(2, { timeout: 90_000 });
+  await expect(page.getByText(/Use a PDF, JPG or PNG that is not password-protected/)).toBeVisible();
+  await expect(page.getByText(/No text could be read from this file/)).toBeVisible();
+  await expect(page.getByText(/Purchase bill · GP-3301/)).toBeVisible();
+  await expect(page.getByText('To check', { exact: true }).filter({ visible: true })).toHaveCount(1);
+  await expectNoErrors(page, errors);
+});
+
+test('Arabic: a credit note and a receipt uploaded together; the receipt is confirmed as a cash expense', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'accountant', 'ar');
+  const credit = '<div dir="rtl"><h1>مؤسسة النور للتجارة</h1><p>الرقم الضريبي: OM1100055555</p><h2>إشعار دائن</h2><p>رقم الإشعار: 15<br>التاريخ: 07/11/2026</p><p>الإجمالي قبل الضريبة 20.000<br>ضريبة القيمة المضافة 5% 1.000<br><b>الإجمالي شامل الضريبة 21.000</b></p></div>';
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByText('رفع PDF / صورة', { exact: true }).first().click();
+  await (await chooser).setFiles([
+    { name: 'إشعار.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, credit) },
+    { name: 'إيصال.png', mimeType: 'image/png', buffer: await photo(browser, RECEIPT) },
+  ]);
+  await expect(page.getByText('المستندات الممسوحة').first()).toBeVisible();
+  await expect(page.getByText('بانتظار المراجعة', { exact: true }).filter({ visible: true })).toHaveCount(2, { timeout: 90_000 });
+  await expect(page.getByText(/إشعار دائن من مورد · 15/)).toBeVisible();
+  await page.getByText(/مصروف نقدي · 55102/).filter({ visible: true }).first().click();
+  await expect(page.getByText(/مصروف نقدي دُفع في الحال/)).toBeVisible();
+  await expect(page.getByText('618000 الوقود والنقل').filter({ visible: true })).toBeVisible();
+  await page.getByText('تأكيد', { exact: true }).filter({ visible: true }).last().click();
+  await expect(page.getByText(/^PV\/\d{4}\/\d+$/).filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1);
+  // Back on the list (in the app, not a page reload), the receipt now shows as saved.
+  await page.goBack();
+  await expect(page.getByText('تم الحفظ', { exact: true }).filter({ visible: true })).toHaveCount(1);
+  await expectNoErrors(page, errors);
+});
+
+test('signing out forgets the scanned list', async ({ page, browser }) => {
+  await demoSignIn(page, 'admin');
+  await upload(page, 'Upload PDF / Photo', { name: 'invoice.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, EN) });
+  await expect(page.getByText('Read from the document')).toBeVisible({ timeout: 60_000 });
+  await page.goto('/account');
+  await page.getByText('Sign out', { exact: true }).click();
+  await signIn(page, 'admin');
+  await page.goto('/scan');
+  await expect(page.getByText('Nothing scanned yet')).toBeVisible();
 });
