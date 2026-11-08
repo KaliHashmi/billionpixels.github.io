@@ -87,15 +87,18 @@ export async function pickImage(): Promise<string | null> {
 
 const MAX_DOCUMENT_BYTES = 10_000_000;
 
-/** Let the user pick a PDF, JPG or PNG of a purchase document and return it as a data URI. Returns null if cancelled. */
-export async function pickDocumentFile(): Promise<{ dataUri: string; mimeType: string } | null> {
-  const res = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/jpeg', 'image/png'], copyToCacheDirectory: true });
-  if (res.canceled || !res.assets.length) return null;
-  const asset = res.assets[0];
-  const mimeType = asset.mimeType === 'application/pdf' || /\.pdf$/i.test(asset.name) ? 'application/pdf' : asset.mimeType === 'image/png' || /\.png$/i.test(asset.name) ? 'image/png' : 'image/jpeg';
-  if ((asset.size ?? 0) > MAX_DOCUMENT_BYTES) throw new Error('The file is too large. Use a PDF or photo under 10 MB.');
-  const data = Platform.OS === 'web' ? new Uint8Array(await (asset.file ?? (await (await fetch(asset.uri)).blob())).arrayBuffer()) : new Uint8Array(await new File(asset.uri).arrayBuffer());
-  return { dataUri: `data:${mimeType};base64,${toBase64(data)}`, mimeType };
+/** Let the user pick one or more PDFs, JPGs or PNGs of purchase documents, returned as data URIs. Empty if cancelled. */
+export async function pickDocumentFiles(): Promise<{ dataUri: string; mimeType: string }[]> {
+  const res = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/jpeg', 'image/png'], copyToCacheDirectory: true, multiple: true });
+  if (res.canceled || !res.assets.length) return [];
+  const out: { dataUri: string; mimeType: string }[] = [];
+  for (const asset of res.assets) {
+    const mimeType = asset.mimeType === 'application/pdf' || /\.pdf$/i.test(asset.name) ? 'application/pdf' : asset.mimeType === 'image/png' || /\.png$/i.test(asset.name) ? 'image/png' : 'image/jpeg';
+    if ((asset.size ?? 0) > MAX_DOCUMENT_BYTES) throw new Error('The file is too large. Use a PDF or photo under 10 MB.');
+    const data = Platform.OS === 'web' ? new Uint8Array(await (asset.file ?? (await (await fetch(asset.uri)).blob())).arrayBuffer()) : new Uint8Array(await new File(asset.uri).arrayBuffer());
+    out.push({ dataUri: `data:${mimeType};base64,${toBase64(data)}`, mimeType });
+  }
+  return out;
 }
 
 /** Longest side of a stored receipt photo. The web preview keeps the books in browser storage, so it keeps smaller photos. */

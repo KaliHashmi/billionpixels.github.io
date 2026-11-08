@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useBooks, useMoney } from '../../data/store';
 import { dashboard, JournalCard } from '../../domain/reports';
+import { ScanButtons } from '../../features/ScanDocument';
 import { useT } from '../../i18n';
 import { monthName } from '../../i18n/translate';
 import { BarChart, Button, ButtonRow, Card, Kpi, Legend, Row, Screen, SectionTitle } from '../../ui/components';
@@ -28,6 +29,8 @@ export default function DashboardScreen() {
         <Kpi label={t('Net profit (this FY)')} value={money(d.netProfitYtd)} tone={d.netProfitYtd >= 0 ? 'success' : 'danger'} onPress={() => router.push({ pathname: '/reports/[report]', params: { report: 'profit-loss' } })} />
         <Kpi label={t('Overdue payables')} value={money(d.overduePayable)} tone={d.overduePayable > 0 ? 'danger' : 'default'} onPress={() => router.push({ pathname: '/reports/[report]', params: { report: 'pending' } })} />
       </View>
+
+      <ScanButtons card />
 
       <ButtonRow>
         <Button small title={t('Receive Money')} icon="arrow-down-circle-outline" onPress={() => router.push({ pathname: '/payments/new', params: { partnerType: 'customer' } })} />

@@ -63,15 +63,56 @@ test('Arabic: an Arabic PDF invoice is read in Arabic', async ({ page, browser }
   await expectNoErrors(page, errors);
 });
 
-test('a photo of a till receipt is recognised on the device', async ({ page, browser }) => {
+test('a photo of a till receipt is recognised on the device and becomes a cash expense', async ({ page, browser }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
   await demoSignIn(page, 'admin');
   await upload(page, 'Upload PDF / Photo', { name: 'receipt.png', mimeType: 'image/png', buffer: await photo(browser, RECEIPT) });
-  await expect(page.getByText('Read from the document')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText('A cash expense paid on the spot.', { exact: false })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText('OMR 15.750').filter({ visible: true }).first()).toBeVisible();
-  await expect(page.getByLabel('Bill Date')).toHaveValue('2026-11-08');
+  // Fuel, from the words on the receipt; amount, date and VAT from the paper.
+  await expect(page.getByText('618000 Fuel & Transport').filter({ visible: true })).toBeVisible();
+  await expect(page.getByLabel('Amount')).toHaveValue(/15\.75/);
+  await page.getByText('Confirm', { exact: true }).filter({ visible: true }).last().click();
+  await expect(page.getByText(/^PV\/\d{4}\/\d+$/).filter({ visible: true }).first()).toBeVisible();
+  // The receipt is kept with the voucher.
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1);
   await expectNoErrors(page, errors);
+});
+
+test('several files at once are read, sorted into bill, credit note and expense, and listed for review', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin');
+  const credit = '<h1>Gulf Paper Trading LLC</h1><p>VATIN: OM1100024680</p><h2>CREDIT NOTE</h2><p>Credit Note No: CN-0042<br>Date: 06/11/2026</p><p>Subtotal 40.000<br>VAT 5% 2.000<br><b>Total OMR 42.000</b></p>';
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByText('Upload PDF / Photo', { exact: true }).first().click();
+  await (await chooser).setFiles([
+    { name: 'invoice.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, EN) },
+    { name: 'credit.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, credit) },
+    { name: 'receipt.png', mimeType: 'image/png', buffer: await photo(browser, RECEIPT) },
+  ]);
+  await expect(page.getByText('Scanned Documents').first()).toBeVisible();
+  await expect(page.getByText('To check').filter({ visible: true })).toHaveCount(3, { timeout: 90_000 });
+  await expect(page.getByText(/Purchase bill · GP-3301/)).toBeVisible();
+  await expect(page.getByText(/Vendor credit note · CN-0042/)).toBeVisible();
+  await expect(page.getByText(/Cash expense/)).toBeVisible();
+
+  // Open the bill and change it to a credit note with one tap: the same draft, another document type.
+  await page.getByText(/Purchase bill · GP-3301/).click();
+  await page.getByText('Vendor credit note', { exact: true }).filter({ visible: true }).click();
+  await expect(page.getByText('Draft Vendor Credit Note').filter({ visible: true })).toBeVisible();
+  // And to a cash expense: the draft goes, the form opens pre-filled.
+  await page.getByText('Cash expense', { exact: true }).filter({ visible: true }).click();
+  await expect(page.getByText('A cash expense paid on the spot.', { exact: false })).toBeVisible();
+  await expectNoErrors(page, errors);
+});
+
+test('Arabic: the Dashboard offers scanning and upload', async ({ page }) => {
+  await demoSignIn(page, 'accountant', 'ar');
+  await expect(page.getByText('مسح أو رفع مستند')).toBeVisible();
+  await expect(page.getByText('مسح ورقة', { exact: true })).toBeVisible();
+  await expect(page.getByText('رفع PDF / صورة', { exact: true })).toBeVisible();
 });
 
 test('viewers cannot scan', async ({ page }) => {

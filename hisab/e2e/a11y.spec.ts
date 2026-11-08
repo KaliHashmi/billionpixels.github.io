@@ -16,7 +16,7 @@ for (const lang of ['en', 'ar'] as const) {
     await scan(page, 'welcome');
     await demoSignIn(page, 'admin', lang);
     await scan(page, 'home');
-    for (const path of ['/moves?type=out_invoice', '/moves?type=in_invoice', '/settings', '/account']) {
+    for (const path of ['/moves?type=out_invoice', '/moves?type=in_invoice', '/scan', '/settings', '/account']) {
       await page.goto(path);
       await page.waitForTimeout(800);
       await scan(page, path);

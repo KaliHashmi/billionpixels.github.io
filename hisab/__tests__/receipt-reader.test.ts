@@ -1,5 +1,5 @@
 import { invoiceStatus, postMove, saveDraft } from '../src/domain/engine';
-import { draftBillFromReading, normaliseText, readReceipt, RECEIPT_MESSAGES } from '../src/domain/receiptReader';
+import { classifyDocument, draftBillFromReading, normaliseText, readReceipt, RECEIPT_MESSAGES, suggestAccount, vendorDefaults } from '../src/domain/receiptReader';
 import { createCompany } from '../src/domain/template';
 import { Partner } from '../src/domain/types';
 import { hasTranslation } from '../src/i18n/translate';
@@ -76,4 +76,39 @@ it('normalises Arabic separators', () => {
 
 it('has an Arabic translation for every reader message', () => {
   expect(Object.values(RECEIPT_MESSAGES).filter((m) => !hasTranslation(m))).toEqual([]);
+});
+
+describe('where a scanned paper goes', () => {
+  const s = company();
+  const kind = (text: string) => classifyDocument(text, readReceipt(s, text));
+  it('a supplier tax invoice becomes a purchase bill', () => expect(kind(ENGLISH)).toBe('bill'));
+  it('a credit note becomes a vendor credit note, with its number', () => {
+    const text = 'Muscat Office Supplies LLC\nVATIN OM1100012345\nCREDIT NOTE\nCredit Note No: CN-12\nTotal 10.500';
+    expect(kind(text)).toBe('credit');
+    expect(readReceipt(s, text).reference).toBe('CN-12');
+  });
+  it('Arabic: إشعار دائن becomes a vendor credit note', () => expect(kind('مؤسسة النور\nإشعار دائن رقم ٥\nالإجمالي ١٠٫٥٠٠')).toBe('credit'));
+  it('a till receipt becomes a cash expense', () => expect(kind('SHELL BAUSHER\nReceipt # 55102\nTOTAL OMR 15.750\nThank you')).toBe('expense'));
+  it('a paper with no invoice and no VAT number becomes a cash expense', () => expect(kind('Taxi Muscat\n08/11/2026\nTotal 5.000')).toBe('expense'));
+});
+
+it('suggests the account booked last time for this vendor, else one from keywords', () => {
+  let s = company();
+  const office = s.accounts.find((a) => a.code === '615000')!;
+  const fuel = s.accounts.find((a) => a.code === '618000')!;
+  const rent = s.accounts.find((a) => a.code === '612000')!;
+  expect(suggestAccount(s, 'SHELL BAUSHER\nUnleaded 91')).toBe(fuel.id);
+  expect(suggestAccount(s, 'إيجار المكتب لشهر نوفمبر')).toBe(rent.id);
+  expect(suggestAccount(s, 'Something else')).toBeUndefined();
+  // After a bill from this vendor is booked to Office Supplies, the next scan uses it.
+  const draft = draftBillFromReading(s, readReceipt(s, ENGLISH), '2026-11-08', 'Paper', { accountId: office.id });
+  s = postMove(saveDraft(s, draft), draft.id);
+  expect(vendorDefaults(s, 'v1').accountId).toBe(office.id);
+  expect(suggestAccount(s, 'fuel', 'v1')).toBe(office.id);
+});
+
+it('makes a vendor credit note when the paper is one', () => {
+  const s = company();
+  const draft = draftBillFromReading(s, readReceipt(s, ENGLISH), '2026-11-08', 'Return', { kind: 'credit' });
+  expect(draft.moveType).toBe('in_refund');
 });

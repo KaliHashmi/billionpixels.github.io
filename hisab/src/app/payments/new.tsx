@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
 import { editPayment, invoiceStatus, PAYMENT_METHOD_LABELS, paymentMatchedMoveIds, registerPayment } from '../../domain/engine';
+import { addAttachment } from '../../domain/attachments';
 import { PaymentMethod } from '../../domain/types';
 import { today } from '../../domain/utils';
 import { accountOptions, journalOptions, partnerOptions, taxOptions } from '../../features/entities';
+import { ScanExpenseBanner } from '../../features/ScanDocument';
+import { scanSession, useScanItem } from '../../features/scanSession';
 import { useT } from '../../i18n';
 import { Button, Card, Row, Screen } from '../../ui/components';
 import { DateField, NumberField, Segmented, SelectField, TextField } from '../../ui/fields';
@@ -14,12 +17,15 @@ import { colors, space } from '../../ui/theme';
 type PartnerType = 'customer' | 'supplier' | 'other';
 
 export default function RegisterPayment() {
-  const params = useLocalSearchParams<{ moveId?: string; partnerType?: PartnerType; direction?: 'inbound' | 'outbound'; journalId?: string; editId?: string }>();
+  const params = useLocalSearchParams<{ moveId?: string; partnerType?: PartnerType; direction?: 'inbound' | 'outbound'; journalId?: string; editId?: string; scan?: string }>();
   const s = useBooks();
   const lk = useLookups();
-  const { runWith } = useStore();
+  const { runWith, user } = useStore();
   const money = useMoney();
   const { t } = useT();
+  // A cash expense read from a scanned receipt: the form starts from what was read.
+  const scanItem = useScanItem(params.scan);
+  const scanned = scanItem?.reading;
   // Editing an existing voucher: the form starts from its current values.
   const editing = params.editId ? s.payments.find((p) => p.id === params.editId) : undefined;
   const matchedNames = editing ? paymentMatchedMoveIds(s, editing).map((id) => s.moves.find((m) => m.id === id)?.name ?? '') : [];
@@ -37,19 +43,19 @@ export default function RegisterPayment() {
   const journals = journalOptions(s, ['bank', 'cash'], t);
   const [partnerType, setPartnerType] = useState<PartnerType>(initialType);
   const [paymentType, setPaymentType] = useState<'inbound' | 'outbound'>(defaultDirection);
-  const [partnerId, setPartnerId] = useState<string | undefined>(editing ? editing.partnerId : move?.partnerId);
+  const [partnerId, setPartnerId] = useState<string | undefined>(editing ? editing.partnerId : move?.partnerId ?? scanned?.vendorId);
   const [journalId, setJournalId] = useState<string | undefined>(
     editing?.journalId ?? params.journalId ?? (initialType === 'other' ? s.journals.find((j) => j.type === 'cash')?.id : undefined) ?? journals[0]?.value,
   );
   const [method, setMethod] = useState<PaymentMethod>(editing?.method ?? 'bank_transfer');
-  const [amount, setAmount] = useState(editing?.amount ?? st?.residual ?? 0);
-  const [date, setDate] = useState(editing?.date ?? today());
-  const [memo, setMemo] = useState(editing ? editing.memo : move ? move.name : '');
+  const [amount, setAmount] = useState(editing?.amount ?? st?.residual ?? scanned?.total ?? scanned?.net ?? 0);
+  const [date, setDate] = useState(editing?.date ?? scanned?.date ?? today());
+  const [memo, setMemo] = useState(editing ? editing.memo : move ? move.name : scanned ? [scanned.vendorId ? '' : scanned.vendorGuess, scanned.reference].filter(Boolean).join(' · ') : '');
   const [chequeNumber, setChequeNumber] = useState(editing?.chequeNumber ?? '');
   const [chequeBank, setChequeBank] = useState(editing?.chequeBank ?? '');
   const [chequeDate, setChequeDate] = useState(editing?.chequeDate ?? today());
-  const [accountId, setAccountId] = useState<string | undefined>(editing?.counterpartAccountId);
-  const [taxId, setTaxId] = useState<string | undefined>(editing?.taxId);
+  const [accountId, setAccountId] = useState<string | undefined>(editing?.counterpartAccountId ?? scanItem?.accountId);
+  const [taxId, setTaxId] = useState<string | undefined>(editing?.taxId ?? scanned?.taxId);
   const isCash = journalId ? lk.journals.get(journalId)?.type === 'cash' : false;
   const inbound = paymentType === 'inbound';
 
@@ -78,8 +84,11 @@ export default function RegisterPayment() {
     }
     const id = runWith((x) => {
       const r = registerPayment(x, input);
-      return { state: r.state, value: r.payment.id };
+      // The scanned receipt is kept with the voucher.
+      const next = scanItem?.preview ? addAttachment(r.state, { ownerId: r.payment.id, dataUri: scanItem.preview, createdBy: user?.name }) : r.state;
+      return { state: next, value: r.payment.id };
     });
+    if (id && scanItem) scanSession.update(scanItem.id, { targetId: id });
     if (id) router.replace({ pathname: '/payments/[id]', params: { id } });
   };
 
@@ -98,6 +107,7 @@ export default function RegisterPayment() {
           <Row label={t('Amount Due')} value={money(st.residual)} bold />
         </Card>
       )}
+      {scanItem && !editing && <ScanExpenseBanner item={scanItem} />}
       {editing && (
         <Card>
           <Text style={{ fontWeight: '700', fontSize: 16 }}>{editing.name}</Text>

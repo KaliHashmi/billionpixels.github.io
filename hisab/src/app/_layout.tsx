@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StoreProvider, useStore } from '../data/store';
 import { CreateAdminScreen, ForcePasswordChangeScreen, LoginScreen, TermsGateScreen } from '../features/Auth';
+import { ScanHost } from '../features/ScanDocument';
 import { needsTermsAcceptance } from '../domain/legal';
 import Onboarding from '../features/Onboarding';
 import { I18nProvider, useT } from '../i18n';
@@ -54,6 +55,7 @@ function Gate() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+      <ScanHost />
     </View>
   );
 }

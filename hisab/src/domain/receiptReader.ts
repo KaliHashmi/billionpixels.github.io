@@ -103,7 +103,7 @@ const STRONG_TOTAL = /grand|incl|inc\.|with\s*vat|due|payable|شامل|المس�
 const NET = /sub\s*-?\s*total|net\s*amount|taxable\s*(amount|value)|total\s*(excl|exc\.|before|without)|amount\s*(excl|before)|المجموع\s*الفرعي|قبل\s*الضريبة|الخاضع\s*للضريبة|غير\s*شامل/i;
 const VAT = /\bvat\b|\btax\b|ضريبة\s*القيمة\s*المضافة|الضريبة|ض\.ق\.م/i;
 const NOT_VAT_AMOUNT = /vat\s*(no|number|reg|registration|in|id)|vatin|tax\s*(no|number|reg|id|card|invoice)|الرقم\s*الضريبي|رقم\s*التسجيل|سجل|فاتورة\s*ضريبية|tax\s*invoice/i;
-const REF = /(?:invoice|inv|bill|receipt|document|doc|ref(?:erence)?)\s*(?:no\.?|number|num|#)?\s*[:#.-]?\s*([A-Z0-9][A-Z0-9/_-]*\d[A-Z0-9/_-]*)|(?:رقم\s*(?:الفاتورة|الإيصال|المستند)|فاتورة\s*رقم|إيصال\s*رقم)\s*[:#.-]?\s*([A-Z0-9][A-Z0-9/_-]*\d[A-Z0-9/_-]*)/i;
+const REF = /(?:invoice|inv|bill|receipt|credit\s*note|note|document|doc|ref(?:erence)?)\s*(?:no\.?|number|num|#)?\s*[:#.-]?\s*([A-Z0-9][A-Z0-9/_-]*\d[A-Z0-9/_-]*)|(?:رقم\s*(?:الفاتورة|الإيصال|المستند|الإشعار)|فاتورة\s*رقم|إيصال\s*رقم|إشعار\s*دائن\s*رقم)\s*[:#.-]?\s*([A-Z0-9][A-Z0-9/_-]*\d[A-Z0-9/_-]*)/i;
 const DATE_LABEL = /date|التاريخ|تاريخ/i;
 const SKIP_NAME = /invoice|receipt|tax|vat|date|total|bill|فاتورة|إيصال|ايصال|ضريب|تاريخ|الإجمالي|page|صفحة/i;
 
@@ -187,11 +187,82 @@ export function readReceipt(state: AppState, rawText: string): ReceiptReading {
   return { vendorId, vendorGuess, vatin, reference, date, net, vat, total, rate, taxId, warnings };
 }
 
-/** A draft purchase bill holding what was read. Hisab recalculates VAT and the total from the net amount. */
-export function draftBillFromReading(state: AppState, reading: ReceiptReading, fallbackDate: string, lineLabel: string): Move {
+/** Where a scanned paper goes: a purchase bill, a vendor credit note, or a cash expense paid on the spot. */
+export type DocumentKind = 'bill' | 'credit' | 'expense';
+
+const CREDIT_WORDS = /credit\s*note|credit\s*memo|إشعار\s*دائن|اشعار\s*دائن/i;
+const RECEIPT_WORDS = /\breceipt\b|cash\s*sale|\bchange\b|\bcashier\b|\btill\b|\bpos\b|\bvisa\b|mastercard|thank\s*you|إيصال|ايصال|نقداً|شكراً/i;
+const INVOICE_WORDS = /invoice|فاتورة/i;
+
+/**
+ * Decide where a paper goes from its words: "credit note" → vendor credit note; a till receipt
+ * (receipt words, or no invoice and no supplier VAT number) → cash expense; otherwise a purchase bill.
+ */
+export function classifyDocument(rawText: string, reading: ReceiptReading): DocumentKind {
+  const text = normaliseText(rawText);
+  if (CREDIT_WORDS.test(text)) return 'credit';
+  const invoice = INVOICE_WORDS.test(text);
+  if (RECEIPT_WORDS.test(text) && !(invoice && reading.vatin)) return 'expense';
+  if (!invoice && !reading.vatin) return 'expense';
+  return 'bill';
+}
+
+/** Expense account by keywords on the paper (fuel, taxi, electricity, rent…), by account code in the chart. */
+const KEYWORD_ACCOUNTS: [RegExp, string][] = [
+  [/fuel|petrol|diesel|gasoline|shell|oman\s*oil|al\s*maha|taxi|uber|careem|parking|وقود|بنزين|ديزل|تاكسي|أجرة|مواقف/i, '618000'],
+  [/electricity|water|nama|كهرباء|مياه|نماء/i, '613000'],
+  [/omantel|ooredoo|vodafone|internet|mobile|telephone|اتصالات|إنترنت|انترنت|عمانتل|أوريدو/i, '619000'],
+  [/\brent\b|lease|إيجار|ايجار/i, '612000'],
+  [/stationery|printer|paper|toner|office\s*supplies|قرطاسية|أدوات\s*مكتبية|ورق/i, '615000'],
+  [/bank\s*(charge|fee)|رسوم\s*بنكية/i, '614000'],
+  [/advert|marketing|إعلان|تسويق/i, '616000'],
+];
+
+/**
+ * The account and tax this vendor was booked to last time (the newest posted bill, credit note or
+ * cash expense with that vendor), so a second scan needs almost no checking.
+ */
+export function vendorDefaults(state: AppState, vendorId: ID): { accountId?: ID; taxId?: ID } {
+  type Hit = { date: string; accountId?: ID; taxId?: ID };
+  const hits: Hit[] = [];
+  for (const m of state.moves) {
+    if (m.partnerId !== vendorId || m.state !== 'posted' || (m.moveType !== 'in_invoice' && m.moveType !== 'in_refund')) continue;
+    const line = m.invoiceLines.find((l) => l.accountId) ?? m.invoiceLines[0];
+    const booked = m.lines.find((l) => l.kind === 'product');
+    if (line || booked) hits.push({ date: m.date, accountId: line?.accountId ?? booked?.accountId, taxId: line?.taxIds[0] });
+  }
+  for (const p of state.payments) {
+    if (p.partnerId === vendorId && p.partnerType === 'other' && p.state === 'posted') hits.push({ date: p.date, accountId: p.counterpartAccountId, taxId: p.taxId });
+  }
+  const last = hits.sort((a, b) => b.date.localeCompare(a.date))[0];
+  return last ? { accountId: last.accountId, taxId: last.taxId } : {};
+}
+
+/** Account for a scanned paper: what this vendor was booked to before, else a keyword match, else none (journal default). */
+export function suggestAccount(state: AppState, rawText: string, vendorId?: ID): ID | undefined {
+  const remembered = vendorId ? vendorDefaults(state, vendorId).accountId : undefined;
+  if (remembered && state.accounts.some((a) => a.id === remembered)) return remembered;
+  const text = normaliseText(rawText);
+  for (const [words, code] of KEYWORD_ACCOUNTS) {
+    if (words.test(text)) {
+      const account = state.accounts.find((a) => a.code === code && a.active !== false);
+      if (account) return account.id;
+    }
+  }
+  return undefined;
+}
+
+/** A draft purchase bill (or vendor credit note) holding what was read. Hisab recalculates VAT and the total from the net amount. */
+export function draftBillFromReading(
+  state: AppState,
+  reading: ReceiptReading,
+  fallbackDate: string,
+  lineLabel: string,
+  opts: { kind?: 'bill' | 'credit'; accountId?: ID } = {},
+): Move {
   const partner = reading.vendorId ? state.partners.find((p) => p.id === reading.vendorId) : undefined;
   const date = reading.date ?? fallbackDate;
-  return newMove(state, 'in_invoice', {
+  return newMove(state, opts.kind === 'credit' ? 'in_refund' : 'in_invoice', {
     partnerId: partner?.id,
     date,
     invoiceDate: date,
@@ -199,7 +270,7 @@ export function draftBillFromReading(state: AppState, reading: ReceiptReading, f
     paymentTermId: partner?.paymentTermId ?? state.settings.defaultPaymentTermId,
     invoiceLines:
       reading.net !== undefined
-        ? [newInvoiceLine({ label: lineLabel, priceUnit: reading.net, taxIds: reading.taxId ? [reading.taxId] : [] })]
+        ? [newInvoiceLine({ label: lineLabel, priceUnit: reading.net, taxIds: reading.taxId ? [reading.taxId] : [], accountId: opts.accountId })]
         : [],
   });
 }
