@@ -29,6 +29,7 @@ import { AppState, InvoiceLine, Move, MoveLine, MoveType, Partner } from '../../
 import { newId, round } from '../../domain/utils';
 import { accountOptions, ENTITIES, journalOptions, partnerOptions, taxOptions, termOptions } from '../../features/entities';
 import { ReceiptPhotos } from '../../features/ReceiptPhotos';
+import { ScanReview } from '../../features/ScanDocument';
 import { moveBadge } from '../../features/status';
 import { useT } from '../../i18n';
 import { invoiceHtml } from '../../services/documents';
@@ -49,7 +50,7 @@ const ORIGIN_NOTES: Partial<Record<Move['origin'], string>> = {
 };
 
 export default function MoveScreen() {
-  const params = useLocalSearchParams<{ id: string; type?: MoveType; partnerId?: string }>();
+  const params = useLocalSearchParams<{ id: string; type?: MoveType; partnerId?: string; scan?: string }>();
   const { run, runWith } = useStore();
   const s = useBooks();
   const lk = useLookups();
@@ -189,6 +190,8 @@ export default function MoveScreen() {
         </Card>
       )}
 
+      {params.scan && <ScanReview scan={params.scan} move={draft} onVendor={(partnerId) => update({ partnerId })} />}
+
       <Card>
         {invoice ? <InvoiceHeader draft={draft} update={update} editable={editable} sale={sale} /> : <EntryHeader draft={draft} update={update} editable={editable} />}
       </Card>
@@ -292,7 +295,7 @@ function InvoiceHeader({ draft, update, editable, sale }: { draft: Move; update:
       )}
       <TextField label={t(sale ? 'Customer Reference' : 'Bill Reference')} value={draft.ref} onChange={(v) => update({ ref: v })} editable={editable} />
       <Row label={t('Journal')} value={t(lk.journals.get(draft.journalId)?.name ?? '')} />
-      {draft.partnerId && lk.partners.get(draft.partnerId)?.taxId ? <Row label={t('Customer VATIN')} value={lk.partners.get(draft.partnerId)!.taxId} /> : null}
+      {draft.partnerId && lk.partners.get(draft.partnerId)?.taxId ? <Row label={t(sale ? 'Customer VATIN' : 'Vendor VATIN')} value={lk.partners.get(draft.partnerId)!.taxId} /> : null}
     </>
   );
 }

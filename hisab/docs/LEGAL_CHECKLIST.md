@@ -17,11 +17,11 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 7 | Access and deletion | Done | Export Backup / CSV; Delete My Account; delete user; Delete Company; `site/delete-data.html` |
 | 8 | Retention limits | Done | Privacy §6 and §9: data stays until deleted; accounting records are kept for 10 years (Oman) |
 | 9 | Data minimisation | Done | Only the accounting data the user enters. Permissions: biometrics (optional), the file picker, and the camera and photo library for receipt photos (asked only when the user takes or chooses a photo; microphone disabled). Photos are reduced to 1600 px and stay on the device |
-| 10 | SDK and tracking audit | Done | No analytics, crash or ads SDKs. Dependencies in `package.json`; store labels say "Data not collected" |
+| 10 | SDK and tracking audit | Done | No analytics, crash or ads SDKs. Dependencies in `package.json`; store labels say "Data not collected". Document scanning uses pdf.js and Tesseract (Apache-2.0) bundled in the app (`assets/ocr/`, copied by `scripts/vendor-ocr.mjs`) and run on the device: no CDN, no network call |
 | 11 | Trackers before consent / cookie banner | N/A | No cookies or trackers. Web local storage is strictly necessary, so no banner is needed (stated in the privacy policy) |
 | 12 | Data processing agreements | N/A | No processor handles user data. GitHub Pages only serves the files (its own terms apply) |
 | 13 | Sub-processors list | Done | Privacy policy states that there are none, and names GitHub Pages as host |
-| 14 | No AI training | Done | No AI in the app; the privacy policy says data is never used to train AI |
+| 14 | No AI training | Done | No AI service in the app (document text recognition runs on the device); the privacy policy says data is never used to train AI |
 | 15 | Children | Done | Terms: 18+, business tool. Privacy §8: not directed at children |
 | 16 | Refund policy | Done | Terms §7: the app is free; future purchases are refunded through Apple and Google, without affecting Omani consumer rights |
 | 17 | Easy to cancel | N/A (today) | No subscriptions. Terms §7 commits to cancelling in a few taps in the store account |

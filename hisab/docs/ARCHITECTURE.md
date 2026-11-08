@@ -53,6 +53,8 @@ hisab/
 - **Native:** one SQLite file per variant (`hisab.db`, `hisab-uat.db`, `hisab-development.db`). There are two tables: `records(collection, id, data)` and `meta` (settings, sequences and `pref:*` preferences).
 - **Web preview:** the whole book is kept in `localStorage`.
 - **Nothing is sent over the network.** Files leave the device only through the system share sheet, when the user exports something.
+- **Receipt photos** are their own records (`attachments` collection, `src/domain/attachments.ts`), JPEG reduced to 1600 px (1000 px on the web, where `localStorage` is small), and are included in backups.
+- **Document scanning** (`src/features/ScanDocument.tsx`): a hidden DOM component (`src/features/DocumentReader.tsx`, a web view on iOS and Android) reads PDFs with pdf.js and photos or scanned pages with Tesseract (English and Arabic). Both are copied from `node_modules` into `assets/ocr/*.bin` by `scripts/vendor-ocr.mjs` on install (`metro.config.js` treats `.bin` as an asset) and loaded from the app itself. The text is turned into a draft bill by the pure, tested `src/domain/receiptReader.ts`.
 - **Passwords:** PBKDF2-HMAC-SHA256 with a random salt. Lockout after 5 failed attempts.
 - **Delete Company** (`storage.clear()`) erases records, settings and saved sign-in preferences. **Delete My Account** (`deleteOwnAccount`) and **Delete User** (`deleteUser`) remove a user's credentials. Accounting records never reference users.
 
@@ -61,8 +63,11 @@ hisab/
 | Asset | Source | Licence |
 | --- | --- | --- |
 | Icons | Ionicons, through `@expo/vector-icons` | MIT |
-| App icon and header logo | Made for Hisab | Owned |
+| App icon and header logo | Made for Hisab (`assets/brand/`); "HISAB" lettering in Montserrat | Owned; Montserrat under SIL OFL |
 | Fonts | System fonts only | — |
 | PDF in browser | jsPDF, html2canvas | MIT |
+| Reading PDFs | pdf.js (`pdfjs-dist`) | Apache-2.0 |
+| Text recognition | Tesseract (`tesseract.js`, `tesseract.js-core`), English and Arabic data (`@tesseract.js-data/eng`, `ara`) | Apache-2.0; data packages MIT |
+| Receipt photos | `expo-image-picker`, `expo-image-manipulator` | MIT |
 
 Add a row whenever a new asset or font is added.

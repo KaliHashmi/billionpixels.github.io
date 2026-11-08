@@ -19,10 +19,13 @@
     "verify": "npm run typecheck && npm run lint && npm test -- --ci",
     "build:web": "bash scripts/build-web.sh",
     "build:e2e": "APP_VARIANT=uat CI=1 expo export --platform web --output-dir dist --clear",
-    "test:e2e": "npm run build:e2e && playwright test"
+    "test:e2e": "npm run build:e2e && playwright test",
+    "postinstall": "node scripts/vendor-ocr.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
+    "@tesseract.js-data/ara": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
     "expo": "~58.0.20",
     "expo-constants": "~58.0.13",
     "expo-crypto": "~58.0.7",
@@ -40,13 +43,16 @@
     "expo-status-bar": "~58.0.4",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
+    "pdfjs-dist": "^6.5.438",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.0",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
     "react-native-svg": "15.16.0",
-    "react-native-web": "~0.21.4"
+    "react-native-web": "~0.21.4",
+    "react-native-webview": "^14.0.1",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

@@ -44,3 +44,6 @@ web-site/
 # end-to-end tests
 /playwright-report/
 /test-results/
+
+# Offline document reader, copied from node_modules on install (scripts/vendor-ocr.mjs)
+assets/ocr/

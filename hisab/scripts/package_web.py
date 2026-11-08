@@ -27,6 +27,11 @@ js = js.replace('"/__HB__"', 'self.__HB__')
 js = js.replace('"/__HB__/', 'self.__HB__+"/')
 left = [m.start() for m in re.finditer('__HB__', js) if not js[max(0, m.start() - 5):m.start()].endswith('self.')]
 print('unrewritten', len(left), [js[i - 40:i + 30] for i in left][:3])
+# The offline document reader (assets/ocr/*.bin) is loaded only when a document is scanned: ship it as files.
+for f in glob.glob(os.path.join(src, 'assets/**/*.bin'), recursive=True):
+    dest = os.path.join(out, os.path.relpath(f, src))
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copy(f, dest)
 os.makedirs(os.path.join(out, 'js'))
 open(os.path.join(out, 'js/hisab.js'), 'w', encoding='utf-8').write(js)
 # A new build gets a new script URL, so phones never keep running a cached older version.
