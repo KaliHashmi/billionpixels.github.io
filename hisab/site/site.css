@@ -1,6 +1,6 @@
 /* Hisab public pages. System fonts only: nothing is loaded from third-party servers. */
-:root{--brand:#714B67;--text:#1f2328;--muted:#5b616b;--bg:#f7f5f6;--card:#fff;--border:#e4dfe2}
-@media (prefers-color-scheme:dark){:root{--text:#e8e6e7;--muted:#a9a3a7;--bg:#18161a;--card:#221f24;--border:#3a3439}}
+:root{--brand:#1E66D0;--text:#1f2328;--muted:#5b616b;--bg:#f4f6f9;--card:#fff;--border:#e1e6ed}
+@media (prefers-color-scheme:dark){:root{--text:#e6e9ee;--muted:#a3abb7;--bg:#14181e;--card:#1c222a;--border:#333c48}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}
 header{background:var(--brand);color:#fff;padding:20px 16px}
@@ -15,7 +15,7 @@ h2{font-size:18px;margin:22px 0 6px}
 p,li{color:var(--text)}
 .meta{color:var(--muted);font-size:14px;margin:0 0 12px}
 a{color:var(--brand)}
-@media (prefers-color-scheme:dark){a{color:#d8a9cc}}
+@media (prefers-color-scheme:dark){a{color:#8fbaf3}}
 [dir=rtl]{font-family:system-ui,"Segoe UI",Tahoma,"Geeza Pro","Noto Naskh Arabic",Arial,sans-serif}
 footer{color:var(--muted);font-size:13px;text-align:center;padding:0 16px 32px}
 table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow-x:auto}

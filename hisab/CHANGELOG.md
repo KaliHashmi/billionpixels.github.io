@@ -4,6 +4,9 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 
 ## [Unreleased] — 1.0.0 candidate
 
+### Look
+- Brand colour changed from purple to FutureX blue (#1E66D0, from the ATND palette) in the app, the app icon, the splash screen, PDF documents and the public pages. White text on it meets WCAG AA (5.4:1).
+
 ### Legal launch checklist (35 items, see docs/LEGAL_CHECKLIST.md)
 - Terms of Use page (English and Arabic), linked in the app, the public pages and Settings.
 - "I agree to the Terms of Use and Privacy Policy" checkbox before creating a company, restoring a backup or loading the demo. The accepted version, time and person are recorded and written to the audit log. New terms ask the administrator again.

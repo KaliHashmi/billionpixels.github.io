@@ -1,7 +1,7 @@
 /** Text colours meet WCAG AA contrast (4.5:1) on white and on `bg`; `e2e/a11y.spec.ts` checks the screens. */
 export const colors = {
-  primary: '#714B67',
-  primaryDark: '#5A3B52',
+  primary: '#1E66D0',
+  primaryDark: '#174F96',
   accent: '#016E73',
   bg: '#F4F5F7',
   card: '#FFFFFF',

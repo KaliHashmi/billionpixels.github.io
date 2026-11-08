@@ -39,7 +39,7 @@ page = f'''<title>{title}</title>
   html, body {{ height: 100%; }}
   body {{ overflow: hidden; background: var(--bg); }}
   #root {{ display: flex; height: 100%; flex: 1; }}
-  #boot {{ margin: auto; font: 15px system-ui, sans-serif; color: #714B67; }}
+  #boot {{ margin: auto; font: 15px system-ui, sans-serif; color: #1E66D0; }}
 </style>
 <div id="root"><p id="boot">Loading Hisab…</p></div>
 <script>

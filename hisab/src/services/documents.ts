@@ -12,11 +12,11 @@ const esc = (s: string | undefined) =>
 const BASE_CSS = `
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Roboto, "Segoe UI", Tahoma, Arial, sans-serif; color: #1f2328; font-size: 12px; margin: 28px; }
-  h1 { color: #714B67; font-size: 20px; margin: 0 0 4px; }
-  h2 { font-size: 13px; margin: 16px 0 6px; color: #714B67; }
+  h1 { color: #1E66D0; font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; margin: 16px 0 6px; color: #1E66D0; }
   .muted { color: #6b7280; }
   .ar { direction: rtl; font-family: "Geeza Pro", "Noto Naskh Arabic", Tahoma, Arial, sans-serif; }
-  .header { display: flex; justify-content: space-between; gap: 16px; border-bottom: 3px solid #714B67; padding-bottom: 10px; margin-bottom: 14px; }
+  .header { display: flex; justify-content: space-between; gap: 16px; border-bottom: 3px solid #1E66D0; padding-bottom: 10px; margin-bottom: 14px; }
   .company { font-size: 15px; font-weight: 700; }
   .title { display: flex; justify-content: space-between; align-items: baseline; }
   table { width: 100%; border-collapse: collapse; margin-top: 8px; }
@@ -36,7 +36,7 @@ const BASE_CSS = `
   .box { border: 1px solid #e3e5e8; border-radius: 6px; padding: 10px 12px; margin: 8px 0; }
   .field { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dotted #c9ccd1; }
   .field b { font-weight: 600; color: #6b7280; min-width: 120px; }
-  .amount { font-size: 18px; font-weight: 800; color: #714B67; }
+  .amount { font-size: 18px; font-weight: 800; color: #1E66D0; }
   .sign { display: flex; justify-content: space-between; margin-top: 48px; gap: 24px; }
   .seal { display: flex; justify-content: flex-end; margin-top: 24px; page-break-inside: avoid; }
   .seal-box { width: 250px; text-align: center; }
