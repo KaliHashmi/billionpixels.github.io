@@ -1,5 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
@@ -81,6 +83,31 @@ export async function pickImage(): Promise<string | null> {
   const bytes = new Uint8Array(await new File(asset.uri).arrayBuffer());
   const mime = asset.mimeType === 'image/jpeg' || /\.jpe?g$/i.test(asset.name) ? 'image/jpeg' : 'image/png';
   return `data:${mime};base64,${toBase64(bytes)}`;
+}
+
+/** Longest side of a stored receipt photo. The web preview keeps the books in browser storage, so it keeps smaller photos. */
+const RECEIPT_MAX_SIDE = Platform.OS === 'web' ? 1000 : 1600;
+
+/**
+ * Take a photo with the camera, or choose one from the photo library, and return it reduced
+ * (JPEG, at most RECEIPT_MAX_SIDE pixels) as a data URI. Returns null if cancelled. The photo stays on the device.
+ */
+export async function pickReceiptPhoto(source: 'camera' | 'library'): Promise<string | null> {
+  if (source === 'camera' && Platform.OS !== 'web') {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) throw new Error('Allow camera access for Hisab in your phone settings to photograph receipts.');
+  }
+  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1 };
+  const res = source === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
+  if (res.canceled || !res.assets.length) return null;
+  const asset = res.assets[0];
+  const longest = Math.max(asset.width, asset.height);
+  const context = ImageManipulator.manipulate(asset.uri);
+  if (longest > RECEIPT_MAX_SIDE) context.resize(asset.width >= asset.height ? { width: RECEIPT_MAX_SIDE } : { height: RECEIPT_MAX_SIDE });
+  const image = await context.renderAsync();
+  const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.6, base64: true });
+  if (!saved.base64) throw new Error('Could not read the photo.');
+  return `data:image/jpeg;base64,${saved.base64}`;
 }
 
 export function toCsv(rows: (string | number | undefined)[][]): string {

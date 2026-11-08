@@ -10,7 +10,11 @@ function persist() {
   try {
     if (latest) localStorage.setItem(KEY, JSON.stringify(latest));
     else localStorage.removeItem(KEY);
-  } catch {
+  } catch (e) {
+    // A full browser store must be reported: the change would otherwise be lost on reload.
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      throw new Error('This browser has no room left to save the books. Remove some receipt photos or use the iPhone or Android app.\nلا توجد مساحة كافية في المتصفح لحفظ الدفاتر. احذف بعض صور الإيصالات أو استخدم تطبيق آيفون أو أندرويد.');
+    }
     // Storage unavailable (private mode): keep data in memory only.
   }
 }

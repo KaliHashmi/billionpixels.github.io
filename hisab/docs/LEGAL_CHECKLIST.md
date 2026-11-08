@@ -2,7 +2,7 @@
 
 The 35-item checklist from `.claude/skills/legal-launch-checklist/SKILL.md`, applied to Hisab. Re-run it before every release.
 
-**Last run:** 3 November 2026.
+**Last run:** 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again).
 
 Hisab keeps all books on the device. It has no server, no accounts held by us, no analytics, no payments and no AI. That is why many items are N/A, and each one becomes relevant again if that changes.
 
@@ -16,7 +16,7 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 6 | Business contact details | **Fixed** | Support page and Terms: FutureX Technical Solutions, Al Wizarat, Bausher, Muscat. Support email futurex.om@outlook.com, Commercial Registration No. 1685674 |
 | 7 | Access and deletion | Done | Export Backup / CSV; Delete My Account; delete user; Delete Company; `site/delete-data.html` |
 | 8 | Retention limits | Done | Privacy §6 and §9: data stays until deleted; accounting records are kept for 10 years (Oman) |
-| 9 | Data minimisation | Done | Only the accounting data the user enters. Permissions: biometrics (optional) and the file picker |
+| 9 | Data minimisation | Done | Only the accounting data the user enters. Permissions: biometrics (optional), the file picker, and the camera and photo library for receipt photos (asked only when the user takes or chooses a photo; microphone disabled). Photos are reduced to 1600 px and stay on the device |
 | 10 | SDK and tracking audit | Done | No analytics, crash or ads SDKs. Dependencies in `package.json`; store labels say "Data not collected" |
 | 11 | Trackers before consent / cookie banner | N/A | No cookies or trackers. Web local storage is strictly necessary, so no banner is needed (stated in the privacy policy) |
 | 12 | Data processing agreements | N/A | No processor handles user data. GitHub Pages only serves the files (its own terms apply) |

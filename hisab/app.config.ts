@@ -90,6 +90,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-sharing',
       'expo-document-picker',
       ['expo-local-authentication', { faceIDPermission: 'Allow Hisab to use Face ID to unlock your books.' }],
+      // Receipt photos: taken or chosen by the user, kept only on the device. No microphone (photos only).
+      [
+        'expo-image-picker',
+        {
+          cameraPermission: 'Allow Hisab to use the camera to photograph receipts and supplier invoices. Photos stay on this device.',
+          photosPermission: 'Allow Hisab to choose photos of receipts and supplier invoices. Photos stay on this device.',
+          microphonePermission: false,
+        },
+      ],
     ],
     experiments: { typedRoutes: false, ...(WEB_BASE ? { baseUrl: WEB_BASE } : {}) },
     extra: {

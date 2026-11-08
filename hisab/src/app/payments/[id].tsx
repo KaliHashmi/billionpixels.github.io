@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
 import { bounceCheque, cancelPayment, chequeStatus, clearCheque, PAYMENT_METHOD_LABELS, unclearCheque } from '../../domain/engine';
 import { today } from '../../domain/utils';
+import { ReceiptPhotos } from '../../features/ReceiptPhotos';
 import { useT } from '../../i18n';
 import { voucherHtml } from '../../services/documents';
 import { printHtml, sharePdf } from '../../services/files';
@@ -106,6 +107,7 @@ export default function PaymentScreen() {
           ))}
         </>
       )}
+      <ReceiptPhotos ownerId={p.id} docName={p.name} />
     </Screen>
   );
 }

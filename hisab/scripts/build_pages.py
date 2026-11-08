@@ -19,7 +19,7 @@ SITE_PATH = os.environ.get('HISAB_SITE_PATH', '/billionpixels.github.io/hisab')
 CONTACT = os.environ.get('HISAB_CONTACT_EMAIL', 'futurex.om@outlook.com')
 CR = os.environ.get('HISAB_CR_NUMBER', '1685674')  # FutureX Technical Solutions' Commercial Registration number.
 # Keep in step with TERMS_VERSION in src/domain/legal.ts: a new date makes the app ask for acceptance again.
-EFFECTIVE, EFFECTIVE_AR = '3 November 2026', '٣ نوفمبر ٢٠٢٦'
+EFFECTIVE, EFFECTIVE_AR = '8 November 2026', '٨ نوفمبر ٢٠٢٦'
 mail = f'<a href="mailto:{html.escape(CONTACT)}">{html.escape(CONTACT)}</a>' if CONTACT else ''
 values = {
     'BASE': SITE_PATH, 'EFFECTIVE_DATE': EFFECTIVE, 'EFFECTIVE_DATE_AR': EFFECTIVE_AR,

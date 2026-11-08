@@ -412,6 +412,18 @@ export interface AuditEntry {
   ref: string;
 }
 
+/** A photo of the paper document (receipt, supplier invoice) kept with a bill or payment. */
+export interface Attachment {
+  id: ID;
+  /** The document (move) or payment the photo belongs to. */
+  ownerId: ID;
+  /** JPEG or PNG data URI, already reduced in size. */
+  dataUri: string;
+  createdAt: string;
+  /** Name of the user who added it. */
+  createdBy?: string;
+}
+
 export interface AppState {
   settings: Settings;
   accounts: Account[];
@@ -432,6 +444,7 @@ export interface AppState {
   cashClosings: CashClosing[];
   users: User[];
   auditLog: AuditEntry[];
+  attachments: Attachment[];
   sequences: Record<string, number>;
 }
 

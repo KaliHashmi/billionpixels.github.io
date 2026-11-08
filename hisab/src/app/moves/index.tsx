@@ -4,6 +4,7 @@ import { FlatList, View } from 'react-native';
 import { useBooks, useLookups, useMoney } from '../../data/store';
 import { invoiceStatus, isInvoice } from '../../domain/engine';
 import { MoveType } from '../../domain/types';
+import { PurchaseImportButtons } from '../../features/PurchaseImport';
 import { moveBadge } from '../../features/status';
 import { useT } from '../../i18n';
 import { Badge, Chips, EmptyState, Fab, ListItem, SearchBar } from '../../ui/components';
@@ -84,6 +85,7 @@ export default function MovesList() {
       <View style={{ padding: space.md, gap: space.sm }}>
         <SearchBar value={q} onChangeText={setQ} placeholder={t('Search number, partner, reference…')} />
         <Chips options={filters} value={filter} onChange={setFilter} />
+        {type === 'in_invoice' && <PurchaseImportButtons />}
       </View>
       <FlatList
         data={visible}

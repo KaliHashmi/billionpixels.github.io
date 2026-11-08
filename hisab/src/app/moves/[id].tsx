@@ -12,6 +12,7 @@ import {
   duplicateMove,
   invoiceStatus,
   isInvoice,
+  isPurchaseDoc,
   isSaleDoc,
   MOVE_TYPE_LABELS,
   moveBalance,
@@ -27,6 +28,7 @@ import { computeInvoiceTotals } from '../../domain/tax';
 import { AppState, InvoiceLine, Move, MoveLine, MoveType, Partner } from '../../domain/types';
 import { newId, round } from '../../domain/utils';
 import { accountOptions, ENTITIES, journalOptions, partnerOptions, taxOptions, termOptions } from '../../features/entities';
+import { ReceiptPhotos } from '../../features/ReceiptPhotos';
 import { moveBadge } from '../../features/status';
 import { useT } from '../../i18n';
 import { invoiceHtml } from '../../services/documents';
@@ -204,6 +206,8 @@ export default function MoveScreen() {
           editable={editable}
         />
       </Card>
+
+      {isPurchaseDoc(draft.moveType) && <ReceiptPhotos ownerId={stored ? draft.id : undefined} docName={issued ? draft.name : t('Draft')} />}
 
       {invoice && draft.state === 'posted' && <JournalItems lines={draft.lines} />}
     </Screen>

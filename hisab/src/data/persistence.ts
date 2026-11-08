@@ -20,6 +20,7 @@ export const COLLECTIONS: CollectionName[] = [
   'cashClosings',
   'users',
   'auditLog',
+  'attachments',
 ];
 
 export const SCHEMA_VERSION = 1;

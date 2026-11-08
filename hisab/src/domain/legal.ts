@@ -2,7 +2,7 @@ import { AppState, ID } from './types';
 import { newId } from './utils';
 
 /** Date of the current Terms of Use and Privacy Policy (`site/terms.html`, `site/privacy.html`). Change it when either changes. */
-export const TERMS_VERSION = '2026-11-03';
+export const TERMS_VERSION = '2026-11-08';
 
 /** True until an administrator accepts the current terms for this company. */
 export function needsTermsAcceptance(state: AppState): boolean {

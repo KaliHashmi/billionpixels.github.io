@@ -100,7 +100,7 @@ First reviews usually take 1–3 days. A rejection plus a fix and resubmission a
 | **Data safety form** completed | Answers below |
 | **Closed testing**: *personal* developer accounts created after 13 Nov 2023 need **12 testers opted in for 14 consecutive days** before production access | Plan for it (below). *Organisation* accounts (with a D-U-N-S number) are exempt |
 | **Generative-AI content reporting** | Not applicable (no AI) |
-| **Permissions** declared and justified | Only biometrics (unlock) and internet. Storage, overlay and microphone permissions are blocked in `app.config.ts` |
+| **Permissions** declared and justified | Biometrics (unlock), camera and photo library (receipt photos, only when the user taps Take Photo or Choose Photo; purpose strings in the `expo-image-picker` plugin) and internet. Storage, overlay and microphone permissions are blocked in `app.config.ts`. Receipt photos stay on the device, so the privacy labels stay "Data Not Collected" |
 
 ### Data safety answers
 

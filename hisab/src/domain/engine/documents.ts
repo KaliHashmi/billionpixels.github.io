@@ -59,7 +59,7 @@ export function deleteDraft(state: AppState, moveId: ID): AppState {
   if (move.name !== '/' && move.state === 'draft') {
     throw new AccountingError('This entry already has a sequence number. Cancel it instead of deleting it.');
   }
-  return { ...state, moves: state.moves.filter((m) => m.id !== moveId) };
+  return { ...state, moves: state.moves.filter((m) => m.id !== moveId), attachments: (state.attachments ?? []).filter((a) => a.ownerId !== moveId) };
 }
 
 /** Generate the journal items of an invoice/bill/refund from its invoice lines. */
@@ -240,7 +240,7 @@ export function deleteMove(state: AppState, moveId: ID): AppState {
   const elsewhere = ELSEWHERE[move.origin];
   if (elsewhere) throw new AccountingError(elsewhere);
   if (move.name !== '/' || move.state !== 'draft') throw new AccountingError(RETENTION_MESSAGE);
-  return { ...state, moves: state.moves.filter((m) => m.id !== moveId) };
+  return { ...state, moves: state.moves.filter((m) => m.id !== moveId), attachments: (state.attachments ?? []).filter((a) => a.ownerId !== moveId) };
 }
 
 /**

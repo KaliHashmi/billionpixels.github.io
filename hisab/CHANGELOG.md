@@ -4,6 +4,11 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 
 ## [Unreleased] — 1.0.0 candidate
 
+### Purchases from paper and Excel
+- Import purchase bills and cash expenses from a CSV file (Vendors › Purchase Invoices › Import CSV), with a downloadable template. English or Arabic column names, day-first or ISO dates, VAT 5 / 0 / exempt. Bills are confirmed and numbered, expenses become payment vouchers; bad rows are listed by row number, and a bill already in the books is not imported twice.
+- Receipt photos: take or choose a photo of the paper receipt or supplier invoice on any purchase bill, vendor credit note or payment voucher. Photos are reduced in size, kept on the device and in backups; adding and removing them is recorded in the audit log.
+- Privacy policy updated for the camera and receipt photos (terms version 2026-11-08).
+
 ### Look
 - Brand colour changed from purple to FutureX blue (#1E66D0, from the ATND palette) in the app, the app icon, the splash screen, PDF documents and the public pages. White text on it meets WCAG AA (5.4:1).
 - New logo: حساب drawn as one geometric line with a cyan coin dot, and HISAB underneath. Used for the app icon, Android adaptive and monochrome icons, splash, favicon and the header. Source files in `assets/brand/`.
