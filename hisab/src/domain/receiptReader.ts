@@ -34,6 +34,7 @@ export const RECEIPT_MESSAGES = {
   vendorGuess: 'The vendor was not recognised (the paper shows "{name}"). Choose or create the vendor.',
   noVat: 'No VAT was found on the paper. Check whether VAT applies.',
   mismatch: 'The amounts on the paper do not add up: {net} + VAT {vat} is not {total}. Check the paper.',
+  notAccounting: "This doesn't look like a bill, receipt or credit note. Only accounting documents can be added.",
 } as const;
 
 const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
@@ -205,6 +206,21 @@ export function classifyDocument(rawText: string, reading: ReceiptReading): Docu
   if (RECEIPT_WORDS.test(text) && !(invoice && reading.vatin)) return 'expense';
   if (!invoice && !reading.vatin) return 'expense';
   return 'bill';
+}
+
+const AMOUNT_WORDS = /\b(sub\s*)?total\b|\bamount\b|الإجمالي|الاجمالي|المجموع|المبلغ/i;
+const CURRENCY = /\bOMR\b|\bR\.?O\b|ر\.\s?ع|ريال|بيسة|\bbaisa\b/i;
+
+/**
+ * Whether the text is that of a bill, receipt or credit note: an amount to pay plus at least one
+ * accounting sign (VAT number, invoice / receipt / VAT / total words, or the currency). Anything else
+ * (a person, a letter, a page of a book) is refused, so only accounting documents are kept in the books.
+ * A text check, not an image scanner: it looks only at the words on the paper.
+ */
+export function isAccountingDocument(rawText: string, reading: ReceiptReading): boolean {
+  if (!reading.total || reading.total <= 0) return false;
+  const text = normaliseText(rawText);
+  return !!reading.vatin || [INVOICE_WORDS, CREDIT_WORDS, RECEIPT_WORDS, VAT, AMOUNT_WORDS, CURRENCY].some((w) => w.test(text));
 }
 
 /** Expense account by keywords on the paper (fuel, taxi, electricity, rent…), by account code in the chart. */

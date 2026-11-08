@@ -1,5 +1,5 @@
 import { invoiceStatus, postMove, saveDraft } from '../src/domain/engine';
-import { classifyDocument, draftBillFromReading, normaliseText, readReceipt, RECEIPT_MESSAGES, suggestAccount, vendorDefaults } from '../src/domain/receiptReader';
+import { classifyDocument, draftBillFromReading, isAccountingDocument, normaliseText, readReceipt, RECEIPT_MESSAGES, suggestAccount, vendorDefaults } from '../src/domain/receiptReader';
 import { createCompany } from '../src/domain/template';
 import { Partner } from '../src/domain/types';
 import { hasTranslation } from '../src/i18n/translate';
@@ -111,4 +111,21 @@ it('makes a vendor credit note when the paper is one', () => {
   const s = company();
   const draft = draftBillFromReading(s, readReceipt(s, ENGLISH), '2026-11-08', 'Return', { kind: 'credit' });
   expect(draft.moveType).toBe('in_refund');
+});
+
+describe('only accounting documents are accepted', () => {
+  const s = company();
+  const ok = (text: string) => isAccountingDocument(text, readReceipt(s, text));
+  it('accepts a tax invoice, a credit note and a till receipt, in English and Arabic', () => {
+    expect(ok(ENGLISH)).toBe(true);
+    expect(ok('مؤسسة النور\nإشعار دائن رقم ٥\nالإجمالي ١٠٫٥٠٠')).toBe(true);
+    expect(ok('SHELL BAUSHER\nReceipt # 55102\nTOTAL OMR 15.750')).toBe(true);
+    expect(ok('Taxi Muscat\n08/11/2026\nTotal 5.000')).toBe(true);
+  });
+  it('refuses text with no total: a letter, a photo of a person, a page of a book', () => {
+    expect(ok('Dear Ahmed,\nThank you for your visit to our office last week.\nKind regards')).toBe(false);
+    expect(ok('~ ,. il1 | :; Ww mm\n.. ,,')).toBe(false);
+    expect(ok('الفصل الأول\nكان يا ما كان في قديم الزمان\nصفحة 12')).toBe(false);
+  });
+  it('refuses a total of nothing', () => expect(ok('Score sheet\nTotal 0')).toBe(false));
 });

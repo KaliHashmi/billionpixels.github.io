@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { Browser, expect, Page } from '@playwright/test';
 
 export type DemoUser = 'admin' | 'accountant' | 'owner';
 export const DEMO_PASSWORD = 'demo1234';
@@ -48,4 +48,16 @@ export async function openPostedInvoice(page: Page) {
 export async function pressAndConfirm(page: Page, label: string | RegExp, confirmLabel: string | RegExp = label) {
   await page.getByText(label, { exact: typeof label === 'string' }).last().click();
   await page.getByText(confirmLabel, { exact: typeof confirmLabel === 'string' }).last().click();
+}
+
+/** A till receipt, as printed. */
+export const RECEIPT_HTML = `<div style="width:420px;font-family:'Courier New',monospace;font-size:24px;line-height:1.5">SHELL BAUSHER<br>Receipt # 55102<br>08-11-2026 14:22<br>Unleaded 91<br>TOTAL OMR 15.750<br>Prices include VAT 5%</div>`;
+
+/** A "photo" of some paper or picture: a screenshot of the HTML, as a PNG. */
+export async function photo(browser: Browser, html: string) {
+  const p = await browser.newPage({ viewport: { width: 520, height: 420 } });
+  await p.setContent(`<body style="margin:0;padding:40px;background:#fff">${html}</body>`);
+  const data = await p.screenshot();
+  await p.close();
+  return data;
 }

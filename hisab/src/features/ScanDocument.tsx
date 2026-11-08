@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../data/store';
 import { addAttachment, attachmentsFor } from '../domain/attachments';
 import { deleteMove, saveDraft } from '../domain/engine';
-import { addVendorFromReading, classifyDocument, DocumentKind, draftBillFromReading, readReceipt, RECEIPT_MESSAGES, suggestAccount } from '../domain/receiptReader';
+import { addVendorFromReading, classifyDocument, DocumentKind, draftBillFromReading, isAccountingDocument, readReceipt, RECEIPT_MESSAGES, suggestAccount } from '../domain/receiptReader';
 import { computeInvoiceTotals } from '../domain/tax';
 import { AppState, Move } from '../domain/types';
 import { today } from '../domain/utils';
@@ -105,6 +105,8 @@ export function ScanHost() {
       const done = runWith((st) => {
         const reading = readReceipt(st, result.text);
         if (reading.warnings.some((w) => w.message === RECEIPT_MESSAGES.noText)) return { state: st, value: { ...item, status: 'failed' as const, source: null, error: RECEIPT_MESSAGES.noText } };
+        // Only accounting documents: anything else is refused and its picture forgotten.
+        if (!isAccountingDocument(result.text, reading)) return { state: st, value: { ...item, status: 'failed' as const, source: null, error: RECEIPT_MESSAGES.notAccounting } };
         const kind = classifyDocument(result.text, reading);
         const ready: ScanItem = { ...item, status: 'ready', source: null, text: result.text, preview: result.preview, reading, kind, accountId: suggestAccount(st, result.text, reading.vendorId) };
         if (kind === 'expense') return { state: st, value: ready };

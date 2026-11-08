@@ -1,5 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
-import { demoSignIn, expectNoErrors, watchErrors } from './helpers';
+import { demoSignIn, expectNoErrors, photo, RECEIPT_HTML, watchErrors } from './helpers';
 
 // The tests run in Node, but the project's TypeScript settings have no Node types.
 declare const Buffer: { from(data: string, encoding?: 'base64'): Uint8Array };
@@ -12,8 +12,8 @@ const CSV = [
   'not a date,bill,E2E Paper Co,E2E-003,Bad row,,10,5,',
 ].join('\n');
 
-// A 1×1 PNG, enough to stand in for a receipt photo.
-const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+// A picture with no accounting text on it (a face, a pet, a holiday photo would read the same).
+const PICTURE = '<div style="width:200px;height:200px;border-radius:100px;background:#f2c94c"></div><div style="font-size:36px">Happy Birthday!</div>';
 
 async function choose(page: Page, button: string | RegExp, file: { name: string; mimeType: string; buffer: Uint8Array }) {
   const chooser = page.waitForEvent('filechooser');
@@ -63,29 +63,67 @@ test('Arabic: purchases are imported with Arabic column names', async ({ page })
   await expectNoErrors(page, errors);
 });
 
-test('a receipt photo is kept with a purchase bill and can be viewed', async ({ page }) => {
+test('a receipt photo is checked, kept with a purchase bill and can be viewed', async ({ page, browser }) => {
+  test.setTimeout(90_000);
   const errors = watchErrors(page);
   await demoSignIn(page, 'admin');
   await page.goto('/moves?type=in_invoice');
   await page.getByText(/^BILL\/\d{4}\/\d+$/).first().click();
   await expect(page.getByText('Receipt Photos')).toBeVisible();
-  await choose(page, 'Choose Photo', { name: 'receipt.png', mimeType: 'image/png', buffer: PNG });
-  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1);
+  await choose(page, 'Choose Photo', { name: 'receipt.png', mimeType: 'image/png', buffer: await photo(browser, RECEIPT_HTML) });
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1, { timeout: 60_000 });
   await page.getByTestId('receipt-thumb').click();
   await page.getByText('Close', { exact: true }).click();
   await page.goto('/audit');
-  await expect(page.getByText('Added a receipt photo').first()).toBeVisible();
+  await expect(page.getByText('Added a receipt photo', { exact: true }).first()).toBeVisible();
   await expectNoErrors(page, errors);
 });
 
-test('Arabic: a receipt photo is added to a payment voucher', async ({ page }) => {
+test('Arabic: a receipt photo is added to a payment voucher', async ({ page, browser }) => {
+  test.setTimeout(90_000);
   const errors = watchErrors(page);
   await demoSignIn(page, 'admin', 'ar');
   await page.goto('/payments?partnerType=supplier');
   await page.getByText(/^PV\/\d{4}\/\d+ · /).first().click();
   await expect(page.getByText('صور الإيصالات')).toBeVisible();
-  await choose(page, 'اختيار صورة', { name: 'receipt.png', mimeType: 'image/png', buffer: PNG });
-  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1);
+  await choose(page, 'اختيار صورة', { name: 'receipt.png', mimeType: 'image/png', buffer: await photo(browser, RECEIPT_HTML) });
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(1, { timeout: 60_000 });
+  await expectNoErrors(page, errors);
+});
+
+test('a picture that is not a receipt is refused for an accountant', async ({ page, browser }) => {
+  test.setTimeout(90_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'accountant');
+  await page.goto('/moves?type=in_invoice');
+  await page.getByText(/^BILL\/\d{4}\/\d+$/).first().click();
+  const before = await page.getByTestId('receipt-thumb').count();
+  await choose(page, 'Choose Photo', { name: 'picture.png', mimeType: 'image/png', buffer: await photo(browser, PICTURE) });
+  await expect(page.getByText('Photo not added')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Ask an administrator to attach a handwritten or faded receipt/)).toBeVisible();
+  await page.getByText('OK', { exact: true }).last().click();
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(before);
+  await expectNoErrors(page, errors);
+});
+
+test('Arabic: an administrator may attach an unreadable photo after confirming, and it is in the audit log', async ({ page, browser }) => {
+  test.setTimeout(90_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin', 'ar');
+  await page.goto('/moves?type=in_invoice');
+  await page.getByText(/^BILL\/\d{4}\/\d+$/).first().click();
+  const before = await page.getByTestId('receipt-thumb').count();
+  // Cancel: nothing is attached.
+  await choose(page, 'اختيار صورة', { name: 'picture.png', mimeType: 'image/png', buffer: await photo(browser, PICTURE) });
+  await expect(page.getByText('إرفاقها على أي حال؟')).toBeVisible({ timeout: 60_000 });
+  await page.getByText('إلغاء', { exact: true }).last().click();
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(before);
+  // Confirm: attached, and recorded.
+  await choose(page, 'اختيار صورة', { name: 'picture.png', mimeType: 'image/png', buffer: await photo(browser, PICTURE) });
+  await page.getByText('إرفاق على أي حال', { exact: true }).click({ timeout: 60_000 });
+  await expect(page.getByTestId('receipt-thumb')).toHaveCount(before + 1);
+  await page.goto('/audit');
+  await expect(page.getByText('أضاف صورة إيصال لم يتمكن حساب من قراءتها').first()).toBeVisible();
   await expectNoErrors(page, errors);
 });
 

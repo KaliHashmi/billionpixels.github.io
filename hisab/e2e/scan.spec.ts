@@ -1,5 +1,5 @@
 import { Browser, expect, Page, test } from '@playwright/test';
-import { demoSignIn, expectNoErrors, signIn, watchErrors } from './helpers';
+import { demoSignIn, expectNoErrors, photo, RECEIPT_HTML as RECEIPT, signIn, watchErrors } from './helpers';
 
 // The tests run in Node, but the project's TypeScript settings have no Node types.
 declare const Buffer: { from(data: string): Uint8Array };
@@ -10,20 +10,11 @@ const EN = `<h1>Gulf Paper Trading LLC</h1><p>VATIN: OM1100024680</p><h2>TAX INV
 <p>Printer paper A4 10 x 12.000 = 120.000<br>Toner 1 x 80.000 = 80.000</p><p>Subtotal 200.000<br>VAT 5% 10.000<br><b>Total (incl. VAT) OMR 210.000</b></p>`;
 const AR = `<div dir="rtl"><h1>مؤسسة النور للتجارة</h1><p>الرقم الضريبي: OM1100055555</p><h2>فاتورة ضريبية</h2><p>رقم الفاتورة: 789<br>التاريخ: 15/11/2026</p>
 <p>الإجمالي قبل الضريبة 200.000<br>ضريبة القيمة المضافة 5% 10.000<br><b>الإجمالي شامل الضريبة 210.000</b></p></div>`;
-const RECEIPT = `<div style="width:420px;font-family:'Courier New',monospace;font-size:24px;line-height:1.5">SHELL BAUSHER<br>Receipt # 55102<br>08-11-2026 14:22<br>Unleaded 91<br>TOTAL OMR 15.750<br>Prices include VAT 5%</div>`;
 
 async function pdf(browser: Browser, html: string) {
   const p = await browser.newPage();
   await p.setContent(`<style>${CSS}</style>${html}`);
   const data = await p.pdf({ format: 'A4' });
-  await p.close();
-  return data;
-}
-
-async function photo(browser: Browser, html: string) {
-  const p = await browser.newPage({ viewport: { width: 520, height: 420 } });
-  await p.setContent(`<body style="margin:0;padding:40px;background:#fff">${html}</body>`);
-  const data = await p.screenshot();
   await p.close();
   return data;
 }
@@ -179,4 +170,42 @@ test('signing out forgets the scanned list', async ({ page, browser }) => {
   await signIn(page, 'admin');
   await page.goto('/scan');
   await expect(page.getByText('Nothing scanned yet')).toBeVisible();
+});
+
+// Not accounting papers: a letter and a birthday card, as a PDF and a photo.
+const LETTER = '<p>Dear Ahmed,</p><p>Thank you for visiting our office last week. We enjoyed meeting your family and hope to see you again soon.</p><p>Kind regards,<br>Salim</p>';
+const CARD = '<div style="font-size:40px;font-family:Georgia,serif;color:#a33">Happy Birthday Sara!</div><div style="margin-top:20px;width:120px;height:120px;border-radius:60px;background:#f2c94c"></div>';
+
+test('a file that is not a bill, receipt or credit note is refused and nothing is kept', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin');
+  await page.goto('/moves?type=in_invoice');
+  const drafts = page.getByText(/^Draft/).filter({ visible: true });
+  await expect(page.getByText(/^BILL\//).filter({ visible: true }).first()).toBeVisible();
+  const before = await drafts.count();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByText('Upload PDF / Photo', { exact: true }).first().click();
+  await (await chooser).setFiles([
+    { name: 'letter.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, LETTER) },
+    { name: 'card.png', mimeType: 'image/png', buffer: await photo(browser, CARD) },
+  ]);
+  await expect(page.getByText('Could not read', { exact: true }).filter({ visible: true })).toHaveCount(2, { timeout: 90_000 });
+  await expect(page.getByText(/This doesn't look like a bill, receipt or credit note/).filter({ visible: true })).toHaveCount(2);
+  await expect(page.getByText('To check', { exact: true })).toHaveCount(0);
+  // No draft was made from them.
+  await page.goto('/moves?type=in_invoice');
+  await expect(page.getByText(/^BILL\//).filter({ visible: true }).first()).toBeVisible();
+  await expect(drafts).toHaveCount(before);
+  await expectNoErrors(page, errors);
+});
+
+test('Arabic: a letter is refused as not an accounting document', async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'accountant', 'ar');
+  await upload(page, 'رفع PDF / صورة', { name: 'رسالة.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, '<div dir="rtl"><p>عزيزي أحمد،</p><p>شكراً لزيارتك مكتبنا الأسبوع الماضي، ونتمنى رؤيتك قريباً.</p><p>مع التحية، سالم</p></div>') });
+  await expect(page.getByText('تعذّرت القراءة', { exact: true }).filter({ visible: true })).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.getByText(/لا يبدو أن هذا المستند فاتورة أو إيصال أو إشعار دائن/)).toBeVisible();
+  await expectNoErrors(page, errors);
 });
