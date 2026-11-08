@@ -190,7 +190,7 @@ test('a file that is not a bill, receipt or credit note is refused and nothing i
     { name: 'letter.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, LETTER) },
     { name: 'card.png', mimeType: 'image/png', buffer: await photo(browser, CARD) },
   ]);
-  await expect(page.getByText('Could not read', { exact: true }).filter({ visible: true })).toHaveCount(2, { timeout: 90_000 });
+  await expect(page.getByText('Not accepted', { exact: true }).filter({ visible: true })).toHaveCount(2, { timeout: 90_000 });
   await expect(page.getByText(/This doesn't look like a bill, receipt or credit note/).filter({ visible: true })).toHaveCount(2);
   await expect(page.getByText('To check', { exact: true })).toHaveCount(0);
   // No draft was made from them.
@@ -205,7 +205,7 @@ test('Arabic: a letter is refused as not an accounting document', async ({ page,
   const errors = watchErrors(page);
   await demoSignIn(page, 'accountant', 'ar');
   await upload(page, 'رفع PDF / صورة', { name: 'رسالة.pdf', mimeType: 'application/pdf', buffer: await pdf(browser, '<div dir="rtl"><p>عزيزي أحمد،</p><p>شكراً لزيارتك مكتبنا الأسبوع الماضي، ونتمنى رؤيتك قريباً.</p><p>مع التحية، سالم</p></div>') });
-  await expect(page.getByText('تعذّرت القراءة', { exact: true }).filter({ visible: true })).toHaveCount(1, { timeout: 90_000 });
+  await expect(page.getByText('غير مقبول', { exact: true }).filter({ visible: true })).toHaveCount(1, { timeout: 90_000 });
   await expect(page.getByText(/لا يبدو أن هذا المستند فاتورة أو إيصال أو إشعار دائن/)).toBeVisible();
   await expectNoErrors(page, errors);
 });

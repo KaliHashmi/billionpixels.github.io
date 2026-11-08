@@ -669,6 +669,7 @@ export const ar: Record<string, string> = {
   "Non-current Assets": "الأصول غير المتداولة",
   "Non-current Liabilities": "الخصوم غير المتداولة",
   "None": "لا شيء",
+  "Not accepted": "غير مقبول",
   "Not allowed": "غير مسموح",
   "Not Depreciable Value (salvage)": "القيمة غير القابلة للإهلاك (الخردة)",
   "Not due": "غير مستحق",

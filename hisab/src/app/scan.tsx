@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { FlatList, View } from 'react-native';
 import { useBooks, useLookups, useMoney } from '../data/store';
 import { useT } from '../i18n';
+import { RECEIPT_MESSAGES } from '../domain/receiptReader';
 import { KIND_LABELS, ScanButtons, useScanActions } from '../features/ScanDocument';
 import { ScanItem, scanSession, useScanItems } from '../features/scanSession';
 import { Badge, Button, EmptyState, ListItem } from '../ui/components';
@@ -30,7 +31,7 @@ export default function ScanReviewList() {
   const status = (i: ScanItem): { label: string; tone: string } => {
     if (i.status === 'queued') return { label: 'Waiting', tone: 'draft' };
     if (i.status === 'reading') return { label: i.step === 'recognising' ? 'Recognising…' : 'Reading…', tone: 'partial' };
-    if (i.status === 'failed') return { label: 'Could not read', tone: 'overdue' };
+    if (i.status === 'failed') return { label: i.error === RECEIPT_MESSAGES.notAccounting ? 'Not accepted' : 'Could not read', tone: 'overdue' };
     if (i.kind === 'expense') return i.targetId ? { label: 'Saved', tone: 'paid' } : { label: 'To check', tone: 'pending' };
     const move = s.moves.find((m) => m.id === i.targetId);
     if (!move) return { label: 'Removed', tone: 'draft' };
