@@ -12,6 +12,9 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 - Only accounting documents are accepted: a scanned or uploaded file, and every receipt photo, is read on the device first and kept only if it shows an amount and an accounting sign (VAT number, invoice / receipt / VAT / total words, or the currency). Anything else (a person, a letter, a picture) is refused with a clear message and nothing is kept. An administrator may still attach a handwritten or faded receipt that cannot be read, after confirming; this is recorded in the audit log. Accountants are refused.
 - Privacy policy updated for the camera, receipt photos and on-device document reading (terms version 2026-11-08).
 
+### Development
+- `npm run impact`: before each push, lists the screens, shared code and tests that use the changed files, worked out from the imports in the code (no AI, nothing to keep up to date). Its own tests run in `npm run verify`.
+
 ### Look
 - Brand colour changed from purple to FutureX blue (#1E66D0, from the ATND palette) in the app, the app icon, the splash screen, PDF documents and the public pages. White text on it meets WCAG AA (5.4:1).
 - New logo: حساب drawn as one geometric line with a cyan coin dot, and HISAB underneath. Used for the app icon, Android adaptive and monochrome icons, splash, favicon and the header. Source files in `assets/brand/`.

@@ -9,6 +9,7 @@ Hisab (حساب) is an offline, bilingual (English/Arabic) accounting app for sm
 | Task | Command |
 | --- | --- |
 | All checks (run before every commit) | `npm run verify`: typecheck, lint and Jest |
+| What a change affects (before every push) | `npm run impact` (or `-- --since <ref>`): screens, shared code and tests that use the changed files, from the imports. No AI |
 | Browser tests (before pushing UI changes) | `npm run test:e2e`: builds the UAT web app and runs `e2e/` with Playwright |
 | Dev server | `npm start` · `npm run start:uat` · `npm run web` |
 | Browser previews and public pages | `npm run build:web` writes the output to `web-site/` (see `docs/RELEASE.md`) |
@@ -55,6 +56,7 @@ Superpowers adds the workflow: plan before coding, test first, review your own w
 3. UI changes pass `npm run test:e2e`. New flows get a test in `e2e/`, covering English **and** Arabic (RTL) and each role (admin, accountant, viewer) where it matters.
 4. New strings are translated in `src/i18n/ar.ts`.
 5. Commits are small and say *why*. Push only to the working branch; never open a PR unless asked.
+6. Before pushing, run `npm run impact` and tell the owner in plain words what the change touches (which screens and features) and which tests cover it. If a touched screen has no test, say so and check it by hand.
 
 ## Store and legal guardrails (do not break these)
 
