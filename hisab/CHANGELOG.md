@@ -6,6 +6,7 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 
 ### Look
 - Brand colour changed from purple to FutureX blue (#1E66D0, from the ATND palette) in the app, the app icon, the splash screen, PDF documents and the public pages. White text on it meets WCAG AA (5.4:1).
+- New logo: حساب drawn as one geometric line with a cyan coin dot, and HISAB underneath. Used for the app icon, Android adaptive and monochrome icons, splash, favicon and the header. Source files in `assets/brand/`.
 
 ### Legal launch checklist (35 items, see docs/LEGAL_CHECKLIST.md)
 - Terms of Use page (English and Arabic), linked in the app, the public pages and Settings.

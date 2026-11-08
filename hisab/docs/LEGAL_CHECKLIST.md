@@ -39,7 +39,7 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 29 | Colour contrast | **Fixed** | Theme colours darkened to WCAG AA (success, warning, danger, info, draft, muted, accent, UAT banner, tab labels). `e2e/a11y.spec.ts` runs axe on the welcome, home, invoices, invoice, settings and account screens in English and Arabic |
 | 30 | Alt text and accessible names | **Fixed** | Every text, number, date and search input now has an accessible name (`aria-label`); axe checks names and roles |
 | 31 | Keyboard navigation | **Fixed** | Web: the terms checkbox toggles with Space; a keyboard-only test creates a company |
-| 32 | Image, font and icon licences | Done | Icons: Ionicons via `@expo/vector-icons` (MIT). App icon made for Hisab. No web fonts |
+| 32 | Image, font and icon licences | Done | Icons: Ionicons via `@expo/vector-icons` (MIT). App icon and logo made for Hisab (`assets/brand/`); the "HISAB" lettering is Montserrat ExtraBold (SIL OFL, commercial use allowed). No web fonts in the app |
 | 33 | Open-source obligations | **Fixed** | Generated `/hisab/licenses/` page: every shipped package, its licence and the licence texts. Linked in Settings › About and from the Terms. No GPL-only packages (one dual-licensed BSD/GPL package is used under BSD) |
 | 34 | DMCA | N/A | No user content is published |
 | 35 | Unsubscribe in marketing email | N/A | No email is sent |

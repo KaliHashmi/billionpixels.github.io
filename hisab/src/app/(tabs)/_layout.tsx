@@ -39,7 +39,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{
           ...tab(t('Dashboard'), 'speedometer-outline'),
-          headerTitle: () => <Image source={require('../../../assets/header-logo.png')} accessibilityLabel={t('Hisab')} style={{ width: 30, height: 30 }} resizeMode="contain" />,
+          headerTitle: () => <Image source={require('../../../assets/header-logo.png')} accessibilityLabel={t('Hisab')} style={{ width: 64, height: 32 }} resizeMode="contain" />,
         }} />
       <Tabs.Screen name="customers" options={tab(t('Customers'), 'people-outline')} />
       <Tabs.Screen name="vendors" options={tab(t('Vendors'), 'cart-outline')} />
