@@ -8,6 +8,8 @@ for src, name in (('out-uat', 'hisab-uat'), ('out-production', 'hisab-app')):
     page = open(os.path.join(src, 'index.html'), encoding='utf-8').read()
     open(os.path.join(out, name, 'index.html'), 'w', encoding='utf-8').write(HEAD + page + '</body></html>')
     shutil.copy(os.path.join(src, 'js', 'hisab.js'), os.path.join(out, name, 'js', 'hisab.js'))
+    if os.path.isdir(os.path.join(src, 'assets')):  # offline document reader files
+        shutil.copytree(os.path.join(src, 'assets'), os.path.join(out, name, 'assets'))
 # Reloading a deep link inside the app lands on 404.html: it boots the app, which then shows that screen.
 app = open(os.path.join('out-production', 'index.html'), encoding='utf-8').read().replace('<title>Hisab</title>', '<title>Hisab</title>')
 guard = '<script>if (!/\\/hisab-(uat|app)(\\/|$)/.test(location.pathname)) document.write("<p style=\\"font:16px system-ui;margin:40px\\">Page not found.</p>");</script>'
