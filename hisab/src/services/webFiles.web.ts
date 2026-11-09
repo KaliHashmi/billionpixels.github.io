@@ -62,13 +62,13 @@ let printFrame: HTMLIFrameElement | undefined;
 
 /**
  * Print a document (invoice, voucher, reminder) on the web: it is drawn in a hidden frame and only that
- * frame is printed, not the app screen. No script runs in the frame (sandboxed; printing is allowed).
+ * frame is printed, not the app screen. No script runs in it: the document itself forbids scripts.
+ * The frames are not sandboxed: Safari then also blocks the load events the PDF library waits for.
  */
 export async function printHtmlOnWeb(html: string): Promise<void> {
   printFrame?.remove();
   const frame = document.createElement('iframe');
   printFrame = frame;
-  frame.setAttribute('sandbox', 'allow-same-origin allow-modals');
   frame.setAttribute('aria-hidden', 'true');
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
   document.body.appendChild(frame);
@@ -93,8 +93,6 @@ export async function htmlToPdfBlob(html: string): Promise<Blob> {
   const frame = document.createElement('iframe');
   // A4 at 96 dpi is 794px wide.
   frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:10px;border:0;visibility:hidden';
-  // No scripts run inside the document being drawn, whatever text it holds (defence in depth: all text is escaped).
-  frame.setAttribute('sandbox', 'allow-same-origin');
   document.body.appendChild(frame);
   try {
     const doc = frame.contentDocument!;

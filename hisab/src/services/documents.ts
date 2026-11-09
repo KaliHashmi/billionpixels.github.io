@@ -51,8 +51,9 @@ const BASE_CSS = `
 /** "English / عربي" label used on bilingual documents. */
 const bi = (en: string) => `${esc(en)} <span class="ar">${esc(translate('ar', en))}</span>`;
 
+// No script may run in a printed or PDF document, whatever text it holds (all text is also escaped).
 function doc(body: string, dir: 'ltr' | 'rtl' = 'ltr') {
-  return `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"/><style>${BASE_CSS}</style></head><body>${body}</body></html>`;
+  return `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"/><meta http-equiv="Content-Security-Policy" content="script-src 'none'"/><style>${BASE_CSS}</style></head><body>${body}</body></html>`;
 }
 
 /** Company stamp and authorised signature (empty when none is set up or switched off for this document). */

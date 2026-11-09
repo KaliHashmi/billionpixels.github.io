@@ -18,6 +18,12 @@ describe('documents (XSS)', () => {
       expect(html).toContain('&lt;script&gt;alert(2)&lt;/script&gt;');
     }
   });
+
+  it('every document forbids scripts itself, so no browser frame needs a sandbox (which breaks PDFs in Safari)', () => {
+    const s = createDemoCompany();
+    const invoice = s.moves.find((m) => m.moveType === 'out_invoice' && m.state === 'posted')!;
+    expect(invoiceHtml(s, invoice)).toContain(`<meta http-equiv="Content-Security-Policy" content="script-src 'none'"/>`);
+  });
 });
 
 describe('CSV exports (formula injection)', () => {

@@ -14,7 +14,7 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 
 ### Security (27-check review, docs/SECURITY_REVIEW.md)
 - PDF library jsPDF updated from 2.5.2 to 4.2.1 (removes known critical and high advisories); invoices and reports checked in English and Arabic.
-- The browser frame that draws PDFs is sandboxed, so no script can run in a document.
+- Every printed or PDF document forbids scripts itself, so no script can run in a document. (A first version sandboxed the PDF frame; that stopped Download PDF working in Safari on iPhone and Mac, and was fixed the same day.)
 - CSV exports keep cells starting with = + - @ as text, so a name cannot run as a formula in Excel.
 - Backups are refused if their records are malformed or a "photo" is not a JPG/PNG image.
 - The audit log now records adding a user, role changes and deactivation, password resets and password changes.
