@@ -60,7 +60,7 @@ Superpowers adds the workflow: plan before coding, test first, review your own w
 
 ## Store and legal guardrails (do not break these)
 
-Run the `legal-launch-checklist` skill before every release and whenever a change touches data, payments, marketing, AI, SDKs, accounts or public claims. Keep `docs/LEGAL_CHECKLIST.md` up to date. Changing `site/terms.html` or `site/privacy.html` means bumping `TERMS_VERSION` in `src/domain/legal.ts` and the effective date in `scripts/build_pages.py` together.
+Run the `legal-launch-checklist` skill before every release and whenever a change touches data, payments, marketing, AI, SDKs, accounts or public claims. Keep `docs/LEGAL_CHECKLIST.md` up to date. Run the `security-launch-checklist` skill (27 checks) before every release and whenever a change touches sign-in, roles, storage, files or packages; keep `docs/SECURITY_REVIEW.md` up to date. Changing `site/terms.html` or `site/privacy.html` means bumping `TERMS_VERSION` in `src/domain/legal.ts` and the effective date in `scripts/build_pages.py` together.
 
 The app is listed as **"Data Not Collected"** (App Store) and **"No data collected or shared"** (Google Play). Any change below needs the privacy policy (`site/privacy.html`), the store answers (`docs/STORE_SUBMISSION.md`) and possibly a consent screen updated **in the same change**:
 

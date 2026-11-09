@@ -166,7 +166,7 @@ export default function SettingsScreen() {
       <Card>
         <SectionTitle>{t('Data')}</SectionTitle>
         <Text style={{ color: colors.muted, marginVertical: space.sm }}>
-          {t('Your books are stored on this device. Export a backup regularly and keep it somewhere safe (email, Drive, iCloud). Oman law requires you to keep accounting and VAT records (invoices, credit notes, ledgers) for 10 years.')}
+          {t('Your books are stored on this device. Export a backup regularly and keep it somewhere safe (email, Drive, iCloud). Oman law requires you to keep accounting and VAT records (invoices, credit notes, ledgers) for 10 years.')} {t('The backup file holds all your books and is not encrypted: anyone who has the file can read them, so share it only with people you trust.')}
         </Text>
         <ButtonRow>
           <Button small title={t('Export Backup')} icon="cloud-upload-outline" onPress={backup} />

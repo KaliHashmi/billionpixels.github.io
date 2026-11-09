@@ -23,7 +23,7 @@ This is the standard for every new app we build, so each one is delivered clean,
   __tests__/
 .github/workflows/<app>.yml    typecheck, lint, test on push; EAS build on dispatch
 .claude/settings.json          shared plugins (expo, karpathy guidelines, superpowers, claude-code-setup)
-.claude/skills/                copy watch-video, legal-launch-checklist and change-impact from this repo
+.claude/skills/                copy watch-video, legal-launch-checklist, security-launch-checklist and change-impact from this repo
 ```
 
 Checklist:
@@ -34,6 +34,7 @@ Checklist:
 - [ ] Add the `verify` script: `typecheck && lint && test`.
 - [ ] Set up CI before writing features.
 - [ ] Run the `legal-launch-checklist` skill and start `docs/LEGAL_CHECKLIST.md`. Re-run it before every release.
+- [ ] Run the `security-launch-checklist` skill (27 checks) and start `docs/SECURITY_REVIEW.md`. Re-run it before every release.
 - [ ] Install the `change-impact` report (`npm run impact`, see the skill) and add its rule to the project's `CLAUDE.md`: before every push, tell the owner what the change touches.
 - [ ] Set up the UAT and production variants, each with its own database and app name, so they install side by side.
 

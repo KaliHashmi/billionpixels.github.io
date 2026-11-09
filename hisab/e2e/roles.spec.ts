@@ -64,3 +64,28 @@ test('administrator sees cancellations in the audit log', async ({ page }) => {
   await expect(page.getByText(name, { exact: true })).toBeVisible();
   await expect(page.getByText(/Demo Administrator \(admin\)/)).toBeVisible();
 });
+
+test('account changes by an administrator are recorded in the audit log', async ({ page }) => {
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin');
+  await page.goto('/users');
+  await page.getByText(/Demo Accountant \(accountant\)/).click();
+  await page.getByLabel('Password', { exact: true }).fill('temp12345');
+  await page.getByLabel('Confirm Password').fill('temp12345');
+  await page.getByText('Set Temporary Password').click();
+  await page.getByText('OK', { exact: true }).last().click();
+  await page.goto('/audit');
+  await expect(page.getByText('Reset password', { exact: true }).first()).toBeVisible();
+  await expectNoErrors(page, errors);
+});
+
+test('Arabic: a role change is recorded in the audit log', async ({ page }) => {
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin', 'ar');
+  await page.goto('/users');
+  await page.getByText(/\(owner\)/).click();
+  await page.getByText('حفظ', { exact: true }).click();
+  await page.goto('/audit');
+  await expect(page.getByText('عدّل مستخدماً', { exact: true }).first()).toBeVisible();
+  await expectNoErrors(page, errors);
+});

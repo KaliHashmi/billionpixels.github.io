@@ -63,6 +63,8 @@ export async function htmlToPdfBlob(html: string): Promise<Blob> {
   const frame = document.createElement('iframe');
   // A4 at 96 dpi is 794px wide.
   frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:10px;border:0;visibility:hidden';
+  // No scripts run inside the document being drawn, whatever text it holds (defence in depth: all text is escaped).
+  frame.setAttribute('sandbox', 'allow-same-origin');
   document.body.appendChild(frame);
   try {
     const doc = frame.contentDocument!;

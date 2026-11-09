@@ -12,6 +12,14 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 - Only accounting documents are accepted: a scanned or uploaded file, and every receipt photo, is read on the device first and kept only if it shows an amount and an accounting sign (VAT number, invoice / receipt / VAT / total words, or the currency). Anything else (a person, a letter, a picture) is refused with a clear message and nothing is kept. An administrator may still attach a handwritten or faded receipt that cannot be read, after confirming; this is recorded in the audit log. Accountants are refused.
 - Privacy policy updated for the camera, receipt photos and on-device document reading (terms version 2026-11-08).
 
+### Security (27-check review, docs/SECURITY_REVIEW.md)
+- PDF library jsPDF updated from 2.5.2 to 4.2.1 (removes known critical and high advisories); invoices and reports checked in English and Arabic.
+- The browser frame that draws PDFs is sandboxed, so no script can run in a document.
+- CSV exports keep cells starting with = + - @ as text, so a name cannot run as a formula in Excel.
+- Backups are refused if their records are malformed or a "photo" is not a JPG/PNG image.
+- The audit log now records adding a user, role changes and deactivation, password resets and password changes.
+- Settings says plainly that a backup file holds all the books and is not encrypted.
+
 ### Development
 - `npm run impact`: before each push, lists the screens, shared code and tests that use the changed files, worked out from the imports in the code (no AI, nothing to keep up to date). Its own tests run in `npm run verify`.
 

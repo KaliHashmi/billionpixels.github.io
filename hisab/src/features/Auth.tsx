@@ -153,7 +153,7 @@ export function ChangePasswordForm({ onDone, forced }: { onDone?: () => void; fo
   const submit = () => {
     if (password !== confirm) return notify(t('Passwords do not match'), t('Type the same password twice.'));
     try {
-      if (run((s) => changePassword(s, user.id, current, password, randomBytes), { allowReadOnly: true })) {
+      if (run((s) => changePassword(s, user.id, current, password, randomBytes), { allowReadOnly: true, audit: { action: 'Changed own password', ref: user.username } })) {
         notify(t('Password changed'), t('Use your new password next time you sign in.'));
         setCurrent('');
         setPassword('');

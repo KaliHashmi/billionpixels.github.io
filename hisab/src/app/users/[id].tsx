@@ -30,15 +30,15 @@ export default function UserForm() {
   const save = () => {
     if (!existing && password !== confirm) return notify(t('Passwords do not match'), t('Type the same password twice.'));
     const ok = existing
-      ? run((x) => updateUser(x, existing.id, { name, role, active }))
-      : run((x) => addUser(x, { username, name, role, password, mustChangePassword: true }, randomBytes).state);
+      ? run((x) => updateUser(x, existing.id, { name, role, active }), { audit: { action: 'Changed user', ref: `${existing.username}: ${role}${active ? '' : ', deactivated'}` } })
+      : run((x) => addUser(x, { username, name, role, password, mustChangePassword: true }, randomBytes).state, { audit: { action: 'Added user', ref: `${username}: ${role}` } });
     if (ok) router.back();
   };
 
   const reset = () => {
     if (!existing) return;
     if (password !== confirm) return notify(t('Passwords do not match'), t('Type the same password twice.'));
-    if (run((x) => resetPassword(x, existing.id, password, randomBytes))) {
+    if (run((x) => resetPassword(x, existing.id, password, randomBytes), { audit: { action: 'Reset password', ref: existing.username } })) {
       setPassword('');
       setConfirm('');
       notify(t('Password reset'), t('Give the temporary password to {name}. They must change it at the next sign-in.', { name: existing.name }));

@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { COLLECTIONS } from '../data/persistence';
 import { AppState } from '../domain/types';
 import { notify } from '../ui/dialog';
 
@@ -128,7 +129,9 @@ export async function pickReceiptPhoto(source: 'camera' | 'library'): Promise<st
 
 export function toCsv(rows: (string | number | undefined)[][]): string {
   const esc = (v: string | number | undefined) => {
-    const s = v === undefined ? '' : String(v);
+    let s = v === undefined ? '' : String(v);
+    // A text cell starting with = + - @ (or a tab) runs as a formula in Excel: keep it as text. Numbers stay numbers.
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s) && !/^-\d[\d,]*(\.\d+)?$/.test(s)) s = `'${s}`;
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return rows.map((r) => r.map(esc).join(',')).join('\n');
@@ -185,8 +188,14 @@ export function readBackup(text: string): AppState {
   } catch {
     throw new Error('This file is not a valid Hisab backup.');
   }
-  if (parsed.app !== 'hisab' || !parsed.state?.settings || !Array.isArray(parsed.state.accounts)) {
-    throw new Error('This file is not a valid Hisab backup.');
-  }
-  return parsed.state;
+  const state = parsed.state as Record<string, unknown> | undefined;
+  const valid =
+    parsed.app === 'hisab' &&
+    !!parsed.state?.settings &&
+    Array.isArray(parsed.state.accounts) &&
+    // Every list of records must be a list, and every photo a JPG or PNG image.
+    COLLECTIONS.every((c) => state?.[c] === undefined || Array.isArray(state[c])) &&
+    (parsed.state.attachments ?? []).every((a) => typeof a?.dataUri === 'string' && /^data:image\/(jpeg|png);base64,/.test(a.dataUri));
+  if (!valid) throw new Error('This file is not a valid Hisab backup.');
+  return parsed.state!;
 }
