@@ -10,7 +10,7 @@ import { AppState } from '../domain/types';
 import { notify } from '../ui/dialog';
 
 import { toBase64 } from '../domain/branding';
-import { DownloadDeclined, htmlToPdfBlob, imageToDataUri, saveFileOnWeb } from './webFiles';
+import { DownloadDeclined, htmlToPdfBlob, imageToDataUri, printHtmlOnWeb, saveFileOnWeb } from './webFiles';
 
 /** Shown when a browser view cannot save files at all. */
 function webUnavailable() {
@@ -57,6 +57,11 @@ export async function printHtml(html: string, filename = 'Document'): Promise<vo
   // Embedded previews (iframes) cannot open the print dialog: hand over a PDF to print instead.
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.top !== window.self) {
     await sharePdf(html, filename);
+    return;
+  }
+  // expo-print on the web prints the whole app screen, so the browser prints the document itself.
+  if (Platform.OS === 'web') {
+    await printHtmlOnWeb(html);
     return;
   }
   await Print.printAsync({ html });

@@ -58,6 +58,36 @@ export async function saveFileOnWeb(filename: string, data: string | Blob, mimeT
   return true;
 }
 
+let printFrame: HTMLIFrameElement | undefined;
+
+/**
+ * Print a document (invoice, voucher, reminder) on the web: it is drawn in a hidden frame and only that
+ * frame is printed, not the app screen. No script runs in the frame (sandboxed; printing is allowed).
+ */
+export async function printHtmlOnWeb(html: string): Promise<void> {
+  printFrame?.remove();
+  const frame = document.createElement('iframe');
+  printFrame = frame;
+  frame.setAttribute('sandbox', 'allow-same-origin allow-modals');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(frame);
+  const doc = frame.contentDocument!;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  // Wait for the stamp, signature and fonts, or they would be missing on paper.
+  await Promise.all(Array.from(doc.images).map((img) => img.decode().catch(() => undefined)));
+  if (doc.fonts?.ready) await doc.fonts.ready;
+  const remove = () => {
+    if (printFrame === frame) printFrame = undefined;
+    frame.remove();
+  };
+  frame.contentWindow!.addEventListener('afterprint', () => setTimeout(remove, 0));
+  frame.contentWindow!.focus();
+  frame.contentWindow!.print();
+}
+
 /** Render a full HTML document to an A4 PDF (text is rasterised, which keeps Arabic shaping intact). */
 export async function htmlToPdfBlob(html: string): Promise<Blob> {
   const frame = document.createElement('iframe');

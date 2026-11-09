@@ -4,7 +4,7 @@
 
 **What Hisab is, for security:** an offline app. The books live only on the device (SQLite on iOS/Android, browser storage on the web). There is no server, no API, no online payment, no cookie and no key to protect. The web version is static files on GitHub Pages. So most attacks in the checklist have nothing to reach; the ones that matter are a hostile name, file or backup, someone with another role on the same device, and the device itself.
 
-**Result:** no critical or high issue left in what ships. Four gaps fixed in this run (below), tests added for each. Two notes for the owner (end of page).
+**Result:** no critical or high issue left in what ships. Four gaps fixed in this run (below), tests added for each. Two notes for the owner (end of page); the first is fixed.
 
 | # | Check | Status | Proof / reason |
 | --- | --- | --- | --- |
@@ -38,5 +38,5 @@
 
 ## Notes for the owner
 
-1. **Printing on the web prints the screen, not the document.** Found during this review (not a security issue): on the web, outside the private preview, "Print" calls the browser's print of the whole page. "Download PDF" works and is the way to print there. Phones are not affected.
+1. **Printing on the web printed the screen, not the document.** Found during this review (not a security issue) and **fixed**: on the web, Print now draws the document in a hidden, sandboxed frame and prints only that frame (`e2e/pdf.spec.ts`, English and Arabic). Phones were never affected.
 2. **The books are as safe as the device.** Data on the phone is not encrypted by Hisab (the phone's own encryption and lock protect it; on the web, the browser profile does). Someone who can unlock the phone, or copy the browser's storage, can read the books whatever their Hisab role. This is normal for offline apps and is why Hisab tells users to use the device lock, biometric unlock and safe backups. Encrypting the books would change the store's encryption answer (`usesNonExemptEncryption`) and is a separate decision.

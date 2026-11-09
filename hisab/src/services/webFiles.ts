@@ -5,6 +5,10 @@ export async function saveFileOnWeb(_filename: string, _data: string | Blob, _mi
   return false;
 }
 
+export async function printHtmlOnWeb(_html: string): Promise<void> {
+  throw new Error('Not available on this platform');
+}
+
 export async function htmlToPdfBlob(_html: string): Promise<Blob> {
   throw new Error('Not available on this platform');
 }

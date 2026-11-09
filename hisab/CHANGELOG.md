@@ -19,6 +19,7 @@ All notable changes to Hisab. Versions follow [semantic versioning](https://semv
 - Backups are refused if their records are malformed or a "photo" is not a JPG/PNG image.
 - The audit log now records adding a user, role changes and deactivation, password resets and password changes.
 - Settings says plainly that a backup file holds all the books and is not encrypted.
+- Fixed: Print on the web printed the app screen instead of the document. It now prints the invoice, voucher or reminder itself.
 
 ### Development
 - `npm run impact`: before each push, lists the screens, shared code and tests that use the changed files, worked out from the imports in the code (no AI, nothing to keep up to date). Its own tests run in `npm run verify`.
