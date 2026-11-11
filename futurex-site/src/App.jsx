@@ -229,6 +229,12 @@ function Products({ t }) {
   );
 }
 
+/** 01, 02… in English; ٠١، ٠٢… on the Arabic page, like every other number there. */
+function stepNumber(n, arabic) {
+  const s = String(n).padStart(2, '0');
+  return arabic ? s.replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]) : s;
+}
+
 function Approach({ t }) {
   const { approach } = t;
   return (
@@ -239,7 +245,7 @@ function Approach({ t }) {
           {approach.steps.map((s, i) => (
             <li key={s.name} data-reveal={i * 0.08}>
               <span className="step-no mono" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
+                {stepNumber(i + 1, t.dir === 'rtl')}
               </span>
               <h3>{s.name}</h3>
               <p>{s.text}</p>
