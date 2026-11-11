@@ -413,23 +413,9 @@ html[lang='ar'] .product h3 .native { font-family: var(--font-display); font-siz
 @media (max-width: 560px) { .steps { grid-template-columns: minmax(0, 1fr); } }
 
 /* Company: "company at a glance" */
-.company-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(2rem, 7vw, 7rem); }
+.company-grid { display: grid; }
 .company .section-head { margin-bottom: 1.6rem; }
-.company-text { color: var(--mist); font-size: var(--step-1); max-width: 56ch; line-height: 1.75; }
-.company-side { display: grid; gap: 1.2rem; align-content: start; min-width: 0; }
-.facts { margin: 0; display: grid; border-top: 1px solid var(--line); }
-.facts div { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid var(--line); }
-.facts dt { color: var(--steel-d); }
-.facts dd { margin: 0; font-weight: 600; color: var(--white); overflow-wrap: anywhere; }
-.side-title { font-size: 0.72rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--steel-d); margin-top: 1.2rem; }
-html[lang='ar'] .side-title { letter-spacing: 0; font-size: 0.92rem; }
-.people { display: grid; }
-.people li { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding-block: 0.85rem; border-top: 1px solid var(--line); }
-.people li:last-child { border-bottom: 1px solid var(--line); }
-.person-name { font-weight: 600; color: var(--white); }
-.person-role { color: var(--steel-d); font-size: 0.92rem; }
-@media (max-width: 860px) { .company-grid { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 560px) { .people li { flex-direction: column; align-items: flex-start; gap: 0.15rem; } }
+.company-text { color: var(--mist); font-size: var(--step-1); max-width: 62ch; line-height: 1.75; }
 
 /* Contact (the back cover) */
 .contact .section-head h2 { font-size: var(--step-4); line-height: 1.04; letter-spacing: -0.03em; max-width: 15ch; }

@@ -266,27 +266,6 @@ function Company({ t }) {
             {company.text}
           </p>
         </div>
-        <div className="company-side">
-          <dl className="facts" data-reveal="0.1">
-            {company.facts.map(([k, v]) => (
-              <div key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <h3 className="side-title" data-reveal>
-            {company.leadershipTitle}
-          </h3>
-          <ul className="people">
-            {company.people.map(([name, role], i) => (
-              <li key={name} data-reveal={i * 0.06}>
-                <span className="person-name">{name}</span>
-                <span className="person-role">{role}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   );

@@ -108,17 +108,6 @@ const en = {
     eyebrow: 'The company',
     title: 'Omani-owned. Built for Oman.',
     text: 'FutureX Technical Solutions LLC was founded in Muscat in 2026 by three Omani partners. We work in Arabic and English, handle personal data under Oman’s Personal Data Protection Law, and keep support close to our clients.',
-    facts: [
-      ['Legal name', 'FutureX Technical Solutions LLC'],
-      ['Founded', '2026, Muscat'],
-      ['Ownership', '100% Omani'],
-    ],
-    leadershipTitle: 'Leadership',
-    people: [
-      ['Munther Ahmed Al Hashmi', 'General Manager'],
-      ['Mohanad Ahmed Al Hashmi', 'Head of App Development'],
-      ['Mohammed Saleh Al Balushi', 'Business Development Manager'],
-    ],
   },
   contact: {
     eyebrow: 'Contact',
@@ -236,17 +225,6 @@ const ar = {
     eyebrow: 'الشركة',
     title: 'شركة عُمانية، لخدمة عُمان.',
     text: 'تأسست فيوتشر اكس للحلول التقنية ش.م.م في مسقط عام ٢٠٢٦ على يد ثلاثة شركاء عُمانيين. نعمل بالعربية والإنجليزية، ونتعامل مع البيانات الشخصية وفق قانون حماية البيانات الشخصية العُماني، ونبقى قريبين من عملائنا بالدعم.',
-    facts: [
-      ['الاسم التجاري', 'فيوتشر اكس للحلول التقنية ش.م.م'],
-      ['التأسيس', '٢٠٢٦، مسقط'],
-      ['الملكية', 'عُمانية ١٠٠٪'],
-    ],
-    leadershipTitle: 'الإدارة',
-    people: [
-      ['منذر أحمد الهاشمي', 'المدير العام'],
-      ['مهند أحمد الهاشمي', 'مدير تطوير التطبيقات'],
-      ['محمد صالح البلوشي', 'مدير تطوير الأعمال'],
-    ],
   },
   contact: {
     eyebrow: 'تواصل معنا',
