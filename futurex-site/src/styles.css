@@ -260,10 +260,11 @@ html[lang='ar'] .kicker { font-family: var(--font-ar); letter-spacing: 0; font-s
   position: absolute;
   inset: 0;
   z-index: -1;
-  opacity: 0.7;
+  opacity: 1;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 70%, transparent 100%);
 }
+.hero-bg-in { position: absolute; inset: 0; opacity: 0.7; }
 .hero-inner { display: grid; gap: 1.6rem; }
 .hero-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.2rem; }
 .tag {

@@ -101,9 +101,10 @@ function Hero({ t, lang }) {
         .from(lang === 'ar' ? split.words : split.chars, { yPercent: 110, duration: 1.2, stagger: lang === 'ar' ? 0.07 : 0.022 }, '<0.1')
         .from('.hero-lead', { y: 24, autoAlpha: 0, duration: 1 }, '-=0.8')
         .from('.hero-ctas > *', { y: 18, autoAlpha: 0, duration: 0.9, stagger: 0.08 }, '-=0.75')
-        .from('.hero-bg', { autoAlpha: 0, duration: 2.4, ease: 'power2.out' }, 0);
-      // The threads drift up and fade as the hero leaves the screen.
-      gsap.to('.hero-bg', { yPercent: -12, autoAlpha: 0.25, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: true } });
+        .from('.hero-bg-in', { opacity: 0, duration: 2.4, ease: 'power2.out' }, 0);
+      // The threads drift up and dim a little as the hero leaves the screen. The load fade-in runs on the inner
+      // layer and this on the outer one, so the two never fight over the same opacity.
+      gsap.fromTo('.hero-bg', { yPercent: 0, opacity: 1 }, { yPercent: -12, opacity: 0.4, ease: 'none', immediateRender: false, scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: true } });
     }, ref);
     return () => ctx.revert();
   }, [lang]);
@@ -112,7 +113,9 @@ function Hero({ t, lang }) {
       <div className="stars" aria-hidden="true" />
       <div className="horizon" aria-hidden="true" />
       <div className="hero-bg" aria-hidden="true">
-        <Threads color={[0.62, 0.66, 0.72]} amplitude={1.25} distance={0.25} lineCount={64} thickness={0.55} speed={0.45} brightness={1.1} angle={lang === 'ar' ? -18 : 18} />
+        <div className="hero-bg-in">
+          <Threads color={[0.62, 0.66, 0.72]} amplitude={1.25} distance={0.25} lineCount={64} thickness={0.55} speed={0.45} brightness={1.1} angle={lang === 'ar' ? -18 : 18} />
+        </div>
       </div>
       <div className="wrap hero-inner">
         <p className="hero-eyebrow">
@@ -378,7 +381,6 @@ function Footer({ t }) {
         <img src={logo} alt="FutureX Technical Solutions" width="170" height="23" className="footer-logo" />
         <ul className="footer-meta">
           <li>{t.footer.rights}</li>
-          <li>{t.footer.cr}</li>
           <li>{t.footer.place}</li>
         </ul>
         <NavLink to="top" className="to-top">

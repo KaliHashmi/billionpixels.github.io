@@ -110,7 +110,6 @@ const en = {
     text: 'FutureX Technical Solutions LLC was founded in Muscat in 2026 by three Omani partners. We work in Arabic and English, handle personal data under Oman’s Personal Data Protection Law, and keep support close to our clients.',
     facts: [
       ['Legal name', 'FutureX Technical Solutions LLC'],
-      ['Commercial Registration', '1685674'],
       ['Founded', '2026, Muscat'],
       ['Ownership', '100% Omani'],
     ],
@@ -135,7 +134,7 @@ const en = {
     copy: 'Copy',
     copied: 'Copied',
   },
-  footer: { rights: '© 2026 FutureX Technical Solutions LLC', cr: 'Commercial Registration 1685674', place: 'Muscat, Sultanate of Oman', top: 'Back to top' },
+  footer: { rights: '© 2026 FutureX Technical Solutions LLC', place: 'Muscat, Sultanate of Oman', top: 'Back to top' },
 };
 
 const ar = {
@@ -239,7 +238,6 @@ const ar = {
     text: 'تأسست فيوتشر اكس للحلول التقنية ش.م.م في مسقط عام ٢٠٢٦ على يد ثلاثة شركاء عُمانيين. نعمل بالعربية والإنجليزية، ونتعامل مع البيانات الشخصية وفق قانون حماية البيانات الشخصية العُماني، ونبقى قريبين من عملائنا بالدعم.',
     facts: [
       ['الاسم التجاري', 'فيوتشر اكس للحلول التقنية ش.م.م'],
-      ['السجل التجاري', '١٦٨٥٦٧٤'],
       ['التأسيس', '٢٠٢٦، مسقط'],
       ['الملكية', 'عُمانية ١٠٠٪'],
     ],
@@ -264,7 +262,7 @@ const ar = {
     copy: 'نسخ',
     copied: 'تم النسخ',
   },
-  footer: { rights: '© ٢٠٢٦ فيوتشر اكس للحلول التقنية ش.م.م', cr: 'سجل تجاري ١٦٨٥٦٧٤', place: 'مسقط، سلطنة عُمان', top: 'العودة إلى الأعلى' },
+  footer: { rights: '© ٢٠٢٦ فيوتشر اكس للحلول التقنية ش.م.م', place: 'مسقط، سلطنة عُمان', top: 'العودة إلى الأعلى' },
 };
 
 export const CONTENT = { en, ar };
