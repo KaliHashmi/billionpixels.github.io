@@ -101,7 +101,6 @@ function Hero({ t, lang }) {
         .from(lang === 'ar' ? split.words : split.chars, { yPercent: 110, duration: 1.2, stagger: lang === 'ar' ? 0.07 : 0.022 }, '<0.1')
         .from('.hero-lead', { y: 24, autoAlpha: 0, duration: 1 }, '-=0.8')
         .from('.hero-ctas > *', { y: 18, autoAlpha: 0, duration: 0.9, stagger: 0.08 }, '-=0.75')
-        .from('.hero-facts > *', { autoAlpha: 0, duration: 0.8, stagger: 0.06 }, '-=0.6')
         .from('.hero-bg', { autoAlpha: 0, duration: 2.4, ease: 'power2.out' }, 0);
       // The threads drift up and fade as the hero leaves the screen.
       gsap.to('.hero-bg', { yPercent: -12, autoAlpha: 0.25, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: true } });
@@ -134,11 +133,6 @@ function Hero({ t, lang }) {
             {t.hero.secondary}
           </NavLink>
         </div>
-        <ul className="hero-facts">
-          {t.hero.facts.map((f) => (
-            <li key={f}>{f}</li>
-          ))}
-        </ul>
       </div>
     </section>
   );

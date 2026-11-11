@@ -22,7 +22,6 @@ const en = {
     lead: 'FutureX Technical Solutions designs, builds and supports the technology organisations in Oman run on: telecom infrastructure, data centres, artificial intelligence and software.',
     primary: 'Talk to our team',
     secondary: 'See what we do',
-    facts: ['Omani-owned LLC', 'CR 1685674', 'Arabic and English'],
   },
   layers: {
     eyebrow: 'What we do',
@@ -153,7 +152,6 @@ const ar = {
     lead: 'تصمّم فيوتشر اكس للحلول التقنية وتنفّذ وتدعم التقنيات التي تعمل عليها المؤسسات في سلطنة عُمان: البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، والتطبيقات.',
     primary: 'تحدّث مع فريقنا',
     secondary: 'تعرّف على خدماتنا',
-    facts: ['شركة عُمانية ش.م.م', 'سجل تجاري ١٦٨٥٦٧٤', 'بالعربية والإنجليزية'],
   },
   layers: {
     eyebrow: 'خدماتنا',

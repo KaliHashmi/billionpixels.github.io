@@ -292,17 +292,6 @@ html[lang='ar'] .hero-title { line-height: 1.25; max-width: 14ch; }
 .hero-title .dim { color: var(--steel); }
 .hero-lead { max-width: 58ch; font-size: var(--step-1); color: var(--mist); line-height: 1.7; }
 .hero-ctas { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.4rem; }
-.hero-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, max-content));
-  gap: 0.6rem 3rem;
-  margin-top: clamp(1.5rem, 4vw, 3rem);
-  padding-top: 1.3rem;
-  border-top: 1px solid var(--line-dark);
-  font-size: 0.9rem;
-  color: var(--mist);
-}
-@media (max-width: 560px) { .hero-facts { grid-template-columns: minmax(0, 1fr); } }
 
 /* Sections (the inner pages) */
 .section { padding-block: clamp(5rem, 10vw, 8.5rem); position: relative; }
