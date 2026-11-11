@@ -3,6 +3,7 @@
 This repository holds two things:
 
 - `hisab/`: the Hisab accounting app (Expo / React Native). **Read `hisab/CLAUDE.md` before working on it.** It covers the commands, the architecture, the definition of done, and the store and legal guardrails.
+- `futurex-site/`: the FutureX company website (Vite + React, English and Arabic). Its `README.md` has the commands, tools, hosting (Cloudflare Pages, never Vercel's free plan) and the launch steps.
 - Root files (`index.html`, `app.js.txt`, `styles.css .txt`): the original Billion Pixels page. Leave them alone unless asked.
 
 Publisher of every app in this account: FutureX Technical Solutions (فيوتشر اكس للحلول التقنية), Al Wizarat, Bausher, Muscat, Commercial Registration No. 1685674. Support email for all apps: futurex.om@outlook.com.
