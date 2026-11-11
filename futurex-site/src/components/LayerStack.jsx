@@ -1,4 +1,4 @@
-// The four service layers drawn as an isometric stack: the network at the bottom, applications on top.
+// The four services drawn as separate isometric plates, one per service; the one being read lifts and lights up.
 // Each plate's top face is a unit square mapped onto the isometric diamond, so the drawings on it
 // (fibre runs, rack rows, a neural network, app screens) sit in true perspective.
 
@@ -74,7 +74,6 @@ const DRAWINGS = [Telecom, DataCentre, Ai, Apps];
 export default function LayerStack({ items, active, label }) {
   return (
     <svg className="stack" viewBox={`0 -24 ${W} 630`} role="img" aria-label={label}>
-      <path d={`M${W / 2} ${cyOf(0)} V${cyOf(3)}`} className="spine" />
       {items.map((item, i) => {
         const cy = cyOf(i);
         const top = cy - HALF_H;
@@ -89,9 +88,6 @@ export default function LayerStack({ items, active, label }) {
             <g transform={`matrix(${HALF_W} ${HALF_H} ${-HALF_W} ${HALF_H} ${W / 2} ${top})`} className="art">
               <Drawing />
             </g>
-            <text x={x1 + 10} y={cy + 5} className="code">
-              {item.code}
-            </text>
           </g>
         );
       })}

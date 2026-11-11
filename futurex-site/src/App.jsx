@@ -97,8 +97,7 @@ function Hero({ t, lang }) {
       // Arabic letters join, so Arabic is animated word by word; English letter by letter.
       const split = SplitText.create(title, { type: lang === 'ar' ? 'words,lines' : 'chars,lines', mask: 'lines' });
       const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-      tl.from('.hero-eyebrow', { y: 16, autoAlpha: 0, duration: 0.8 })
-        .from(lang === 'ar' ? split.words : split.chars, { yPercent: 110, duration: 1.2, stagger: lang === 'ar' ? 0.07 : 0.022 }, '<0.1')
+      tl.from(lang === 'ar' ? split.words : split.chars, { yPercent: 110, duration: 1.2, stagger: lang === 'ar' ? 0.07 : 0.022 }, 0.1)
         .from('.hero-lead', { y: 24, autoAlpha: 0, duration: 1 }, '-=0.8')
         .from('.hero-ctas > *', { y: 18, autoAlpha: 0, duration: 0.9, stagger: 0.08 }, '-=0.75')
         .from('.hero-bg-in', { opacity: 0, duration: 2.4, ease: 'power2.out' }, 0);
@@ -118,9 +117,6 @@ function Hero({ t, lang }) {
         </div>
       </div>
       <div className="wrap hero-inner">
-        <p className="hero-eyebrow">
-          <span className="tag">{t.hero.eyebrow}</span>
-        </p>
         <h1 className="hero-title" id="hero-title">
           {t.hero.title[0]}
           <br />
@@ -191,7 +187,6 @@ function Layers({ t }) {
               <li key={item.id} className={`layer${i === active ? ' is-active' : ''}`}>
                 <div className="layer-top">
                   <LayerIcon id={item.id} />
-                  <p className="layer-code mono">{item.code}</p>
                 </div>
                 <h3>{item.name}</h3>
                 <p className="tagline">{item.tagline}</p>

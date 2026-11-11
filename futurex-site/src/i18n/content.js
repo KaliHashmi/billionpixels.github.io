@@ -16,22 +16,20 @@ const en = {
   },
   nav: { layers: 'What we do', products: 'Products', approach: 'How we work', company: 'Company', contact: 'Contact', cta: 'Talk to us', lang: 'العربية', langLabel: 'Read this site in Arabic', menu: 'Menu', close: 'Close' },
   hero: {
-    eyebrow: 'Muscat · Sultanate of Oman',
-    title: ['From the fibre', 'to the app.'],
-    lead: 'FutureX Technical Solutions designs, builds and supports the technology organisations in Oman run on: telecom infrastructure, data centres, artificial intelligence and software.',
+    title: ['Four services.', 'One standard.'],
+    lead: 'Telecom infrastructure, data centres, artificial intelligence and software development. FutureX Technical Solutions offers each as a separate service, so you hire us for exactly what your project needs.',
     primary: 'Talk to our team',
-    secondary: 'See what we do',
+    secondary: 'See our services',
   },
   layers: {
     eyebrow: 'What we do',
-    title: 'Four layers. One accountable partner.',
+    title: 'Each service stands on its own.',
     intro:
-      'Every digital service sits on a stack. The network carries it, the data centre hosts it, AI makes sense of its data, and the application puts it in people’s hands. We work on all four, so the parts fit together.',
-    stackLabel: 'The technology stack, from the network at the bottom to applications at the top',
+      'Every service is its own line of work, with its own team and its own contract. One client needs a fibre network built, another a data centre designed, another an AI project or a new app: we take on each one separately.',
+    stackLabel: 'Our four services: telecom infrastructure, data centres, artificial intelligence and applications',
     items: [
       {
         id: 'telecom',
-        code: 'L1',
         name: 'Telecom infrastructure',
         tagline: 'The network everything travels on.',
         services: [
@@ -44,7 +42,6 @@ const en = {
       },
       {
         id: 'datacentre',
-        code: 'L2',
         name: 'Data centres',
         tagline: 'Where your systems live.',
         services: [
@@ -57,7 +54,6 @@ const en = {
       },
       {
         id: 'ai',
-        code: 'L3',
         name: 'Artificial intelligence',
         tagline: 'Turning data into decisions.',
         services: [
@@ -70,7 +66,6 @@ const en = {
       },
       {
         id: 'apps',
-        code: 'L4',
         name: 'Applications',
         tagline: 'What people actually touch.',
         services: [
@@ -133,21 +128,19 @@ const ar = {
   },
   nav: { layers: 'خدماتنا', products: 'منتجاتنا', approach: 'آلية العمل', company: 'الشركة', contact: 'تواصل معنا', cta: 'تحدّث معنا', lang: 'English', langLabel: 'Read this site in English', menu: 'القائمة', close: 'إغلاق' },
   hero: {
-    eyebrow: 'مسقط · سلطنة عُمان',
-    title: ['من الألياف', 'إلى التطبيق.'],
-    lead: 'تصمّم فيوتشر اكس للحلول التقنية وتنفّذ وتدعم التقنيات التي تعمل عليها المؤسسات في سلطنة عُمان: البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، والتطبيقات.',
+    title: ['أربع خدمات.', 'بمعيار واحد.'],
+    lead: 'البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، وتطوير البرمجيات. تقدّم فيوتشر اكس للحلول التقنية كلاً منها خدمةً مستقلة، لتختاروا ما يحتاجه مشروعكم تماماً.',
     primary: 'تحدّث مع فريقنا',
     secondary: 'تعرّف على خدماتنا',
   },
   layers: {
     eyebrow: 'خدماتنا',
-    title: 'أربع طبقات، وشريك واحد مسؤول عنها.',
-    intro: 'كل خدمة رقمية تقوم على طبقات: الشبكة تنقلها، ومركز البيانات يستضيفها، والذكاء الاصطناعي يحلّل بياناتها، والتطبيق يضعها بين أيدي الناس. نعمل في الطبقات الأربع، لتتكامل أجزاؤها.',
-    stackLabel: 'طبقات التقنية، من الشبكة في الأسفل إلى التطبيقات في الأعلى',
+    title: 'كل خدمة مستقلة بذاتها.',
+    intro: 'لكل خدمة مجالها وفريقها وعقدها الخاص. عميل يحتاج إلى تنفيذ شبكة ألياف، وآخر إلى تصميم مركز بيانات، وثالث إلى مشروع ذكاء اصطناعي أو تطبيق جديد: ونتولى كل خدمة منها على حدة.',
+    stackLabel: 'خدماتنا الأربع: البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، والتطبيقات',
     items: [
       {
         id: 'telecom',
-        code: 'L1',
         name: 'البنية التحتية للاتصالات',
         tagline: 'الشبكة التي ينتقل عبرها كل شيء.',
         services: [
@@ -160,7 +153,6 @@ const ar = {
       },
       {
         id: 'datacentre',
-        code: 'L2',
         name: 'مراكز البيانات',
         tagline: 'حيث تعمل أنظمتكم.',
         services: [
@@ -173,7 +165,6 @@ const ar = {
       },
       {
         id: 'ai',
-        code: 'L3',
         name: 'الذكاء الاصطناعي',
         tagline: 'من البيانات إلى القرار.',
         services: [
@@ -186,7 +177,6 @@ const ar = {
       },
       {
         id: 'apps',
-        code: 'L4',
         name: 'التطبيقات',
         tagline: 'ما يستخدمه الناس فعلاً.',
         services: [
