@@ -3,11 +3,11 @@
 // (fibre runs, rack rows, a neural network, app screens) sit in true perspective.
 
 const W = 420;
-const HALF_W = 160;
-const HALF_H = 80;
+const HALF_W = 150;
+const HALF_H = 75;
 const DEPTH = 14;
-const GAP = 112;
-const BASE_Y = 412;
+const GAP = 140;
+const BASE_Y = 500;
 
 const cyOf = (i) => BASE_Y - i * GAP;
 
@@ -73,7 +73,7 @@ const DRAWINGS = [Telecom, DataCentre, Ai, Apps];
 
 export default function LayerStack({ items, active, label }) {
   return (
-    <svg className="stack" viewBox={`0 -24 ${W} 560`} role="img" aria-label={label}>
+    <svg className="stack" viewBox={`0 -24 ${W} 630`} role="img" aria-label={label}>
       <path d={`M${W / 2} ${cyOf(0)} V${cyOf(3)}`} className="spine" />
       {items.map((item, i) => {
         const cy = cyOf(i);

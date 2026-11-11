@@ -5,6 +5,8 @@ import Threads from './components/Threads.jsx';
 import SpotlightCard from './components/SpotlightCard.jsx';
 import LayerStack from './components/LayerStack.jsx';
 import logo from './assets/logo.svg';
+import logoLight from './assets/logo-light.svg';
+import LayerIcon from './components/LayerIcon.jsx';
 import hisabIcon from './assets/hisab.webp';
 import atndIcon from './assets/atnd.webp';
 
@@ -59,7 +61,8 @@ function Header({ t, onToggleLang }) {
     <header className={`site-header${scrolled || open ? ' is-solid' : ''}`}>
       <div className="wrap header-row">
         <NavLink to="top" className="brand" onClick={() => setOpen(false)}>
-          <img src={logo} alt="FutureX Technical Solutions" width="200" height="27" />
+          <img src={logo} alt="FutureX Technical Solutions" width="200" height="27" className="logo-on-dark" />
+          <img src={logoLight} alt="" width="200" height="27" className="logo-on-light" aria-hidden="true" />
         </NavLink>
         <nav className={`nav${open ? ' is-open' : ''}`} aria-label={t.nav.menu} id="site-nav">
           {links.map((id) => (
@@ -106,13 +109,15 @@ function Hero({ t, lang }) {
     return () => ctx.revert();
   }, [lang]);
   return (
-    <section className="hero" ref={ref} id="top-hero" aria-labelledby="hero-title">
+    <section className="hero dark" ref={ref} id="top-hero" aria-labelledby="hero-title">
+      <div className="stars" aria-hidden="true" />
+      <div className="horizon" aria-hidden="true" />
       <div className="hero-bg" aria-hidden="true">
         <Threads color={[0.62, 0.66, 0.72]} amplitude={1.25} distance={0.25} lineCount={64} thickness={0.55} speed={0.45} brightness={1.1} angle={lang === 'ar' ? -18 : 18} />
       </div>
       <div className="wrap hero-inner">
-        <p className="hero-eyebrow eyebrow">
-          <span>{t.hero.eyebrow}</span>
+        <p className="hero-eyebrow">
+          <span className="tag">{t.hero.eyebrow}</span>
           <span className="mono" dir="ltr">{t.hero.coords}</span>
         </p>
         <h1 className="hero-title" id="hero-title">
@@ -142,12 +147,16 @@ function Hero({ t, lang }) {
 function SectionHead({ eyebrow, title, intro, id }) {
   return (
     <div className="section-head">
-      <p className="eyebrow" data-reveal>
+      <p className="kicker" data-reveal>
         {eyebrow}
       </p>
       <h2 id={id} data-split>
         {title}
       </h2>
+      <div className="rule" aria-hidden="true" data-reveal="0.05">
+        <i />
+        <i />
+      </div>
       {intro && (
         <p className="intro" data-reveal="0.1">
           {intro}
@@ -182,7 +191,10 @@ function Layers({ t }) {
           <ol className="layers-list">
             {layers.items.map((item, i) => (
               <li key={item.id} className={`layer${i === active ? ' is-active' : ''}`}>
-                <p className="layer-code mono">{item.code}</p>
+                <div className="layer-top">
+                  <LayerIcon id={item.id} />
+                  <p className="layer-code mono">{item.code}</p>
+                </div>
                 <h3>{item.name}</h3>
                 <p className="tagline">{item.tagline}</p>
                 <ul className="services">
@@ -202,12 +214,12 @@ function Layers({ t }) {
 function Products({ t }) {
   const { products } = t;
   return (
-    <section className="section products" id="products" tabIndex={-1} aria-labelledby="products-title">
+    <section className="section products soft" id="products" tabIndex={-1} aria-labelledby="products-title">
       <div className="wrap">
         <SectionHead eyebrow={products.eyebrow} title={products.title} intro={products.intro} id="products-title" />
         <div className="product-grid">
           {products.items.map((p, i) => (
-            <SpotlightCard key={p.id} className="product" spotlightColor="#C9D0DA" intensity={0.12} borderGlow={0.5} data-reveal={i * 0.1}>
+            <SpotlightCard key={p.id} className="product" theme="light" spotlightColor="#8A909B" intensity={0.5} borderGlow={0.8} data-reveal={i * 0.1}>
               <div className="product-top">
                 <img src={ICONS[p.id]} alt="" width="64" height="64" className="product-icon" />
                 <span className="chip">{products.status}</span>
@@ -249,7 +261,7 @@ function Approach({ t }) {
 function Company({ t }) {
   const { company } = t;
   return (
-    <section className="section company" id="company" tabIndex={-1} aria-labelledby="company-title">
+    <section className="section company soft" id="company" tabIndex={-1} aria-labelledby="company-title">
       <div className="wrap company-grid">
         <div>
           <SectionHead eyebrow={company.eyebrow} title={company.title} id="company-title" />
@@ -322,7 +334,9 @@ function selectNext(button) {
 function Contact({ t }) {
   const { contact } = t;
   return (
-    <section className="section contact" id="contact" tabIndex={-1} aria-labelledby="contact-title">
+    <section className="section contact dark" id="contact" tabIndex={-1} aria-labelledby="contact-title">
+      <div className="stars" aria-hidden="true" />
+      <div className="horizon" aria-hidden="true" />
       <div className="wrap">
         <SectionHead eyebrow={contact.eyebrow} title={contact.title} intro={contact.text} id="contact-title" />
         <div className="contact-grid">

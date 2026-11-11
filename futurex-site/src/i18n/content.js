@@ -124,7 +124,7 @@ const en = {
   },
   contact: {
     eyebrow: 'Contact',
-    title: 'Tell us what you are building.',
+    title: 'Let’s build your next project together.',
     text: 'A site to connect, a server room to fit out, a process to automate or an app to launch: send us the details and we will arrange a meeting.',
     email: 'Email',
     phone: 'Phone and WhatsApp',
@@ -254,7 +254,7 @@ const ar = {
   },
   contact: {
     eyebrow: 'تواصل معنا',
-    title: 'أخبرنا بما تعمل عليه.',
+    title: 'لنبنِ مشروعك القادم معاً.',
     text: 'موقع تريد ربطه، أو غرفة خوادم تريد تجهيزها، أو إجراء تريد أتمتته، أو تطبيق تريد إطلاقه: أرسل لنا التفاصيل ونرتّب معك اجتماعاً.',
     email: 'البريد الإلكتروني',
     phone: 'الهاتف وواتساب',
