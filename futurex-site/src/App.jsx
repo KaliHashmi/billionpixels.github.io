@@ -213,7 +213,7 @@ function Products({ t }) {
         <SectionHead eyebrow={products.eyebrow} title={products.title} intro={products.intro} id="products-title" />
         <div className="product-grid">
           {products.items.map((p, i) => (
-            <SpotlightCard key={p.id} className="product" theme="light" spotlightColor="#8A909B" intensity={0.5} borderGlow={0.8} data-reveal={i * 0.1}>
+            <SpotlightCard key={p.id} className="product" theme="dark" spotlightColor="#C9D0DA" intensity={0.14} borderGlow={0.6} data-reveal={i * 0.1}>
               <div className="product-top">
                 <img src={ICONS[p.id]} alt="" width="64" height="64" className="product-icon" />
                 <span className="chip">{products.status}</span>
