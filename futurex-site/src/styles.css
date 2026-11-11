@@ -280,7 +280,6 @@ html[lang='ar'] .kicker { font-family: var(--font-ar); letter-spacing: 0; font-s
   padding: 0.4rem 1rem;
 }
 html[lang='ar'] .tag { font-family: var(--font-ar); letter-spacing: 0; font-size: 0.88rem; }
-.hero-eyebrow .mono { font-size: 0.78rem; letter-spacing: 0.08em; color: var(--steel); }
 .hero-title { color: var(--white); font-size: var(--step-4); line-height: 1.02; letter-spacing: -0.03em; max-width: 13ch; }
 html[lang='ar'] .hero-title { line-height: 1.25; max-width: 14ch; }
 .hero-title .dim { color: var(--steel); }

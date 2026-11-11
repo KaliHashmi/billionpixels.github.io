@@ -17,7 +17,6 @@ const en = {
   nav: { layers: 'What we do', products: 'Products', approach: 'How we work', company: 'Company', contact: 'Contact', cta: 'Talk to us', lang: 'العربية', langLabel: 'Read this site in Arabic', menu: 'Menu', close: 'Close' },
   hero: {
     eyebrow: 'Muscat · Sultanate of Oman',
-    coords: '23.58° N · 58.40° E',
     title: ['From the fibre', 'to the app.'],
     lead: 'FutureX Technical Solutions designs, builds and supports the technology organisations in Oman run on: telecom infrastructure, data centres, artificial intelligence and software.',
     primary: 'Talk to our team',
@@ -135,7 +134,6 @@ const ar = {
   nav: { layers: 'خدماتنا', products: 'منتجاتنا', approach: 'آلية العمل', company: 'الشركة', contact: 'تواصل معنا', cta: 'تحدّث معنا', lang: 'English', langLabel: 'Read this site in English', menu: 'القائمة', close: 'إغلاق' },
   hero: {
     eyebrow: 'مسقط · سلطنة عُمان',
-    coords: '23.58° N · 58.40° E',
     title: ['من الألياف', 'إلى التطبيق.'],
     lead: 'تصمّم فيوتشر اكس للحلول التقنية وتنفّذ وتدعم التقنيات التي تعمل عليها المؤسسات في سلطنة عُمان: البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، والتطبيقات.',
     primary: 'تحدّث مع فريقنا',

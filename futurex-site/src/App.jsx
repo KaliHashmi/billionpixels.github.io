@@ -120,7 +120,6 @@ function Hero({ t, lang }) {
       <div className="wrap hero-inner">
         <p className="hero-eyebrow">
           <span className="tag">{t.hero.eyebrow}</span>
-          <span className="mono" dir="ltr">{t.hero.coords}</span>
         </p>
         <h1 className="hero-title" id="hero-title">
           {t.hero.title[0]}
