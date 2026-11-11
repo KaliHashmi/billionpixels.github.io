@@ -362,9 +362,19 @@ html[dir='rtl'] .services li::before { box-shadow: -3px 3px 0 var(--steel-d); to
 @keyframes pulse { to { stroke-dashoffset: -0.36; } }
 
 @media (max-width: 960px) {
-  .layers-grid { grid-template-columns: minmax(0, 1fr); }
-  .layers-visual { display: none; }
-  .layer { opacity: 1; min-height: 0; }
+  /* Phones and tablets: the stack stays pinned under the header while the four layers scroll beneath it. */
+  .layers-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .layers-visual {
+    position: sticky;
+    top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    z-index: 2;
+    align-self: start;
+    padding-block: 0.5rem 1.25rem;
+    background: linear-gradient(to bottom, var(--ink) 85%, transparent);
+  }
+  .layers-sticky { position: static; }
+  .stack { max-height: min(28vh, 230px); width: auto; }
+  .layer { min-height: 0; padding-block: 2.5rem; }
 }
 
 /* Products: the profile's soft cards */

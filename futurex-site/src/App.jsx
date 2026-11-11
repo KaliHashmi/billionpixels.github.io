@@ -168,7 +168,9 @@ function Layers({ t }) {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       ref.current.querySelectorAll('.layer').forEach((el, i) => {
-        ScrollTrigger.create({ trigger: el, start: 'top 55%', end: 'bottom 55%', onToggle: (self) => self.isActive && setActive(i) });
+        // On phones the pinned drawing covers the top of the screen, so a layer counts as "being read" lower down.
+        const line = () => (window.innerWidth <= 960 ? '78%' : '55%');
+        ScrollTrigger.create({ trigger: el, start: () => `top ${line()}`, end: () => `bottom ${line()}`, invalidateOnRefresh: true, onToggle: (self) => self.isActive && setActive(i) });
       });
     }, ref);
     return () => ctx.revert();
