@@ -34,9 +34,12 @@ const HEADER_OFFSET = -76;
 export function goTo(id) {
   const el = id === 'top' ? document.body : document.getElementById(id);
   if (!el) return;
-  if (lenis) lenis.scrollTo(id === 'top' ? 0 : el, { offset: HEADER_OFFSET, duration: 1.4 });
+  // On phones the service drawing stays pinned under the header, so a service has to land below it.
+  const pinned = el.classList?.contains('layer') && window.innerWidth <= 960 ? (document.querySelector('.layers-visual')?.offsetHeight ?? 0) : 0;
+  const offset = HEADER_OFFSET - pinned;
+  if (lenis) lenis.scrollTo(id === 'top' ? 0 : el, { offset, duration: 1.4 });
   else {
-    const top = id === 'top' ? 0 : el.getBoundingClientRect().top + window.scrollY + HEADER_OFFSET;
+    const top = id === 'top' ? 0 : el.getBoundingClientRect().top + window.scrollY + offset;
     window.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }
   if (id !== 'top') el.focus?.({ preventScroll: true });
@@ -71,6 +74,8 @@ export function revealIn(root) {
         duration: 1,
         ease: 'power3.out',
         delay: Number(el.dataset.reveal) || 0,
+        // Hand the element back to the stylesheet afterwards, so hover effects on cards still work.
+        clearProps: 'transform,opacity,visibility',
         scrollTrigger: { trigger: el, start: 'top 90%', once: true },
       });
     });

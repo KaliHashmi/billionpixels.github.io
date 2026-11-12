@@ -27,6 +27,8 @@ const en = {
     intro:
       'Every service is its own line of work, with its own team and its own contract. One client needs a fibre network built, another a data centre designed, another an AI project or a new app: we take on each one separately.',
     stackLabel: 'Our four services: telecom infrastructure, data centres, artificial intelligence and applications',
+    ask: 'Ask about this service',
+    askMessage: 'Hello FutureX, I would like to ask about: {service}',
     items: [
       {
         id: 'telecom',
@@ -101,7 +103,13 @@ const en = {
   company: {
     eyebrow: 'The company',
     title: 'Omani-owned. Built for Oman.',
-    text: 'FutureX Technical Solutions LLC was founded in Muscat in 2026 by three Omani partners. We work in Arabic and English, handle personal data under Oman’s Personal Data Protection Law, and keep support close to our clients.',
+    text: 'FutureX Technical Solutions LLC was founded in Muscat in 2026 by three Omani partners. We handle personal data under Oman’s Personal Data Protection Law, and we stay close to our clients after handover.',
+    points: [
+      ['One contract per service', 'Hire us for the one service you need. Each job has its own scope, price and schedule.'],
+      ['Agreed before work starts', 'You approve the design, the cost and the timeline before anything is built.'],
+      ['Arabic and English', 'Meetings, documents and software in both languages.'],
+      ['Handover and local support', 'Every job ends with documentation and training, and our team in Muscat stays available.'],
+    ],
   },
   contact: {
     eyebrow: 'Contact',
@@ -109,7 +117,9 @@ const en = {
     text: 'A site to connect, a server room to fit out, a process to automate or an app to launch: send us the details and we will arrange a meeting.',
     email: 'Email',
     phone: 'Phone and WhatsApp',
-    whatsapp: 'Message on WhatsApp',
+    whatsapp: 'Message us on WhatsApp',
+    ctaEmail: 'Send an email',
+    floating: 'WhatsApp',
     office: 'Office',
     address: ['Authority for SME Development (Riyada) Building', 'Hay Al Wizarat, Bousher', 'Muscat 133, Sultanate of Oman'],
     hours: 'Working hours',
@@ -117,7 +127,7 @@ const en = {
     copy: 'Copy',
     copied: 'Copied',
   },
-  footer: { rights: '© 2026 FutureX Technical Solutions LLC', place: 'Muscat, Sultanate of Oman', top: 'Back to top' },
+  footer: { rights: '© 2026 FutureX Technical Solutions LLC', place: 'Muscat, Sultanate of Oman', privacy: 'This website uses no cookies and no tracking.', top: 'Back to top' },
 };
 
 const ar = {
@@ -138,6 +148,8 @@ const ar = {
     title: 'كل خدمة مستقلة بذاتها.',
     intro: 'لكل خدمة مجالها وفريقها وعقدها الخاص. فقد يحتاج عميلٌ إلى تنفيذ شبكة ألياف ضوئية، وآخر إلى تصميم مركز بيانات، وثالث إلى مشروع ذكاء اصطناعي أو تطبيق جديد، ونتولّى كل خدمة منها على حدة.',
     stackLabel: 'خدماتنا الأربع: البنية التحتية للاتصالات، ومراكز البيانات، والذكاء الاصطناعي، والتطبيقات',
+    ask: 'استفسروا عن هذه الخدمة',
+    askMessage: 'مرحباً فيوتشر اكس، أودّ الاستفسار عن خدمة: {service}',
     items: [
       {
         id: 'telecom',
@@ -212,7 +224,13 @@ const ar = {
   company: {
     eyebrow: 'الشركة',
     title: 'شركة عُمانية، لخدمة عُمان.',
-    text: 'تأسست فيوتشر اكس للحلول التقنية ش.م.م في مسقط عام ٢٠٢٦ على يد ثلاثة شركاء عُمانيين. نعمل بالعربية والإنجليزية، ونتعامل مع البيانات الشخصية وفق قانون حماية البيانات الشخصية العُماني، ونقدّم الدعم لعملائنا عن قُرب.',
+    text: 'تأسست فيوتشر اكس للحلول التقنية ش.م.م في مسقط عام ٢٠٢٦ على يد ثلاثة شركاء عُمانيين. نتعامل مع البيانات الشخصية وفق قانون حماية البيانات الشخصية العُماني، ونبقى على مقربة من عملائنا بعد التسليم.',
+    points: [
+      ['عقد مستقل لكل خدمة', 'تتعاقدون معنا على الخدمة التي تحتاجونها فقط، ولكل عمل نطاقه وسعره وجدوله الزمني.'],
+      ['اتفاق قبل بدء العمل', 'تعتمدون التصميم والتكلفة والجدول الزمني قبل تنفيذ أي شيء.'],
+      ['بالعربية والإنجليزية', 'الاجتماعات والمستندات والبرمجيات باللغتين.'],
+      ['تسليم موثّق ودعم محلي', 'ينتهي كل عمل بالتوثيق والتدريب، ويبقى فريقنا في مسقط في خدمتكم.'],
+    ],
   },
   contact: {
     eyebrow: 'تواصلوا معنا',
@@ -221,6 +239,8 @@ const ar = {
     email: 'البريد الإلكتروني',
     phone: 'الهاتف وواتساب',
     whatsapp: 'راسلونا على واتساب',
+    ctaEmail: 'أرسلوا بريداً إلكترونياً',
+    floating: 'واتساب',
     office: 'المكتب',
     address: ['مبنى هيئة تنمية المؤسسات الصغيرة والمتوسطة (ريادة)', 'حي الوزارات، بوشر', 'مسقط ١٣٣، سلطنة عُمان'],
     hours: 'ساعات العمل',
@@ -228,7 +248,7 @@ const ar = {
     copy: 'نسخ',
     copied: 'تم النسخ',
   },
-  footer: { rights: '© ٢٠٢٦ فيوتشر اكس للحلول التقنية ش.م.م', place: 'مسقط، سلطنة عُمان', top: 'العودة إلى الأعلى' },
+  footer: { rights: '© ٢٠٢٦ فيوتشر اكس للحلول التقنية ش.م.م', place: 'مسقط، سلطنة عُمان', privacy: 'هذا الموقع لا يستخدم ملفات تعريف الارتباط ولا يتتبّع زوّاره.', top: 'العودة إلى الأعلى' },
 };
 
 export const CONTENT = { en, ar };

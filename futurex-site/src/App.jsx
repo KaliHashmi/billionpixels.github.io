@@ -4,14 +4,14 @@ import { gsap, ScrollTrigger, SplitText, goTo, prefersReducedMotion, revealIn, s
 import Threads from './components/Threads.jsx';
 import SpotlightCard from './components/SpotlightCard.jsx';
 import LayerStack from './components/LayerStack.jsx';
-import logo from './assets/logo.svg';
-import logoLight from './assets/logo-light.svg';
 import LayerIcon from './components/LayerIcon.jsx';
+import logo from './assets/logo.svg';
 import hisabIcon from './assets/hisab.webp';
 import atndIcon from './assets/atnd.webp';
 
 const ICONS = { hisab: hisabIcon, atnd: atndIcon };
 const STORE_KEY = 'futurex-lang';
+const SECTIONS = ['layers', 'products', 'approach', 'company', 'contact'];
 
 function initialLang() {
   const hash = typeof location !== 'undefined' ? location.hash.slice(1) : '';
@@ -25,8 +25,48 @@ function initialLang() {
   return typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('ar') ? 'ar' : 'en';
 }
 
+/** Runs `read` once now, then at most once per frame while the page scrolls or resizes. */
+function useScrollRead(read) {
+  useEffect(() => {
+    let raf = 0;
+    const run = () => {
+      raf = 0;
+      read();
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(run);
+    };
+    run();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+    // `read` only touches refs and state setters, so one subscription for the life of the component is enough.
+  }, []);
+}
+
+/** Arrow that points the way the text reads (it flips on the Arabic page). */
+function Arrow() {
+  return (
+    <svg className="arrow" viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M3 8h10M9 4l4 4-4 4" />
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg className="chat-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" />
+    </svg>
+  );
+}
+
 /** Section links scroll smoothly instead of jumping, and never change the page address. */
-function NavLink({ to, children, className, onClick }) {
+function NavLink({ to, children, className, onClick, ...rest }) {
   return (
     <a
       href={`#${to}`}
@@ -36,37 +76,48 @@ function NavLink({ to, children, className, onClick }) {
         onClick?.();
         goTo(to);
       }}
+      {...rest}
     >
       {children}
     </a>
   );
 }
 
+const whatsappLink = (message) => (message ? `${CONTACT.whatsapp}?text=${encodeURIComponent(message)}` : CONTACT.whatsapp);
+
 function Header({ t, onToggleLang }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const [active, setActive] = useState(null);
+  const bar = useRef(null);
+  useScrollRead(() => {
+    const y = window.scrollY;
+    setScrolled(y > 24);
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    bar.current?.style.setProperty('--progress', max > 0 ? Math.min(1, y / max).toFixed(4) : '0');
+    // The section being read is the last one whose top has passed 40% of the screen.
+    const line = window.innerHeight * 0.4;
+    let current = null;
+    for (const id of SECTIONS) {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= line) current = id;
+    }
+    setActive(current);
+  });
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  const links = ['layers', 'products', 'approach', 'company', 'contact'];
   return (
     <header className={`site-header${scrolled || open ? ' is-solid' : ''}`}>
       <div className="wrap header-row">
         <NavLink to="top" className="brand" onClick={() => setOpen(false)}>
-          <img src={logo} alt="FutureX Technical Solutions" width="200" height="27" className="logo-on-dark" />
-          <img src={logoLight} alt="" width="200" height="27" className="logo-on-light" aria-hidden="true" />
+          <img src={logo} alt="FutureX Technical Solutions" width="200" height="27" />
         </NavLink>
         <nav className={`nav${open ? ' is-open' : ''}`} aria-label={t.nav.menu} id="site-nav">
-          {links.map((id) => (
-            <NavLink key={id} to={id} className="nav-link" onClick={() => setOpen(false)}>
+          {SECTIONS.map((id) => (
+            <NavLink key={id} to={id} className="nav-link" aria-current={active === id ? 'true' : undefined} onClick={() => setOpen(false)}>
               {t.nav[id]}
             </NavLink>
           ))}
@@ -84,6 +135,7 @@ function Header({ t, onToggleLang }) {
           </button>
         </div>
       </div>
+      <span className="scroll-progress" ref={bar} aria-hidden="true" />
     </header>
   );
 }
@@ -100,6 +152,8 @@ function Hero({ t, lang }) {
       tl.from(lang === 'ar' ? split.words : split.chars, { yPercent: 110, duration: 1.2, stagger: lang === 'ar' ? 0.07 : 0.022 }, 0.1)
         .from('.hero-lead', { y: 24, autoAlpha: 0, duration: 1 }, '-=0.8')
         .from('.hero-ctas > *', { y: 18, autoAlpha: 0, duration: 0.9, stagger: 0.08 }, '-=0.75')
+        .from('.hero-index', { autoAlpha: 0, duration: 0.8 }, '-=0.7')
+        .from('.hero-index > li', { y: 16, autoAlpha: 0, duration: 0.8, stagger: 0.07 }, '<')
         .from('.hero-bg-in', { opacity: 0, duration: 2.4, ease: 'power2.out' }, 0);
       // The threads drift up and dim a little as the hero leaves the screen. The load fade-in runs on the inner
       // layer and this on the outer one, so the two never fight over the same opacity.
@@ -126,11 +180,22 @@ function Hero({ t, lang }) {
         <div className="hero-ctas">
           <NavLink to="contact" className="btn">
             {t.hero.primary}
+            <Arrow />
           </NavLink>
           <NavLink to="layers" className="btn btn-ghost">
             {t.hero.secondary}
           </NavLink>
         </div>
+        <ul className="hero-index" aria-label={t.nav.layers}>
+          {t.layers.items.map((item) => (
+            <li key={item.id}>
+              <NavLink to={`service-${item.id}`}>
+                <LayerIcon id={item.id} />
+                <span>{item.name}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -184,7 +249,7 @@ function Layers({ t }) {
           </div>
           <ol className="layers-list">
             {layers.items.map((item, i) => (
-              <li key={item.id} className={`layer${i === active ? ' is-active' : ''}`}>
+              <li key={item.id} id={`service-${item.id}`} className={`layer${i === active ? ' is-active' : ''}`}>
                 <div className="layer-top">
                   <LayerIcon id={item.id} />
                 </div>
@@ -195,6 +260,10 @@ function Layers({ t }) {
                     <li key={s}>{s}</li>
                   ))}
                 </ul>
+                <a className="ask" href={whatsappLink(layers.askMessage.replace('{service}', item.name))} target="_blank" rel="noopener noreferrer">
+                  {layers.ask}
+                  <Arrow />
+                </a>
               </li>
             ))}
           </ol>
@@ -243,7 +312,7 @@ function Approach({ t }) {
         <SectionHead eyebrow={approach.eyebrow} title={approach.title} id="approach-title" />
         <ol className="steps">
           {approach.steps.map((s, i) => (
-            <li key={s.name} data-reveal={i * 0.08}>
+            <li key={s.name} className="card" data-reveal={i * 0.08}>
               <span className="step-no mono" aria-hidden="true">
                 {stepNumber(i + 1, t.dir === 'rtl')}
               </span>
@@ -268,6 +337,15 @@ function Company({ t }) {
             {company.text}
           </p>
         </div>
+        <ul className="why">
+          {company.points.map(([title, text], i) => (
+            <li key={title} className="card" data-reveal={i * 0.07}>
+              <span className="tick" aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -317,6 +395,15 @@ function Contact({ t }) {
       <div className="horizon" aria-hidden="true" />
       <div className="wrap">
         <SectionHead eyebrow={contact.eyebrow} title={contact.title} intro={contact.text} id="contact-title" />
+        <div className="contact-ctas" data-reveal="0.15">
+          <a className="btn" href={whatsappLink()} target="_blank" rel="noopener noreferrer">
+            <ChatIcon />
+            {contact.whatsapp}
+          </a>
+          <a className="btn btn-ghost" href={`mailto:${CONTACT.email}`}>
+            {contact.ctaEmail}
+          </a>
+        </div>
         <div className="contact-grid">
           <div className="contact-item" data-reveal>
             <p className="label">{contact.email}</p>
@@ -330,12 +417,7 @@ function Contact({ t }) {
             <a className="value" href={`tel:${CONTACT.phone.replace(/\s/g, '')}`} dir="ltr">
               {CONTACT.phone}
             </a>
-            <div className="row">
-              <CopyButton text={CONTACT.phone} t={t} />
-              <a className="copy" href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer">
-                {contact.whatsapp}
-              </a>
-            </div>
+            <CopyButton text={CONTACT.phone} t={t} />
           </div>
           <div className="contact-item" data-reveal="0.16">
             <p className="label">{contact.office}</p>
@@ -358,17 +440,43 @@ function Contact({ t }) {
 function Footer({ t }) {
   return (
     <footer className="site-footer">
-      <div className="wrap footer-row">
-        <img src={logo} alt="FutureX Technical Solutions" width="170" height="23" className="footer-logo" />
+      <div className="wrap">
+        <div className="footer-top">
+          <img src={logo} alt="FutureX Technical Solutions" width="170" height="23" className="footer-logo" />
+          <nav className="footer-nav" aria-label={t.nav.menu}>
+            {SECTIONS.map((id) => (
+              <NavLink key={id} to={id}>
+                {t.nav[id]}
+              </NavLink>
+            ))}
+          </nav>
+          <NavLink to="top" className="to-top">
+            {t.footer.top}
+          </NavLink>
+        </div>
         <ul className="footer-meta">
           <li>{t.footer.rights}</li>
           <li>{t.footer.place}</li>
+          <li>{t.footer.privacy}</li>
         </ul>
-        <NavLink to="top" className="to-top">
-          {t.footer.top}
-        </NavLink>
       </div>
     </footer>
+  );
+}
+
+/** On phones the header has no room for "Talk to us", so a small WhatsApp button follows the reader instead. */
+function FloatingContact({ t }) {
+  const [show, setShow] = useState(false);
+  useScrollRead(() => {
+    const contact = document.getElementById('contact');
+    const beforeContact = !contact || contact.getBoundingClientRect().top > window.innerHeight * 0.9;
+    setShow(window.scrollY > window.innerHeight * 0.6 && beforeContact);
+  });
+  return (
+    <a className={`float-contact${show ? ' is-shown' : ''}`} href={whatsappLink()} target="_blank" rel="noopener noreferrer" tabIndex={show ? 0 : -1} aria-hidden={!show} aria-label={t.contact.whatsapp}>
+      <ChatIcon />
+      <span>{t.contact.floating}</span>
+    </a>
   );
 }
 
@@ -424,6 +532,7 @@ export default function App() {
       <Header t={t} onToggleLang={toggle} />
       <Page key={lang} t={t} lang={lang} />
       <Footer t={t} />
+      <FloatingContact t={t} />
     </>
   );
 }
