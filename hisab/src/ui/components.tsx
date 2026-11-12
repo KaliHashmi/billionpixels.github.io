@@ -231,9 +231,11 @@ export function EmptyState({ icon = 'document-text-outline', title, message }: {
 }
 
 export function Loading() {
+  const { t } = useT();
   return (
     <View style={[styles.empty, { flex: 1 }]}>
-      <ActivityIndicator color={colors.primary} size="large" />
+      {/* Named, so a screen reader says "Loading" rather than an unnamed progress bar. */}
+      <ActivityIndicator color={colors.primary} size="large" accessibilityLabel={t('Loading')} />
     </View>
   );
 }

@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 /**
  * The same browser tests, against the published UAT site (GitHub Pages) instead of a local build.
  *   npm run test:e2e:live      after a deploy: proves the live site works, demo accounts included
+ * Before a deploy, the built site can be tested the same way: serve web-site/ under /billionpixels.github.io/
+ * (missing files answered with 404.html, like GitHub Pages) and set LIVE_ORIGIN to that server.
  */
 export default defineConfig({
   ...base,
@@ -16,7 +18,7 @@ export default defineConfig({
     command: 'node e2e/live-proxy.mjs 4180',
     url: 'http://127.0.0.1:4180/billionpixels.github.io/hisab-uat/',
     reuseExistingServer: false,
-    // Behind a company or cloud proxy, Node's fetch has to be told to use it.
-    env: { NODE_USE_ENV_PROXY: '1', NODE_NO_WARNINGS: '1' },
+    // Behind a company or cloud proxy, Node's fetch has to be told to use it (not for a local LIVE_ORIGIN).
+    env: process.env.LIVE_ORIGIN ? {} : { NODE_USE_ENV_PROXY: '1', NODE_NO_WARNINGS: '1' },
   },
 });

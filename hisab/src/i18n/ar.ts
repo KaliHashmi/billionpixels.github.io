@@ -591,6 +591,7 @@ export const ar: Record<string, string> = {
   "Line": "سطر",
   "Liquidity Transfer": "تحويلات نقدية",
   "Load Demo Company": "تحميل شركة تجريبية",
+  "Loading": "جارٍ التحميل",
   "Lock Date (YYYY-MM-DD)": "تاريخ الإقفال (YYYY-MM-DD)",
   "Lock Dates": "تواريخ الإقفال",
   "Lock dates must use the YYYY-MM-DD format.": "يجب أن تكون تواريخ الإقفال بصيغة YYYY-MM-DD.",
