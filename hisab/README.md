@@ -78,7 +78,9 @@ npm run start:prod   # run the production variant
 npm run web          # browser preview (localStorage instead of SQLite; PDFs are generated in the browser and downloaded)
 ```
 
-Browser tests: `npm run test:e2e` (Playwright) checks sign-in, roles, edit/delete permissions, account deletion, PDF download and that every screen opens for each role in English and Arabic.
+Browser tests: `npm run test:e2e` (Playwright) checks sign-in, roles, edit/delete permissions, account deletion, PDF download and that every screen opens for each role in English and Arabic. `npm run test:e2e:live` runs the same tests against the published UAT site, demo accounts included.
+
+Performance: `npm run test:perf` builds one busy year of books (12,000 sales invoices, 3,000 bills, payments) and checks that saving, payments, every report and opening the app stay quick. It takes about two minutes, so it runs on its own (and as its own job in CI).
 
 Checks: `npm run verify` runs `typecheck`, `lint` and `test` (accounting engine, Oman features, persistence, and a test that fails if any UI string lacks an Arabic translation).
 

@@ -17,6 +17,45 @@ import { byId, isZero, newId, round, today } from '../utils';
 
 export type ReconcileIndex = Map<ID, number>;
 
+// Lookups built once per version of the books. The engine never changes an array in place (every change
+// makes new ones), so a lookup cached against an array stays correct for as long as that array exists.
+// Without them, showing the status of every invoice searched the whole book once per invoice.
+const moveLookups = new WeakMap<Move[], { byId: Map<ID, Move>; reversals: Map<ID, ID[]> }>();
+const counterpartLookups = new WeakMap<Reconcile[], Map<ID, ID[]>>();
+
+/** Documents by id, and the reversals made of each document. */
+export function moveLookup(moves: Move[]) {
+  let found = moveLookups.get(moves);
+  if (!found) {
+    found = { byId: new Map(), reversals: new Map() };
+    for (const m of moves) {
+      found.byId.set(m.id, m);
+      if (m.reversedEntryId) found.reversals.set(m.reversedEntryId, [...(found.reversals.get(m.reversedEntryId) ?? []), m.id]);
+    }
+    moveLookups.set(moves, found);
+  }
+  return found;
+}
+
+/** For each document, the documents its journal items are matched with. */
+function counterparts(reconciles: Reconcile[]) {
+  let found = counterpartLookups.get(reconciles);
+  if (!found) {
+    found = new Map();
+    const add = (from: ID, to: ID) => {
+      const list = found!.get(from);
+      if (list) list.push(to);
+      else found!.set(from, [to]);
+    };
+    for (const r of reconciles) {
+      add(r.debitMoveId, r.creditMoveId);
+      add(r.creditMoveId, r.debitMoveId);
+    }
+    counterpartLookups.set(reconciles, found);
+  }
+  return found;
+}
+
 /** Matched amount per journal item. */
 export function buildReconcileIndex(reconciles: Reconcile[]): ReconcileIndex {
   const idx: ReconcileIndex = new Map();
@@ -151,17 +190,16 @@ export function invoiceStatus(state: AppState, move: Move, idx?: ReconcileIndex)
   const residual = round(Math.abs(termLines.reduce((s, l) => s + lineResidual(l, index, decimals), 0)), decimals);
   let paymentState: PaymentState = 'not_paid';
   if (isZero(residual, decimals)) {
-    const counterpartMoves = state.reconciles
-      .filter((r) => r.debitMoveId === move.id || r.creditMoveId === move.id)
-      .map((r) => (r.debitMoveId === move.id ? r.creditMoveId : r.debitMoveId));
-    const reversed = state.moves.some((m) => m.reversedEntryId === move.id && counterpartMoves.includes(m.id));
+    const counterpartMoves = counterparts(state.reconciles).get(move.id) ?? [];
+    const moves = moveLookup(state.moves);
+    const reversed = (moves.reversals.get(move.id) ?? []).some((id) => counterpartMoves.includes(id));
     if (reversed) paymentState = 'reversed';
     else {
       // "In payment" while the payment has not been matched with a bank statement yet.
       const st = state.settings;
       const outstanding = new Set([st.outstandingReceiptsAccountId, st.outstandingPaymentsAccountId, st.chequesReceivedAccountId, st.chequesIssuedAccountId, st.cardClearingAccountId]);
       const pending = counterpartMoves.some((mid) => {
-        const m = state.moves.find((x) => x.id === mid);
+        const m = moves.byId.get(mid);
         if (!m || m.origin !== 'payment') return false;
         return m.lines.some((l) => outstanding.has(l.accountId) && !isZero(lineResidual(l, index, decimals), decimals));
       });

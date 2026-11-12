@@ -10,7 +10,8 @@ Hisab (حساب) is an offline, bilingual (English/Arabic) accounting app for sm
 | --- | --- |
 | All checks (run before every commit) | `npm run verify`: typecheck, lint and Jest |
 | What a change affects (before every push) | `npm run impact` (or `-- --since <ref>`): screens, shared code and tests that use the changed files, from the imports. No AI |
-| Browser tests (before pushing UI changes) | `npm run test:e2e`: builds the UAT web app and runs `e2e/` with Playwright |
+| Browser tests (before pushing UI changes) | `npm run test:e2e`: builds the UAT web app and runs `e2e/` with Playwright. `npm run test:e2e:live` runs them against the published UAT site |
+| Performance (before pushing engine or report changes) | `npm run test:perf`: one busy year of books (15,000 documents); saving, payments, reports and app start must stay quick. About two minutes |
 | Dev server | `npm start` · `npm run start:uat` · `npm run web` |
 | Browser previews and public pages | `npm run build:web` writes the output to `web-site/` (see `docs/RELEASE.md`) |
 | Store builds | `npm run build:uat` · `npm run build:prod` · `npm run submit:prod` |

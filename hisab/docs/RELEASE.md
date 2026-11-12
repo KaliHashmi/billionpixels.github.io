@@ -26,8 +26,8 @@ The variant comes from `APP_VARIANT`, which the EAS profiles in `eas.json` set.
 
 ## Release steps
 
-1. `npm run verify` and `npm run test:e2e`.
-2. `npm run build:uat`, then testers validate. You can also publish the browser previews (below).
+1. `npm run verify`, `npm run test:e2e` and `npm run test:perf`.
+2. `npm run build:uat`, then testers validate. You can also publish the browser previews (below); after publishing them, `npm run test:e2e:live` checks the live UAT site.
 3. Fix, and repeat until UAT signs off.
 4. Bump `version`, update `CHANGELOG.md`, commit.
 5. `npm run build:prod` from that commit, then `npm run submit:prod`.

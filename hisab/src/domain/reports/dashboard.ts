@@ -1,5 +1,5 @@
 // Dashboard figures and journal cards.
-import { buildReconcileIndex, invoiceStatus, isInvoice, lineResidual } from '../engine';
+import { buildReconcileIndex, invoiceStatus, isInvoice, lineResidual, moveLookup } from '../engine';
 import { AppState, ID, Move } from '../types';
 import { fiscalYear, isZero, round, today } from '../utils';
 import { balancesByAccount, postedItems } from './base';
@@ -73,7 +73,7 @@ export function dashboard(state: AppState, asOf = today()): Dashboard {
         secondary.unshift({ label: 'To reconcile', amount: round(toReconcile.reduce((s, l) => s + l.amount, 0), d), count: toReconcile.length });
         const outstanding = state.payments.filter((p) => p.journalId === j.id && p.state === 'posted');
         const unmatched = outstanding.filter((p) => {
-          const mv = state.moves.find((m) => m.id === p.moveId);
+          const mv = p.moveId ? moveLookup(state.moves).byId.get(p.moveId) : undefined;
           const l = mv?.lines.find((x) => x.kind === 'other');
           return l && !isZero(lineResidual(l, idx, d), d);
         });
