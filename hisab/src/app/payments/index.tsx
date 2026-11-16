@@ -6,6 +6,7 @@ import { PAYMENT_METHOD_LABELS } from '../../domain/engine';
 import { useT } from '../../i18n';
 import { Badge, EmptyState, Fab, ListItem, SearchBar } from '../../ui/components';
 import { colors, space } from '../../ui/theme';
+import { matchesSearch } from '../../ui/search';
 
 export default function PaymentsList() {
   const { partnerType = 'customer' } = useLocalSearchParams<{ partnerType?: 'customer' | 'supplier' }>();
@@ -18,8 +19,7 @@ export default function PaymentsList() {
     () => s.payments.filter((p) => p.partnerType === partnerType).sort((a, b) => b.date.localeCompare(a.date) || b.name.localeCompare(a.name)),
     [s.payments, partnerType],
   );
-  const term = q.trim().toLowerCase();
-  const visible = rows.filter((p) => !term || p.name.toLowerCase().includes(term) || p.memo.toLowerCase().includes(term) || p.chequeNumber?.includes(term) || (p.partnerId && partners.get(p.partnerId)?.name.toLowerCase().includes(term)));
+  const visible = rows.filter((p) => matchesSearch(q, p.name, p.memo, p.chequeNumber, p.partnerId && partners.get(p.partnerId)?.name));
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: t(partnerType === 'customer' ? 'Customer Receipts' : 'Supplier Payments') }} />

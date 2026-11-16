@@ -41,7 +41,7 @@ export function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
-export function toISODate(d: Date): string {
+function toISODate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
@@ -49,7 +49,7 @@ export function today(): string {
   return toISODate(new Date());
 }
 
-export function parseISODate(s: string): Date {
+function parseISODate(s: string): Date {
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }

@@ -28,6 +28,19 @@ for (const lang of ['en', 'ar'] as const) {
     await page.getByText(/^BILL\/\d{4}\/\d+$/).first().click();
     await page.getByText(lang === 'ar' ? 'صور الإيصالات' : 'Receipt Photos').waitFor();
     await scan(page, 'purchase bill');
+    // Forms with icon-only buttons (remove a line, step a date): each must be a named button.
+    const removeLine = lang === 'ar' ? 'إزالة السطر' : 'Remove line';
+    const addLine = lang === 'ar' ? 'إضافة سطر' : 'Add a line';
+    for (const [path, where] of [['/moves/new?type=out_invoice', 'new invoice'], ['/moves/new?type=entry', 'new journal entry'], ['/budgets/new', 'new budget']]) {
+      await page.goto(path);
+      await page.getByText(addLine, { exact: true }).first().click();
+      await expect(page.getByRole('button', { name: removeLine }).first(), where).toBeVisible();
+      await scan(page, where);
+    }
+    await page.goto('/moves/new?type=out_invoice');
+    for (const name of lang === 'ar' ? ['اليوم السابق', 'اليوم', 'اليوم التالي'] : ['Previous day', 'Today', 'Next day']) {
+      await expect(page.getByRole('button', { name, exact: true }).first(), `date button ${name}`).toBeVisible();
+    }
   });
 }
 

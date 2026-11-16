@@ -63,7 +63,7 @@ export function deleteDraft(state: AppState, moveId: ID): AppState {
 }
 
 /** Generate the journal items of an invoice/bill/refund from its invoice lines. */
-export function buildInvoiceMoveLines(state: AppState, move: Move): MoveLine[] {
+function buildInvoiceMoveLines(state: AppState, move: Move): MoveLine[] {
   const { decimals } = state.settings;
   const taxesById = byId(state.taxes);
   const productsById = byId(state.products);
@@ -227,7 +227,7 @@ const ELSEWHERE: Partial<Record<Move['origin'], string>> = {
  * Oman VAT law: issued tax invoices and credit notes are kept (10 years) and corrected only by a
  * credit note. Any document that has been given a number is part of the books and is never erased.
  */
-export const RETENTION_MESSAGE = 'Issued documents are kept as part of the books (10 years under Oman law). Cancel it or issue a credit note instead.';
+const RETENTION_MESSAGE = 'Issued documents are kept as part of the books (10 years under Oman law). Cancel it or issue a credit note instead.';
 
 /** Sales invoice or credit note that has been issued (numbered): changed only through a credit note. */
 export function isIssuedTaxDocument(move: Move): boolean {
@@ -279,12 +279,6 @@ export function correctInvoice(state: AppState, moveId: ID, opts: { date: string
   const credit = reverseMove(state, moveId, { ...opts, post: true });
   const copy = duplicateMove(credit.state, moveId);
   return { state: copy.state, creditNote: credit.move, draft: copy.move };
-}
-
-export function cancelMove(state: AppState, moveId: ID): AppState {
-  const move = getMove(state, moveId);
-  if (move.state !== 'draft') throw new AccountingError('Reset the entry to draft before cancelling it.');
-  return { ...state, moves: replace(state.moves, { ...move, state: 'cancel' }) };
 }
 
 export function duplicateMove(state: AppState, moveId: ID): { state: AppState; move: Move } {

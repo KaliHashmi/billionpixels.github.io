@@ -6,6 +6,7 @@ import { ENTITIES } from '../../../features/entities';
 import { useT } from '../../../i18n';
 import { Badge, Chips, EmptyState, Fab, ListItem, SearchBar } from '../../../ui/components';
 import { colors, space } from '../../../ui/theme';
+import { matchesSearch } from '../../../ui/search';
 
 export default function EntityList() {
   const params = useLocalSearchParams<{ entity: string; kind?: string }>();
@@ -20,10 +21,7 @@ export default function EntityList() {
     return def.sort ? [...list].sort(def.sort) : list;
   }, [s, def, params]);
   if (!def) return null;
-  const term = q.trim().toLowerCase();
-  const visible = records.filter(
-    (r) => (show === 'active' ? r.active : !r.active) && (!term || def.display(r, t).toLowerCase().includes(term) || def.subtitle?.(r, s, t).toLowerCase().includes(term)),
-  );
+  const visible = records.filter((r) => (show === 'active' ? r.active : !r.active) && matchesSearch(q, def.display(r, t), def.subtitle?.(r, s, t)));
   const title = t(params.entity === 'partners' ? (params.kind === 'customer' ? 'Customers' : params.kind === 'supplier' ? 'Vendors' : 'Contacts') : def.title);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

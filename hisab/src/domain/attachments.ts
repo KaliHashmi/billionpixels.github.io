@@ -3,7 +3,7 @@ import { AccountingError, AppState, Attachment, ID } from './types';
 import { newId } from './utils';
 
 /** A reduced phone photo is about 200–400 KB; this limit stops a full-size image filling the books. */
-export const MAX_ATTACHMENT_CHARS = 2_500_000;
+const MAX_ATTACHMENT_CHARS = 2_500_000;
 export const MAX_ATTACHMENTS_PER_DOCUMENT = 10;
 
 export function attachmentsFor(state: AppState, ownerId: ID): Attachment[] {

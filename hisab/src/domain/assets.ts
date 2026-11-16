@@ -1,5 +1,5 @@
-import { checkLockDate, getJournal, nextSequence } from './engine';
-import { AccountingError, AppState, Asset, ID, Move } from './types';
+import { addPostedEntry, checkLockDate, getJournal } from './engine';
+import { AccountingError, AppState, Asset, ID } from './types';
 import { addMonths, endOfMonth, isValidISODate, isZero, newId, round } from './utils';
 
 export interface DepreciationRow {
@@ -80,30 +80,20 @@ export function postDepreciations(state: AppState, assetId: ID, untilDate: strin
       continue;
     }
     checkLockDate(next, row.date);
-    const seq = nextSequence(next, journal.code, row.date);
-    next = seq.state;
     const label = `${asset.name}: Depreciation ${row.index + 1}/${board.length}`;
-    const move: Move = {
-      id: newId(),
-      moveType: 'entry',
-      name: seq.name,
-      state: 'posted',
+    const res = addPostedEntry(next, {
       journalId: journal.id,
       date: row.date,
       ref: label,
-      narration: '',
-      invoiceLines: [],
       lines: [
         { id: newId(), accountId: asset.expenseAccountId, label, debit: row.amount, credit: 0, kind: 'other' },
         { id: newId(), accountId: asset.depreciationAccountId, label, debit: 0, credit: row.amount, kind: 'other' },
       ],
       origin: 'asset',
       originId: asset.id,
-      createdAt: new Date().toISOString(),
-      postedAt: new Date().toISOString(),
-    };
-    next = { ...next, moves: [...next.moves, move] };
-    moveIds.push(move.id);
+    });
+    next = res.state;
+    moveIds.push(res.move.id);
   }
   asset = { ...asset, depreciationMoveIds: moveIds, state: moveIds.length >= board.length ? 'closed' : 'running' };
   return { ...next, assets: next.assets.map((a) => (a.id === assetId ? asset! : a)) };

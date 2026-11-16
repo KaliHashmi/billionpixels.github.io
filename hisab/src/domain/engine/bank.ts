@@ -3,12 +3,11 @@ import {
   AccountingError,
   AppState,
   ID,
-  Move,
   MoveLine,
   StatementLine,
 } from '../types';
 import { isValidISODate, isZero, newId, round } from '../utils';
-import { checkLockDate, getJournal, nextSequence, replace } from './core';
+import { addPostedEntry, checkLockDate, getJournal, replace } from './core';
 import { buildReconcileIndex, findLine, lineResidual, OpenItem, openItems, reconcileLines, unreconcileMove } from './reconcile';
 
 // ---------------------------------------------------------------------------
@@ -126,29 +125,10 @@ export function reconcileStatementLine(
     });
   }
 
-  const seq = nextSequence(state, journal.code, sl.date);
-  let next = seq.state;
-  const move: Move = {
-    id: newId(),
-    moveType: 'entry',
-    name: seq.name,
-    state: 'posted',
-    journalId: journal.id,
-    partnerId: sl.partnerId,
-    date: sl.date,
-    ref: sl.ref || sl.label,
-    narration: '',
-    invoiceLines: [],
-    lines,
-    origin: 'statement',
-    originId: sl.id,
-    createdAt: new Date().toISOString(),
-    postedAt: new Date().toISOString(),
-  };
-  next = {
-    ...next,
-    moves: [...next.moves, move],
-    statementLines: replace(next.statementLines, { ...sl, reconciled: true, moveId: move.id }),
+  const res = addPostedEntry(state, { journalId: journal.id, partnerId: sl.partnerId, date: sl.date, ref: sl.ref || sl.label, lines, origin: 'statement', originId: sl.id });
+  let next: AppState = {
+    ...res.state,
+    statementLines: replace(res.state.statementLines, { ...sl, reconciled: true, moveId: res.move.id }),
   };
   for (const [a, b] of pairs) next = reconcileLines(next, [a, b], sl.date);
   return next;

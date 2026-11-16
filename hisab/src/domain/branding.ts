@@ -110,7 +110,7 @@ export function stampSource(s: Settings): string | undefined {
 }
 
 /** Every document type carries the stamp unless switched off in Stamp & Signature. */
-export function brandingApplies(s: Settings, kind: BrandedDocument): boolean {
+function brandingApplies(s: Settings, kind: BrandedDocument): boolean {
   if (kind === 'sales') return s.brandSales ?? true;
   if (kind === 'vouchers') return s.brandVouchers ?? true;
   if (kind === 'reports') return s.brandReports ?? true;
@@ -129,7 +129,7 @@ export function documentBranding(s: Settings, kind: BrandedDocument, draft = fal
 export const DEMO_COMPANY_NAME = 'Hisab Demo Trading LLC';
 
 /** A handwriting-like scribble for the demo signature: a looped capital, a run of letters and an underline. */
-export function demoSignature(): Point[][] {
+function demoSignature(): Point[][] {
   const word: Point[] = [];
   for (let i = 0; i <= 220; i++) {
     const t = i / 220;

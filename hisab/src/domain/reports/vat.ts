@@ -1,6 +1,6 @@
 // Tax report and the VAT closing entry.
-import { checkLockDate, defaultJournal, nextSequence } from '../engine';
-import { AccountingError, AppState, ID, Move, MoveLine, Tax } from '../types';
+import { addPostedEntry, checkLockDate, defaultJournal } from '../engine';
+import { AccountingError, AppState, ID, MoveLine, Tax } from '../types';
 import { byId, isZero, newId, round } from '../utils';
 import { postedItems } from './base';
 
@@ -106,26 +106,9 @@ export function postTaxClosing(state: AppState, from: string, to: string): AppSt
     });
   }
   const journal = defaultJournal(state, 'general');
-  const seq = nextSequence(state, journal.code, to);
-  const move: Move = {
-    id: newId(),
-    moveType: 'entry',
-    name: seq.name,
-    state: 'posted',
-    journalId: journal.id,
-    date: to,
-    ref: `VAT return ${from} - ${to}`,
-    narration: '',
-    invoiceLines: [],
-    lines,
-    origin: 'tax_closing',
-    originId: key,
-    createdAt: new Date().toISOString(),
-    postedAt: new Date().toISOString(),
-  };
+  const { state: next } = addPostedEntry(state, { journalId: journal.id, date: to, ref: `VAT return ${from} - ${to}`, lines, origin: 'tax_closing', originId: key });
   return {
-    ...seq.state,
-    moves: [...seq.state.moves, move],
-    settings: { ...seq.state.settings, taxLockDate: to > (state.settings.taxLockDate ?? '') ? to : state.settings.taxLockDate },
+    ...next,
+    settings: { ...next.settings, taxLockDate: to > (state.settings.taxLockDate ?? '') ? to : state.settings.taxLockDate },
   };
 }

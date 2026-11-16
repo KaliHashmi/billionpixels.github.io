@@ -132,7 +132,7 @@ export function MenuItem({ icon, title, subtitle, onPress, count }: { icon: Icon
 }
 
 /** Forward chevron that points the reading direction (mirrored in Arabic). */
-export function Chevron() {
+function Chevron() {
   const { rtl } = useT();
   return <Ionicons name={rtl ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.muted} />;
 }
@@ -213,9 +213,28 @@ export function ButtonRow({ children }: { children: React.ReactNode }) {
 }
 
 export function Fab({ onPress, icon = 'add' }: { onPress: () => void; icon?: IconName }) {
+  const { t } = useT();
   return (
-    <Pressable accessibilityLabel="New" onPress={onPress} style={({ pressed }) => [styles.fab, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('New')} onPress={onPress} style={({ pressed }) => [styles.fab, pressed && styles.pressed]}>
       <Ionicons name={icon} size={28} color="#fff" />
+    </Pressable>
+  );
+}
+
+/**
+ * A button that shows only an icon (delete a line, step a date). Screen readers announce it by `label`,
+ * and the touch area reaches 44pt around a small icon without moving anything on screen.
+ */
+export function IconButton({ icon, label, onPress, color = colors.primary, size = 20, hitSlop, style }: { icon: IconName; label: string; onPress: () => void; color?: string; size?: number; hitSlop?: number; style?: StyleProp<ViewStyle> }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      hitSlop={hitSlop ?? Math.max(0, Math.ceil((44 - size) / 2))}
+      style={({ pressed }) => [style, pressed && styles.pressed]}
+    >
+      <Ionicons name={icon} size={size} color={color} />
     </Pressable>
   );
 }

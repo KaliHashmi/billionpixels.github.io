@@ -1,28 +1,6 @@
-import { checkLockDate, getJournal, liquidityAccountFor, nextSequence, unreconcileMove } from './engine';
-import { AccountingError, AppState, CashClosing, Employee, ID, Move, MoveLine, Payslip, PayrollRun } from './types';
+import { addPostedEntry, checkLockDate, getJournal, liquidityAccountFor, unreconcileMove } from './engine';
+import { AccountingError, AppState, CashClosing, Employee, ID, MoveLine, Payslip, PayrollRun } from './types';
 import { isValidISODate, isZero, newId, round } from './utils';
-
-function postedMove(state: AppState, journalId: ID, date: string, ref: string, lines: MoveLine[], origin: Move['origin'], originId: ID): { state: AppState; move: Move } {
-  const journal = getJournal(state, journalId);
-  const seq = nextSequence(state, journal.code, date);
-  const move: Move = {
-    id: newId(),
-    moveType: 'entry',
-    name: seq.name,
-    state: 'posted',
-    journalId,
-    date,
-    ref,
-    narration: '',
-    invoiceLines: [],
-    lines,
-    origin,
-    originId,
-    createdAt: new Date().toISOString(),
-    postedAt: new Date().toISOString(),
-  };
-  return { state: { ...seq.state, moves: [...seq.state.moves, move] }, move };
-}
 
 function line(accountId: ID, label: string, amount: number, partnerId?: ID): MoveLine {
   return { id: newId(), accountId, label, debit: amount > 0 ? amount : 0, credit: amount < 0 ? -amount : 0, kind: 'other', partnerId };
@@ -99,10 +77,14 @@ export function closeCashDay(state: AppState, input: CashClosingInput): AppState
   if (!isZero(difference, d)) {
     checkLockDate(state, input.date);
     const label = difference > 0 ? 'Cash overage' : 'Cash shortage';
-    const res = postedMove(next, journal.id, input.date, `${label} ${input.date}`, [
-      line(journal.defaultAccountId, label, difference),
-      line(state.settings.cashDifferenceAccountId, label, -difference),
-    ], 'cash_closing', closing.id);
+    const res = addPostedEntry(next, {
+      journalId: journal.id,
+      date: input.date,
+      ref: `${label} ${input.date}`,
+      lines: [line(journal.defaultAccountId, label, difference), line(state.settings.cashDifferenceAccountId, label, -difference)],
+      origin: 'cash_closing',
+      originId: closing.id,
+    });
     next = res.state;
     closing.moveId = res.move.id;
   }
@@ -125,10 +107,6 @@ export function reopenCashDay(state: AppState, closingId: ID): AppState {
 // ---------------------------------------------------------------------------
 // Payroll
 // ---------------------------------------------------------------------------
-
-export function employeeGross(e: Employee): number {
-  return e.basicSalary + e.housingAllowance + e.transportAllowance + e.otherAllowance;
-}
 
 /**
  * Social Protection Fund contributions on the contribution wage (gross, capped at the ceiling).
@@ -227,7 +205,7 @@ export function postPayroll(state: AppState, runId: ID): AppState {
   ].filter((l) => !isZero(l.debit + l.credit, d));
   const general = state.journals.find((j) => j.type === 'general' && j.active);
   if (!general) throw new AccountingError('No miscellaneous journal configured.');
-  const res = postedMove(state, general.id, run.date, label, lines, 'payroll', run.id);
+  const res = addPostedEntry(state, { journalId: general.id, date: run.date, ref: label, lines, origin: 'payroll', originId: run.id });
   return { ...res.state, payrollRuns: res.state.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'posted', moveId: res.move.id, issued: true } : r)) };
 }
 
@@ -243,10 +221,14 @@ export function payPayroll(state: AppState, runId: ID, journalId: ID, date: stri
   if (journal.type !== 'bank' && journal.type !== 'cash') throw new AccountingError('Choose a bank or cash journal.');
   const net = round(payrollTotals(run).net, d);
   const label = `Salaries ${run.month}`;
-  const res = postedMove(state, journalId, date, label, [
-    line(state.settings.salariesPayableAccountId, label, net),
-    line(liquidityAccountFor(state, journal, false), label, -net),
-  ], 'payroll', run.id);
+  const res = addPostedEntry(state, {
+    journalId,
+    date,
+    ref: label,
+    lines: [line(state.settings.salariesPayableAccountId, label, net), line(liquidityAccountFor(state, journal, false), label, -net)],
+    origin: 'payroll',
+    originId: run.id,
+  });
   return { ...res.state, payrollRuns: res.state.payrollRuns.map((r) => (r.id === runId ? { ...r, state: 'paid', paymentMoveId: res.move.id } : r)) };
 }
 

@@ -4,7 +4,7 @@ import { AppState, ID, Partner, Tax } from './types';
 import { isValidISODate, newId, round } from './utils';
 
 /** Columns of the downloadable template, in order. */
-export const PURCHASE_IMPORT_COLUMNS = ['date', 'type', 'vendor', 'reference', 'description', 'account', 'amount', 'vat', 'paid_from'] as const;
+const PURCHASE_IMPORT_COLUMNS = ['date', 'type', 'vendor', 'reference', 'description', 'account', 'amount', 'vat', 'paid_from'] as const;
 type Column = (typeof PURCHASE_IMPORT_COLUMNS)[number];
 
 /** Header names accepted for each column (English and Arabic), compared in lower case. */

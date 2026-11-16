@@ -9,6 +9,7 @@ import { useT } from '../i18n';
 import { Badge, Button, ButtonRow, Card, Chips, EmptyState, ListItem, Row, SearchBar } from '../ui/components';
 import { SelectField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
+import { matchesSearch } from '../ui/search';
 
 /** Every receipt and payment through a bank or cash journal, with running totals. */
 export default function CashBook() {
@@ -40,11 +41,10 @@ export default function CashBook() {
     return round(b, s.settings.decimals);
   }, [s.moves, s.journals, journalId, s.settings.decimals]);
 
-  const term = q.trim().toLowerCase();
   const visible = rows.filter(
     (p) =>
       (filter === 'all' || (filter === 'in' ? p.paymentType === 'inbound' : p.paymentType === 'outbound')) &&
-      (!term || p.name.toLowerCase().includes(term) || p.memo.toLowerCase().includes(term) || (p.partnerId && lk.partners.get(p.partnerId)?.name.toLowerCase().includes(term))),
+      matchesSearch(q, p.name, p.memo, p.partnerId && lk.partners.get(p.partnerId)?.name),
   );
 
   return (

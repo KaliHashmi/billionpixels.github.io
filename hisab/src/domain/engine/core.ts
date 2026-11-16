@@ -9,7 +9,7 @@ import {
   MoveType,
   PaymentTerm,
 } from '../types';
-import { addDays, endOfMonth } from '../utils';
+import { addDays, endOfMonth, newId } from '../utils';
 
 // ---------------------------------------------------------------------------
 // Basic helpers
@@ -98,6 +98,44 @@ export function nextSequence(state: AppState, prefix: string, date: string): { s
     state: { ...state, sequences: { ...state.sequences, [key]: n } },
     name: `${key}/${String(n).padStart(5, '0')}`,
   };
+}
+
+export interface PostedEntry {
+  journalId: ID;
+  date: string;
+  ref: string;
+  lines: MoveLine[];
+  origin: Move['origin'];
+  originId: ID;
+  partnerId?: ID;
+}
+
+/**
+ * Adds a journal entry that Hisab makes itself (depreciation, a bank line, a cleared cheque, the VAT
+ * closing, payroll, a cash day): already posted, numbered from its journal. The caller checks lock dates.
+ */
+export function addPostedEntry(state: AppState, entry: PostedEntry): { state: AppState; move: Move } {
+  const journal = getJournal(state, entry.journalId);
+  const seq = nextSequence(state, journal.code, entry.date);
+  const now = new Date().toISOString();
+  const move: Move = {
+    id: newId(),
+    moveType: 'entry',
+    name: seq.name,
+    state: 'posted',
+    journalId: journal.id,
+    partnerId: entry.partnerId,
+    date: entry.date,
+    ref: entry.ref,
+    narration: '',
+    invoiceLines: [],
+    lines: entry.lines,
+    origin: entry.origin,
+    originId: entry.originId,
+    createdAt: now,
+    postedAt: now,
+  };
+  return { state: { ...seq.state, moves: [...seq.state.moves, move] }, move };
 }
 
 export function computeDueDate(invoiceDate: string, term?: PaymentTerm): string {

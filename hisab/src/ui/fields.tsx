@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, KeyboardTypeOptions, Modal, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDays, isValidISODate, today } from '../domain/utils';
+import { matchesSearch } from './search';
 import { useT } from '../i18n';
-import { SearchBar } from './components';
+import { IconButton, IconName, SearchBar } from './components';
 import { colors, space } from './theme';
 
-export function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+function FieldLabel({ label, required }: { label: string; required?: boolean }) {
   return (
     <Text style={s.label}>
       {label}
@@ -109,6 +110,7 @@ export function NumberField({
 }
 
 export function DateField({ label, value, onChange, required, editable = true }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; editable?: boolean }) {
+  const { t } = useT();
   const [text, setText] = useState(value);
   const [prev, setPrev] = useState(value);
   if (value !== prev) {
@@ -136,9 +138,9 @@ export function DateField({ label, value, onChange, required, editable = true }:
         />
         {editable && (
           <>
-            <SmallIcon icon="remove" onPress={() => set(addDays(valid ? text : today(), -1))} />
-            <SmallIcon icon="today-outline" onPress={() => set(today())} />
-            <SmallIcon icon="add" onPress={() => set(addDays(valid ? text : today(), 1))} />
+            <SmallIcon icon="remove" label={t('Previous day')} onPress={() => set(addDays(valid ? text : today(), -1))} />
+            <SmallIcon icon="today-outline" label={t('Today')} onPress={() => set(today())} />
+            <SmallIcon icon="add" label={t('Next day')} onPress={() => set(addDays(valid ? text : today(), 1))} />
           </>
         )}
       </View>
@@ -146,12 +148,9 @@ export function DateField({ label, value, onChange, required, editable = true }:
   );
 }
 
-function SmallIcon({ icon, onPress }: { icon: React.ComponentProps<typeof Ionicons>['name']; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} hitSlop={6} style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.6 }]}>
-      <Ionicons name={icon} size={18} color={colors.primary} />
-    </Pressable>
-  );
+/** The boxed step buttons beside a date. The box is 34×40, so a small slop reaches 44pt without overlapping its neighbour. */
+function SmallIcon({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  return <IconButton icon={icon} label={label} onPress={onPress} size={18} hitSlop={6} style={s.iconBtn} />;
 }
 
 export function SwitchField({ label, value, onChange, hint }: { label: string; value: boolean; onChange: (v: boolean) => void; hint?: string }) {
@@ -226,10 +225,7 @@ function OptionModal({
       setQ('');
     }
   }
-  const filtered = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    return t ? options.filter((o) => o.label.toLowerCase().includes(t) || o.hint?.toLowerCase().includes(t)) : options;
-  }, [q, options]);
+  const filtered = useMemo(() => options.filter((o) => matchesSearch(q, o.label, o.hint)), [q, options]);
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet">
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>

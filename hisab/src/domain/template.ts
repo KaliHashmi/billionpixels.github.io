@@ -51,10 +51,6 @@ export function isPnlType(t: AccountType): boolean {
   return t.startsWith('income') || t.startsWith('expense');
 }
 
-export function isBalanceSheetType(t: AccountType): boolean {
-  return !isPnlType(t) && t !== 'off_balance';
-}
-
 type AccountSeed = [code: string, name: string, type: AccountType, reconcile?: boolean];
 
 const ACCOUNTS: AccountSeed[] = [

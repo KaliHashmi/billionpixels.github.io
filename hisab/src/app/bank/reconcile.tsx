@@ -11,6 +11,7 @@ import { Button, ButtonRow, Card, Divider, Row, Screen, SearchBar, SectionTitle 
 import { confirm } from '../../ui/dialog';
 import { Segmented, SelectField, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
+import { matchesSearch } from '../../ui/search';
 
 export default function ReconcileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,15 +41,7 @@ export default function ReconcileScreen() {
   const toExplain = overMatched && excess === 'open' ? 0 : diff;
   const needsAccount = !isZero(toExplain, d);
 
-  const term = q.trim().toLowerCase();
-  const visible = candidates.filter(
-    (c) =>
-      !term ||
-      c.move.name.toLowerCase().includes(term) ||
-      c.move.ref.toLowerCase().includes(term) ||
-      (c.line.partnerId && lk.partners.get(c.line.partnerId)?.name.toLowerCase().includes(term)) ||
-      String(Math.abs(c.residual)).includes(term),
-  );
+  const visible = candidates.filter((c) => matchesSearch(q, c.move.name, c.move.ref, c.line.partnerId && lk.partners.get(c.line.partnerId)?.name, Math.abs(c.residual)));
 
   const validate = () => {
     const ok = run((st) => {

@@ -2,7 +2,7 @@ import { fromHex, pbkdf2Sha256, safeEqual, toHex, utf8 } from './crypto';
 import { AccountingError, AppState, ID, User, UserRole } from './types';
 import { newId } from './utils';
 
-export const PASSWORD_ITERATIONS = 30000;
+const PASSWORD_ITERATIONS = 30000;
 export const MIN_PASSWORD_LENGTH = 8;
 const MAX_ATTEMPTS = 5;
 const LOCK_MINUTES = 5;
@@ -18,11 +18,11 @@ export type RandomBytes = (n: number) => Uint8Array;
 /** Fallback for tests; the app passes a cryptographically secure generator. */
 const insecureRandom: RandomBytes = (n) => Uint8Array.from({ length: n }, () => Math.floor(Math.random() * 256));
 
-export function hashPassword(password: string, saltHex: string, iterations = PASSWORD_ITERATIONS): string {
+function hashPassword(password: string, saltHex: string, iterations = PASSWORD_ITERATIONS): string {
   return toHex(pbkdf2Sha256(utf8(password), fromHex(saltHex), iterations));
 }
 
-export function validatePassword(password: string): void {
+function validatePassword(password: string): void {
   if (password.length < MIN_PASSWORD_LENGTH) throw new AccountingError(`The password must have at least ${MIN_PASSWORD_LENGTH} characters.`);
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) throw new AccountingError('The password must contain letters and numbers.');
 }
@@ -98,7 +98,7 @@ export function login(state: AppState, usernameInput: string, password: string, 
 }
 
 /** "Keep me signed in" lasts this long on a device, renewed each time the app is opened. */
-export const KEEP_SIGNED_IN_DAYS = 30;
+const KEEP_SIGNED_IN_DAYS = 30;
 
 /** A remembered sign-in, stored on the device. Tied to the password: a new password ends it. */
 export interface SavedSession {

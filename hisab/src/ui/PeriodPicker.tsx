@@ -20,7 +20,7 @@ function quarterStart(d: string) {
   return `${d.slice(0, 4)}-${String(qm).padStart(2, '0')}-01`;
 }
 
-export function computePeriod(preset: PresetKey, fyLastMonth: number, ref = today()): { from: string; to: string } {
+function computePeriod(preset: PresetKey, fyLastMonth: number, ref = today()): { from: string; to: string } {
   switch (preset) {
     case 'this_week':
     case 'last_week': {

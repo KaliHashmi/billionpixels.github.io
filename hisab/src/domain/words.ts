@@ -11,7 +11,7 @@ function enUnder1000(n: number): string {
   return parts.join(' and ');
 }
 
-export function numberToWordsEn(n: number): string {
+function numberToWordsEn(n: number): string {
   n = Math.floor(Math.abs(n));
   if (n === 0) return 'Zero';
   const scales = ['', ' Thousand', ' Million', ' Billion'];
@@ -45,7 +45,7 @@ function arScale(n: number, one: string, two: string, few: string): string {
   return `${arUnder1000(n)} ${one}`;
 }
 
-export function numberToWordsAr(n: number): string {
+function numberToWordsAr(n: number): string {
   n = Math.floor(Math.abs(n));
   if (n === 0) return 'صفر';
   const millions = Math.floor(n / 1_000_000);

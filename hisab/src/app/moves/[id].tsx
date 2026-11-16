@@ -34,7 +34,7 @@ import { moveBadge } from '../../features/status';
 import { useT } from '../../i18n';
 import { invoiceHtml } from '../../services/documents';
 import { printHtml, sharePdf } from '../../services/files';
-import { Badge, Button, ButtonRow, Card, Divider, Row, Screen, SectionTitle } from '../../ui/components';
+import { Badge, Button, ButtonRow, Card, Divider, IconButton, Row, Screen, SectionTitle } from '../../ui/components';
 import { confirm, notify } from '../../ui/dialog';
 import { DateField, MultiSelectField, NumberField, SelectField, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
@@ -334,9 +334,7 @@ function InvoiceLines({ draft, update, editable, sale }: { draft: Move; update: 
                 <Text style={{ fontWeight: '700', color: colors.muted }}>
                   {t('Line')} {i + 1}
                 </Text>
-                <Pressable hitSlop={8} onPress={() => update({ invoiceLines: draft.invoiceLines.filter((x) => x.id !== l.id) })}>
-                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                </Pressable>
+                <IconButton icon="trash-outline" color={colors.danger} label={t('Remove line')} onPress={() => update({ invoiceLines: draft.invoiceLines.filter((x) => x.id !== l.id) })} />
               </View>
               <SelectField
                 label={t('Product')}
@@ -534,9 +532,7 @@ function EntryLines({ draft, update, editable }: { draft: Move; update: (p: Part
                 <Text style={{ fontWeight: '700', color: colors.muted }}>
                   {t('Line')} {i + 1}
                 </Text>
-                <Pressable hitSlop={8} onPress={() => update({ lines: draft.lines.filter((x) => x.id !== l.id) })}>
-                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                </Pressable>
+                <IconButton icon="trash-outline" color={colors.danger} label={t('Remove line')} onPress={() => update({ lines: draft.lines.filter((x) => x.id !== l.id) })} />
               </View>
               <SelectField label={t('Account')} required value={l.accountId || undefined} options={accOpts} onChange={(v) => setLine(l.id, { accountId: v ?? '' })} />
               <SelectField label={t('Partner')} value={l.partnerId} options={partnerOpts} onChange={(v) => setLine(l.id, { partnerId: v })} />

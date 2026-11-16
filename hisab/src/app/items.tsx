@@ -10,6 +10,7 @@ import { useT } from '../i18n';
 import { Badge, Chips, EmptyState, ListItem, SearchBar } from '../ui/components';
 import { SelectField } from '../ui/fields';
 import { colors, space } from '../ui/theme';
+import { matchesSearch } from '../ui/search';
 
 export default function JournalItemsScreen() {
   const s = useBooks();
@@ -20,17 +21,10 @@ export default function JournalItemsScreen() {
   const [accountId, setAccountId] = useState<string | undefined>();
   const [filter, setFilter] = useState<'all' | 'unreconciled'>('all');
   const items = useMemo(() => postedItems(s).reverse(), [s]);
-  const term = q.trim().toLowerCase();
   const visible = items.filter((it) => {
     if (accountId && it.account.id !== accountId) return false;
     if (filter === 'unreconciled' && (!it.account.reconcile || isZero(lineResidual(it.line, lk.reconcileIndex, s.settings.decimals), s.settings.decimals))) return false;
-    if (!term) return true;
-    return (
-      it.move.name.toLowerCase().includes(term) ||
-      it.line.label.toLowerCase().includes(term) ||
-      it.account.code.includes(term) ||
-      (it.line.partnerId ? lk.partners.get(it.line.partnerId)?.name.toLowerCase().includes(term) : false)
-    );
+    return matchesSearch(q, it.move.name, it.line.label, it.account.code, it.line.partnerId && lk.partners.get(it.line.partnerId)?.name);
   });
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

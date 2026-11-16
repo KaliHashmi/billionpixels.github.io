@@ -1,13 +1,12 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useBooks, useStore } from '../../data/store';
 import { Budget } from '../../domain/types';
 import { newId } from '../../domain/utils';
 import { accountOptions } from '../../features/entities';
 import { useT } from '../../i18n';
-import { Button, ButtonRow, Card, Screen, SectionTitle } from '../../ui/components';
+import { Button, ButtonRow, Card, IconButton, Screen, SectionTitle } from '../../ui/components';
 import { confirm, notify } from '../../ui/dialog';
 import { NumberField, SelectField, SwitchField, TextField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
@@ -42,9 +41,7 @@ export default function BudgetScreen() {
               <SelectField label={t('Account')} value={l.accountId || undefined} options={options} onChange={(v) => setB({ ...b, lines: b.lines.map((x, j) => (j === i ? { ...x, accountId: v ?? '' } : x)) })} />
               <NumberField label={t('Amount per month')} value={l.monthly} onChange={(v) => setB({ ...b, lines: b.lines.map((x, j) => (j === i ? { ...x, monthly: v } : x)) })} />
             </View>
-            <Pressable hitSlop={8} onPress={() => setB({ ...b, lines: b.lines.filter((_, j) => j !== i) })}>
-              <Ionicons name="trash-outline" size={20} color={colors.danger} />
-            </Pressable>
+            <IconButton icon="trash-outline" color={colors.danger} label={t('Remove line')} onPress={() => setB({ ...b, lines: b.lines.filter((_, j) => j !== i) })} />
           </View>
         </Card>
       ))}

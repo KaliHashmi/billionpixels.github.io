@@ -11,6 +11,7 @@ import { Badge, Button, ButtonRow, Card, Chips, EmptyState, Fab, ListItem, Row, 
 import { notify } from '../../ui/dialog';
 import { SelectField } from '../../ui/fields';
 import { colors, space } from '../../ui/theme';
+import { matchesSearch } from '../../ui/search';
 
 export default function BankScreen() {
   const params = useLocalSearchParams<{ journalId?: string }>();
@@ -34,8 +35,7 @@ export default function BankScreen() {
     return round(b, s.settings.decimals);
   }, [s.moves, journal, s.settings.decimals]);
 
-  const term = q.trim().toLowerCase();
-  const visible = lines.filter((l) => (filter === 'all' || (filter === 'todo' ? !l.reconciled : l.reconciled)) && (!term || l.label.toLowerCase().includes(term) || String(l.amount).includes(term)));
+  const visible = lines.filter((l) => (filter === 'all' || (filter === 'todo' ? !l.reconciled : l.reconciled)) && matchesSearch(q, l.label, l.amount));
 
   const importCsv = async () => {
     try {

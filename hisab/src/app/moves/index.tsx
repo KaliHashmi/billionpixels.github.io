@@ -10,6 +10,7 @@ import { moveBadge } from '../../features/status';
 import { useT } from '../../i18n';
 import { Badge, Chips, EmptyState, Fab, ListItem, SearchBar } from '../../ui/components';
 import { colors, space } from '../../ui/theme';
+import { matchesSearch } from '../../ui/search';
 
 const TITLES: Record<MoveType, string> = {
   out_invoice: 'Sales Invoices',
@@ -70,15 +71,7 @@ export default function MovesList() {
     count: rows.filter((r) => matches(f, r)).length,
   }));
 
-  const term = q.trim().toLowerCase();
-  const visible = rows.filter(
-    (r) =>
-      matches(filter, r) &&
-      (!term ||
-        r.m.name.toLowerCase().includes(term) ||
-        r.m.ref.toLowerCase().includes(term) ||
-        (r.m.partnerId && partners.get(r.m.partnerId)?.name.toLowerCase().includes(term))),
-  );
+  const visible = rows.filter((r) => matches(filter, r) && matchesSearch(q, r.m.name, r.m.ref, r.m.partnerId && partners.get(r.m.partnerId)?.name));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

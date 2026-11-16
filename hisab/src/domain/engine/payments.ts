@@ -10,7 +10,7 @@ import {
   PaymentMethod,
 } from '../types';
 import { isValidISODate, isZero, newId, round } from '../utils';
-import { checkLockDate, getJournal, getMove, isInvoice, nextSequence, replace } from './core';
+import { addPostedEntry, checkLockDate, getJournal, getMove, isInvoice, nextSequence, replace } from './core';
 import { buildReconcileIndex, lineResidual, OpenItem, openItems, ReconcileIndex, reconcileLines, unreconcileMove } from './reconcile';
 
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ export function registerPayment(state: AppState, input: PaymentInput, keep?: Pay
 }
 
 /** The money-side journal item of a payment. */
-export function paymentLiquidityLine(state: AppState, payment: Payment): MoveLine | undefined {
+function paymentLiquidityLine(state: AppState, payment: Payment): MoveLine | undefined {
   return state.moves.find((m) => m.id === payment.moveId)?.lines.find((l) => l.kind === 'other');
 }
 
@@ -197,28 +197,19 @@ export function clearCheque(state: AppState, paymentId: ID, date: string): AppSt
   const inbound = payment.paymentType === 'inbound';
   const label = `Cheque ${payment.chequeNumber ?? ''} cleared`.trim();
   const transitLine: MoveLine = { id: newId(), accountId: line.accountId, partnerId: payment.partnerId, label, debit: inbound ? 0 : payment.amount, credit: inbound ? payment.amount : 0, kind: 'other' };
-  const seq = nextSequence(state, journal.code, date);
-  const move: Move = {
-    id: newId(),
-    moveType: 'entry',
-    name: seq.name,
-    state: 'posted',
+  const { state: withMove, move } = addPostedEntry(state, {
     journalId: journal.id,
     partnerId: payment.partnerId,
     date,
     ref: label,
-    narration: '',
-    invoiceLines: [],
     lines: [
       { id: newId(), accountId: journal.defaultAccountId, partnerId: payment.partnerId, label, debit: inbound ? payment.amount : 0, credit: inbound ? 0 : payment.amount, kind: 'other' },
       transitLine,
     ],
     origin: 'cheque',
     originId: payment.id,
-    createdAt: new Date().toISOString(),
-    postedAt: new Date().toISOString(),
-  };
-  let next: AppState = { ...seq.state, moves: [...seq.state.moves, move], payments: replace(seq.state.payments, { ...payment, clearingMoveId: move.id }) };
+  });
+  let next: AppState = { ...withMove, payments: replace(withMove.payments, { ...payment, clearingMoveId: move.id }) };
   next = reconcileLines(next, [line.id, transitLine.id], date);
   return next;
 }

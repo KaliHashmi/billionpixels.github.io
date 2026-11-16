@@ -2,7 +2,7 @@
 
 The 35-item checklist from `.claude/skills/legal-launch-checklist/SKILL.md`, applied to Hisab. Re-run it before every release.
 
-**Last run:** 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
+**Last run:** 16 November 2026 (code clean-up: accessibility fixes only, items 29–30; nothing else touched consent, legal pages or data). Before that, 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
 
 Hisab keeps all books on the device. It has no server, no accounts held by us, no analytics, no payments and no AI. That is why many items are N/A, and each one becomes relevant again if that changes.
 
@@ -37,7 +37,7 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 27 | Realistic uptime | Done | Terms §8: no uptime promise; the app works offline |
 | 28 | Customer logos | N/A | None used |
 | 29 | Colour contrast | **Fixed** | Theme colours darkened to WCAG AA (success, warning, danger, info, draft, muted, accent, UAT banner, tab labels). `e2e/a11y.spec.ts` runs axe on the welcome, home, invoices, invoice, settings and account screens in English and Arabic |
-| 30 | Alt text and accessible names | **Fixed** | Every text, number, date and search input now has an accessible name (`aria-label`); axe checks names and roles |
+| 30 | Alt text and accessible names | **Fixed** | Every text, number, date and search input now has an accessible name (`aria-label`); axe checks names and roles. 16 Nov 2026: icon-only buttons (remove a line on invoices, journal entries and budgets; the date field's previous day / today / next day; the round "+" button, now in Arabic too) go through `IconButton`, which requires a spoken name, has the button role and a 44pt touch area. (since 12 Nov the start-up spinner also says "Loading"). `e2e/a11y.spec.ts` now also opens a new invoice, journal entry and budget with a line and checks those buttons by name in English and Arabic |
 | 31 | Keyboard navigation | **Fixed** | Web: the terms checkbox toggles with Space; a keyboard-only test creates a company |
 | 32 | Image, font and icon licences | Done | Icons: Ionicons via `@expo/vector-icons` (MIT). App icon and logo made for Hisab (`assets/brand/`); the "HISAB" lettering is Montserrat ExtraBold (SIL OFL, commercial use allowed). No web fonts in the app |
 | 33 | Open-source obligations | **Fixed** | Generated `/hisab/licenses/` page: every shipped package, its licence and the licence texts. Linked in Settings › About and from the Terms. No GPL-only packages (one dual-licensed BSD/GPL package is used under BSD) |
