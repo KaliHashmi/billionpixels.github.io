@@ -8,6 +8,8 @@ This repository holds two things:
 
 Publisher of every app in this account: FutureX Technical Solutions (فيوتشر اكس للحلول التقنية), Al Wizarat, Bausher, Muscat, Commercial Registration No. 1685674. Support email for all apps: futurex.om@outlook.com.
 
+GitHub organization: the company's code is moving to the `FutureX-Oman` organization (created 16 Nov 2026). ATND moves first. This repository moves only after the company domain (futurexoman.com) serves Hisab's public pages and the FutureX site, because GitHub Pages addresses are not redirected after a move and the store listings link to them. After any move, update the cloud environment, Claude's GitHub access, CI, EAS and Cloudflare connections, and test every public link.
+
 Branches:
 - Development happens on feature branches. Never push to another branch without permission.
 - `main` is served by GitHub Pages. It also carries the built Hisab web previews (`hisab-uat/`, `hisab-app/`), the public pages (`hisab/`) and `404.html`, all produced by `hisab/scripts/build-web.sh`.
