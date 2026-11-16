@@ -1,12 +1,13 @@
 import { router, Stack } from 'expo-router';
 import { FlatList, View } from 'react-native';
-import { useBooks, useMoney } from '../../data/store';
+import { useBooks, useMoney, usePermissions } from '../../data/store';
 import { useT } from '../../i18n';
 import { Badge, EmptyState, Fab, ListItem } from '../../ui/components';
 import { colors } from '../../ui/theme';
 
 export default function BudgetsList() {
   const s = useBooks();
+  const can = usePermissions();
   const money = useMoney();
   const { t } = useT();
   return (
@@ -26,7 +27,7 @@ export default function BudgetsList() {
           />
         )}
       />
-      <Fab onPress={() => router.push({ pathname: '/budgets/[id]', params: { id: 'new' } })} />
+      {can.create && <Fab onPress={() => router.push({ pathname: '/budgets/[id]', params: { id: 'new' } })} />}
     </View>
   );
 }

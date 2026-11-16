@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { useBooks, useLookups, useMoney } from '../../data/store';
+import { useBooks, useLookups, useMoney, usePermissions } from '../../data/store';
 import { PAYMENT_METHOD_LABELS } from '../../domain/engine';
 import { useT } from '../../i18n';
 import { Badge, EmptyState, Fab, ListItem, SearchBar } from '../../ui/components';
@@ -11,6 +11,7 @@ import { matchesSearch } from '../../ui/search';
 export default function PaymentsList() {
   const { partnerType = 'customer' } = useLocalSearchParams<{ partnerType?: 'customer' | 'supplier' }>();
   const s = useBooks();
+  const can = usePermissions();
   const { partners } = useLookups();
   const money = useMoney();
   const { t, fmtDate } = useT();
@@ -41,7 +42,7 @@ export default function PaymentsList() {
           />
         )}
       />
-      <Fab onPress={() => router.push({ pathname: '/payments/new', params: { partnerType } })} />
+      {can.create && <Fab onPress={() => router.push({ pathname: '/payments/new', params: { partnerType } })} />}
     </View>
   );
 }

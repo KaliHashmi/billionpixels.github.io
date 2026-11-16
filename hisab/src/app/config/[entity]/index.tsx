@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { useBooks } from '../../../data/store';
+import { useBooks, usePermissions } from '../../../data/store';
 import { ENTITIES } from '../../../features/entities';
 import { useT } from '../../../i18n';
 import { Badge, Chips, EmptyState, Fab, ListItem, SearchBar } from '../../../ui/components';
@@ -12,6 +12,7 @@ export default function EntityList() {
   const params = useLocalSearchParams<{ entity: string; kind?: string }>();
   const def = ENTITIES[params.entity];
   const s = useBooks();
+  const can = usePermissions();
   const { t } = useT();
   const [q, setQ] = useState('');
   const [show, setShow] = useState<'active' | 'archived'>('active');
@@ -51,7 +52,7 @@ export default function EntityList() {
           />
         )}
       />
-      <Fab onPress={() => router.push({ pathname: '/config/[entity]/[id]', params: { entity: params.entity, id: 'new', kind: params.kind } })} />
+      {can.create && <Fab onPress={() => router.push({ pathname: '/config/[entity]/[id]', params: { entity: params.entity, id: 'new', kind: params.kind } })} />}
     </View>
   );
 }

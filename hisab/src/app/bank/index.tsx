@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
-import { useBooks, useLookups, useMoney, useStore } from '../../data/store';
+import { useBooks, useLookups, useMoney, usePermissions, useStore } from '../../data/store';
 import { saveStatementLine } from '../../domain/engine';
 import { AppState } from '../../domain/types';
 import { isValidISODate, newId, round } from '../../domain/utils';
@@ -16,6 +16,7 @@ import { matchesSearch } from '../../ui/search';
 export default function BankScreen() {
   const params = useLocalSearchParams<{ journalId?: string }>();
   const s = useBooks();
+  const can = usePermissions();
   const { run } = useStore();
   const lk = useLookups();
   const money = useMoney();
@@ -123,7 +124,7 @@ export default function BankScreen() {
         )}
       />
       {!journal && <Text style={{ padding: space.lg }}>{t('Create a bank journal first.')}</Text>}
-      {journal && <Fab onPress={() => router.push({ pathname: '/bank/line', params: { journalId } })} />}
+      {journal && can.create && <Fab onPress={() => router.push({ pathname: '/bank/line', params: { journalId } })} />}
     </View>
   );
 }

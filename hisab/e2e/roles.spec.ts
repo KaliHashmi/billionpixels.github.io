@@ -89,3 +89,22 @@ test('Arabic: a role change is recorded in the audit log', async ({ page }) => {
   await expect(page.getByText('عدّل مستخدماً', { exact: true }).first()).toBeVisible();
   await expectNoErrors(page, errors);
 });
+
+test('viewers are not offered the "+" (New) button on any list; accountants are', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  const lists = ['/moves?type=out_invoice', '/moves?type=in_invoice', '/payments?partnerType=customer', '/config/partners?kind=customer', '/assets', '/budgets', '/bank'];
+  for (const [user, offered] of [['owner', false], ['accountant', true]] as const) {
+    await page.context().clearCookies();
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await demoSignIn(page, user);
+    for (const path of lists) {
+      await page.goto(path);
+      await expect(page.getByRole('heading').first(), path).toBeVisible();
+      await page.waitForTimeout(500); // let the list finish drawing before checking for the button
+      await expect(page.getByRole('button', { name: 'New', exact: true }), `${user} ${path}`).toHaveCount(offered ? 1 : 0);
+    }
+  }
+  await expectNoErrors(page, errors);
+});

@@ -1,6 +1,6 @@
 import { router, Stack } from 'expo-router';
 import { FlatList, View } from 'react-native';
-import { useBooks, useMoney, useStore } from '../../data/store';
+import { useBooks, useMoney, usePermissions, useStore } from '../../data/store';
 import { depreciationBoard, postAllDepreciations } from '../../domain/assets';
 import { today } from '../../domain/utils';
 import { useT } from '../../i18n';
@@ -10,6 +10,7 @@ import { colors, space } from '../../ui/theme';
 
 export default function AssetsList() {
   const s = useBooks();
+  const can = usePermissions();
   const { run } = useStore();
   const money = useMoney();
   const { t } = useT();
@@ -46,7 +47,7 @@ export default function AssetsList() {
           );
         }}
       />
-      <Fab onPress={() => router.push({ pathname: '/assets/[id]', params: { id: 'new' } })} />
+      {can.create && <Fab onPress={() => router.push({ pathname: '/assets/[id]', params: { id: 'new' } })} />}
     </View>
   );
 }

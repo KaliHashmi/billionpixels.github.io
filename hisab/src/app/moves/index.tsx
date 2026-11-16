@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { useBooks, useLookups, useMoney } from '../../data/store';
+import { useBooks, useLookups, useMoney, usePermissions } from '../../data/store';
 import { invoiceStatus, isInvoice } from '../../domain/engine';
 import { MoveType } from '../../domain/types';
 import { PurchaseImportButtons } from '../../features/PurchaseImport';
@@ -26,6 +26,7 @@ export default function MovesList() {
   const params = useLocalSearchParams<{ type?: MoveType; filter?: Filter; partnerId?: string }>();
   const type: MoveType = params.type ?? 'out_invoice';
   const s = useBooks();
+  const can = usePermissions();
   const { partners, journals, reconcileIndex } = useLookups();
   const money = useMoney();
   const { t, fmtDate } = useT();
@@ -104,7 +105,7 @@ export default function MovesList() {
           );
         }}
       />
-      <Fab onPress={() => router.push({ pathname: '/moves/[id]', params: { id: 'new', type, partnerId: params.partnerId } })} />
+      {can.create && <Fab onPress={() => router.push({ pathname: '/moves/[id]', params: { id: 'new', type, partnerId: params.partnerId } })} />}
     </View>
   );
 }

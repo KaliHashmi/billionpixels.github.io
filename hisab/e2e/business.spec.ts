@@ -128,6 +128,7 @@ test('an administrator adds an accountant and a viewer; each signs in with the r
     await page.getByText('Change Password', { exact: true }).last().click();
     await expect(page.getByLabel('My Account')).toBeVisible();
     await page.goto('/moves?type=out_invoice');
+    await expect(page.getByRole('heading', { name: 'Sales Invoices' })).toBeVisible(); // the list has loaded
     if (user === 'sara') await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
     else await expect(page.getByRole('button', { name: 'New' })).toHaveCount(0);
     await page.goto('/users');
