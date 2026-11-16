@@ -1,12 +1,12 @@
 // Relays the published UAT app to http://127.0.0.1:<port>, so the browser tests can run against the live site.
 //   node e2e/live-proxy.mjs [port]        (used by playwright.live.config.ts)
-// The tests open addresses such as /moves; the live app lives under /billionpixels.github.io/hisab-uat/,
+// The tests open addresses such as /moves; the live app lives under /billionpixels.github.io/hisab-uat/ (or hisab-app),
 // so those are redirected there. Everything under /billionpixels.github.io/ is fetched from GitHub Pages as is.
 import { createServer } from 'node:http';
 
 const ORIGIN = process.env.LIVE_ORIGIN ?? 'https://kalihashmi.github.io';
 const SITE = '/billionpixels.github.io';
-const APP = `${SITE}/hisab-uat`;
+const APP = `${SITE}/${process.env.LIVE_APP ?? 'hisab-uat'}`; // LIVE_APP=hisab-app for the production preview
 const port = Number(process.argv[2] ?? 4180);
 
 createServer(async (req, res) => {

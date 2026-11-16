@@ -22,6 +22,7 @@
     "build:e2e": "APP_VARIANT=uat CI=1 expo export --platform web --output-dir dist --clear",
     "test:e2e": "npm run build:e2e && playwright test",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
+    "test:e2e:prod": "APP_VARIANT=production CI=1 expo export --platform web --output-dir dist-prod --clear && playwright test --config playwright.prod.config.ts",
     "test:perf": "jest --ci --testMatch '**/__tests__/**/*.perf.ts'",
     "postinstall": "node scripts/vendor-ocr.mjs"
   },

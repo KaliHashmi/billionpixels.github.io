@@ -312,12 +312,14 @@ export function SelectField({
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
+  const shown = current?.label ?? placeholder ?? t('Select…');
   return (
     <View style={s.field}>
       <FieldLabel label={label} required={required} />
-      <Pressable disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
+      {/* Named "field: value", so a screen reader says which field it is and what is chosen. */}
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${shown}`} disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
         <Text style={{ color: current ? colors.text : colors.muted, flex: 1, fontSize: 15 }} numberOfLines={1}>
-          {current?.label ?? placeholder ?? t('Select…')}
+          {shown}
         </Text>
         {editable && <Ionicons name="chevron-down" size={18} color={colors.muted} />}
       </Pressable>
@@ -350,12 +352,13 @@ export function MultiSelectField({ label, value, options, onChange, editable = t
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const labels = options.filter((o) => value.includes(o.value)).map((o) => o.label);
+  const shown = labels.length ? labels.join('، ') : t('None');
   return (
     <View style={s.field}>
       <FieldLabel label={label} />
-      <Pressable disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${shown}`} disabled={!editable} onPress={() => setOpen(true)} style={[s.input, s.select, !editable && s.readonly]}>
         <Text style={{ color: labels.length ? colors.text : colors.muted, flex: 1, fontSize: 15 }} numberOfLines={2}>
-          {labels.length ? labels.join('، ') : t('None')}
+          {shown}
         </Text>
         {editable && <Ionicons name="chevron-down" size={18} color={colors.muted} />}
       </Pressable>

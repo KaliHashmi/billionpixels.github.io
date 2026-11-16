@@ -6,9 +6,13 @@ import { defineConfig } from '@playwright/test';
  *   npm run test:e2e:live      after a deploy: proves the live site works, demo accounts included
  * Before a deploy, the built site can be tested the same way: serve web-site/ under /billionpixels.github.io/
  * (missing files answered with 404.html, like GitHub Pages) and set LIVE_ORIGIN to that server.
+ * LIVE_APP=hisab-app tests the production preview instead: only the tests that start from an empty company.
  */
+const PRODUCTION = process.env.LIVE_APP === 'hisab-app';
+
 export default defineConfig({
   ...base,
+  ...(PRODUCTION ? { testMatch: ['business.spec.ts', 'production.spec.ts'], testIgnore: [] } : {}),
   // The live site is further away than a local build.
   timeout: 120_000,
   expect: { timeout: 30_000 },
@@ -16,7 +20,7 @@ export default defineConfig({
   use: { ...base.use, baseURL: 'http://127.0.0.1:4180' },
   webServer: {
     command: 'node e2e/live-proxy.mjs 4180',
-    url: 'http://127.0.0.1:4180/billionpixels.github.io/hisab-uat/',
+    url: `http://127.0.0.1:4180/billionpixels.github.io/${process.env.LIVE_APP ?? 'hisab-uat'}/`,
     reuseExistingServer: false,
     // Behind a company or cloud proxy, Node's fetch has to be told to use it (not for a local LIVE_ORIGIN).
     env: process.env.LIVE_ORIGIN ? {} : { NODE_USE_ENV_PROXY: '1', NODE_NO_WARNINGS: '1' },

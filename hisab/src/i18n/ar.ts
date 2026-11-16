@@ -57,7 +57,7 @@ export const ar: Record<string, string> = {
   "Administration": "الإدارة",
   "Administrator": "مدير النظام",
   "Administrator account": "حساب مدير النظام",
-  "Administrators manage users and settings and can edit or delete issued invoices, bills, vouchers, payroll and VAT closings. Accountants record transactions and can delete those documents but not edit them. Viewers can only see the books and reports.": "يدير المسؤولون المستخدمين والإعدادات ويمكنهم تعديل أو حذف الفواتير وفواتير الموردين والسندات والرواتب وإقفالات ضريبة القيمة المضافة الصادرة. يسجّل المحاسبون المعاملات ويمكنهم حذف هذه المستندات دون تعديلها. أما المشاهدون فيمكنهم الاطلاع على الدفاتر والتقارير فقط.",
+  "Administrators manage users and settings and can correct or cancel issued invoices, bills, vouchers, payroll and VAT closings. Accountants record transactions and can cancel those documents but not correct them. Issued documents are never deleted. Viewers can only see the books and reports.": "يدير المسؤولون المستخدمين والإعدادات ويمكنهم تصحيح أو إلغاء الفواتير وفواتير الموردين والسندات والرواتب وإقفالات ضريبة القيمة المضافة الصادرة. يسجّل المحاسبون المعاملات ويمكنهم إلغاء هذه المستندات دون تصحيحها. لا تُحذف المستندات الصادرة أبداً. أما المشاهدون فيمكنهم الاطلاع على الدفاتر والتقارير فقط.",
   "Administrators only": "لمدير النظام فقط",
   "Aged Payable": "أعمار الذمم الدائنة",
   "Aged Receivable": "أعمار الذمم المدينة",

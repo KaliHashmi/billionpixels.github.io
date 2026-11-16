@@ -66,7 +66,7 @@ test('a photo of a till receipt is recognised on the device and becomes a cash e
   await expect(page.getByText('OMR 15.750').filter({ visible: true }).first()).toBeVisible();
   // Fuel, from the words on the receipt; amount, date and VAT from the paper.
   await expect(page.getByText('618000 Fuel & Transport').filter({ visible: true })).toBeVisible();
-  await expect(page.getByLabel('Amount')).toHaveValue(/15\.75/);
+  await expect(page.getByLabel('Amount', { exact: true })).toHaveValue(/15\.75/);
   await page.getByText('Confirm', { exact: true }).filter({ visible: true }).last().click();
   await expect(page.getByText(/^PV\/\d{4}\/\d+$/).filter({ visible: true }).first()).toBeVisible();
   // The receipt is kept with the voucher.

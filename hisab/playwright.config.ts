@@ -7,6 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['production.spec.ts'], // production build only: npm run test:e2e:prod
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,

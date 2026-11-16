@@ -70,6 +70,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build:e2e
       - run: npx playwright test
+      # The same business flows on the production build (no demo company).
+      - run: npm run test:e2e:prod
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
