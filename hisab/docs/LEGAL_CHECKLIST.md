@@ -2,7 +2,7 @@
 
 The 35-item checklist from `.claude/skills/legal-launch-checklist/SKILL.md`, applied to Hisab. Re-run it before every release.
 
-**Last run:** 16 November 2026 (code clean-up: accessibility fixes only, items 29–30; nothing else touched consent, legal pages or data). Before that, 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
+**Updated:** 16 November 2026, accessibility items 29–30 only (code clean-up; nothing touched consent, legal pages or data). **Last full run:** 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
 
 Hisab keeps all books on the device. It has no server, no accounts held by us, no analytics, no payments and no AI. That is why many items are N/A, and each one becomes relevant again if that changes.
 
