@@ -1,6 +1,6 @@
 # FutureX website
 
-The company website of FutureX Technical Solutions LLC (CR 1685674), in English and Arabic. One page: four separate services (telecom infrastructure, data centres, artificial intelligence, applications), the company's own products (Hisab, ATND), how a project runs, why FutureX, and contact details. Each service has an "Ask about this service" link that opens WhatsApp with the service name filled in.
+The company website of FutureX Technical Solutions LLC (CR 1685674), in English and Arabic. One page: four separate services (applications, artificial intelligence, data centres, telecom infrastructure; always in this order), the company's own products (Hisab, ATND), how a project runs, why FutureX, and contact details. Each service has an "Ask about this service" link that opens WhatsApp with the service name filled in.
 
 ## Commands
 

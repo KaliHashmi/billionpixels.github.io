@@ -1,6 +1,7 @@
-// The four services drawn as separate isometric plates, one per service; the one being read lifts and lights up.
+// The four services drawn as separate isometric plates, one per service, in the site's order (applications on
+// top, telecom at the bottom); the one being read lifts and lights up.
 // Each plate's top face is a unit square mapped onto the isometric diamond, so the drawings on it
-// (fibre runs, rack rows, a neural network, app screens) sit in true perspective.
+// (app screens, a neural network, rack rows, fibre runs) sit in true perspective.
 
 const W = 420;
 const HALF_W = 150;
@@ -9,7 +10,8 @@ const DEPTH = 14;
 const GAP = 140;
 const BASE_Y = 500;
 
-const cyOf = (i) => BASE_Y - i * GAP;
+// The first service is drawn on top (the list reads top to bottom), the last at the bottom.
+const cyOf = (i, n) => BASE_Y - (n - 1 - i) * GAP;
 
 function Telecom() {
   const rows = [0.2, 0.35, 0.5, 0.65, 0.8];
@@ -69,19 +71,20 @@ function Apps() {
   );
 }
 
-const DRAWINGS = [Telecom, DataCentre, Ai, Apps];
+const DRAWINGS = { telecom: Telecom, datacentre: DataCentre, ai: Ai, apps: Apps };
 
 export default function LayerStack({ items, active, label }) {
   return (
     <svg className="stack" viewBox={`0 -24 ${W} 630`} role="img" aria-label={label}>
-      {items.map((item, i) => {
-        const cy = cyOf(i);
+      {/* Painted bottom plate first, so each higher plate sits over the one below it. */}
+      {items.map((item, i) => ({ item, i })).reverse().map(({ item, i }) => {
+        const cy = cyOf(i, items.length);
         const top = cy - HALF_H;
         const x0 = W / 2 - HALF_W;
         const x1 = W / 2 + HALF_W;
-        const Drawing = DRAWINGS[i];
+        const Drawing = DRAWINGS[item.id];
         return (
-          <g key={item.id} className={`plate${i === active ? ' is-active' : ''}${i > active ? ' is-above' : ''}`}>
+          <g key={item.id} className={`plate${i === active ? ' is-active' : ''}${i < active ? ' is-above' : ''}`}>
             <polygon className="side l" points={`${x0},${cy} ${W / 2},${cy + HALF_H} ${W / 2},${cy + HALF_H + DEPTH} ${x0},${cy + DEPTH}`} />
             <polygon className="side r" points={`${x1},${cy} ${W / 2},${cy + HALF_H} ${W / 2},${cy + HALF_H + DEPTH} ${x1},${cy + DEPTH}`} />
             <polygon className="face" points={`${W / 2},${top} ${x1},${cy} ${W / 2},${cy + HALF_H} ${x0},${cy}`} />

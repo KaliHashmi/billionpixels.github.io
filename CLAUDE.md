@@ -6,6 +6,8 @@ This repository holds two things:
 - `futurex-site/`: the FutureX company website (Vite + React, English and Arabic). Its `README.md` has the commands, tools, hosting (Cloudflare Pages, never Vercel's free plan) and the launch steps.
 - Root files (`index.html`, `app.js.txt`, `styles.css .txt`): the original Billion Pixels page. Leave them alone unless asked.
 
+Service order (owner's rule, 18 Nov 2026): wherever FutureX's services are listed (website, company profile, proposals, any document, English and Arabic), always use this order: 1. Applications (التطبيقات), 2. Artificial intelligence (الذكاء الاصطناعي), 3. Data centres (مراكز البيانات), 4. Telecom infrastructure (البنية التحتية للاتصالات).
+
 Publisher of every app in this account: FutureX Technical Solutions (فيوتشر اكس للحلول التقنية), Al Wizarat, Bausher, Muscat, Commercial Registration No. 1685674. Support email for all apps: futurex.om@outlook.com.
 
 GitHub organization: the company's code is moving to the `FutureX-Oman` organization (created 16 Nov 2026). ATND moves first. This repository moves only after the company domain (futurexoman.com) serves Hisab's public pages and the FutureX site, because GitHub Pages addresses are not redirected after a move and the store listings link to them. After any move, update the cloud environment, Claude's GitHub access, CI, EAS and Cloudflare connections, and test every public link.
