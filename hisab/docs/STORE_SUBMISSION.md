@@ -6,6 +6,22 @@ Last reviewed: November 2026.
 
 ---
 
+## Go-live runbook (status 18 Nov 2026)
+
+Ready now: the app (all tests green on UAT and production builds), the store texts in English and Arabic (`docs/STORE_LISTING.md`), draft screenshots (`store-assets/screenshots-draft/`), the security review and the legal checklist (both re-run 18 Nov), iPhone only.
+
+Waiting on the owner:
+- Apple: the switch of the Apple Developer account from individual to **organization** (FutureX, D-U-N-S number done) is pending Apple's approval. The owner chose to wait for it before TestFlight.
+- Google Play: an organization account ($25 once) with the same D-U-N-S number. Huawei AppGallery: an enterprise account (free).
+
+When the organization account is approved, in this order:
+1. **Decide the permanent app ID** (bundle id / package name). Remind the owner: it can never change after the first upload. Proposed: `com.futurexoman.hisab`, or `om.futurex.hisab`; the placeholder `com.hisab.accounting` is not tied to FutureX. Set it with `HISAB_BUNDLE_ID` (EAS environment variable) or in `app.config.ts`.
+2. Link Hisab to the Expo account (`eas init`), set `EAS_PROJECT_ID`, and the Apple team in EAS.
+3. Bump the version if needed, move the CHANGELOG "Unreleased" section to 1.0.0, run `npm run verify`, `npm run test:e2e`, `npm run test:e2e:prod`, `npm run test:perf`.
+4. `npm run build:prod` (with the owner's approval), then `npm run submit:prod` to App Store Connect: the build goes to **TestFlight** (internal testers, no review needed).
+5. The owner tests on a real iPhone in English and Arabic: the remove-line bin buttons, VoiceOver reading the Arabic button names, Face ID, receipt photos, PDF sharing. Replace the draft screenshots with real ones from that iPhone.
+6. App Store Connect: paste the texts, the answers in section 1 and the review notes; submit for review.
+
 ## 0. Before either store
 
 - [ ] `npm run verify` is green on the release commit.
@@ -71,7 +87,7 @@ Face ID is optional and only unlocks the app on the device.
 ### Screenshots
 
 - **iPhone 6.9"** (1320 × 2868), 3–10 images. Apple scales them down for smaller iPhones.
-- **iPad 13"** (2064 × 2752). This is **required** because `supportsTablet: true`. If you do not want to support iPad, set `supportsTablet: false` before the first submission.
+- No iPad screenshots: the first release is **iPhone only** (`supportsTablet: false`, owner's choice on 18 Nov 2026). Adding iPad later means iPad screenshots and an iPad review.
 - Make one set in English and one in Arabic.
 
 ### Submit

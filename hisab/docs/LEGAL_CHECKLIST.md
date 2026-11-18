@@ -2,7 +2,7 @@
 
 The 35-item checklist from `.claude/skills/legal-launch-checklist/SKILL.md`, applied to Hisab. Re-run it before every release.
 
-**Updated:** 16 November 2026, accessibility items 29–30 only (code clean-up; nothing touched consent, legal pages or data). **Last full run:** 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
+**Last run:** 18 November 2026, before the first App Store and Google Play submission. All 35 items re-checked against what changed since 8 November: the store listing texts and screenshots (`docs/STORE_LISTING.md`, `store-assets/screenshots-draft/`), iPhone only, the accessibility fixes and the corrected role description. No data, consent, payment, SDK or legal-page change, so the privacy policy, terms and store privacy answers stay as they are. Before that: 16 November (items 29–30) and the full run of 8 November 2026 (receipt photos and CSV import of purchases added; the privacy policy now covers the camera and receipt photos, and `TERMS_VERSION` moved to 2026-11-08 so administrators accept it again). Re-checked the same day for the "accounting documents only" check: no new data, permission, SDK or network call, so the privacy policy and store answers stay as they are.
 
 Hisab keeps all books on the device. It has no server, no accounts held by us, no analytics, no payments and no AI. That is why many items are N/A, and each one becomes relevant again if that changes.
 
@@ -28,14 +28,14 @@ Hisab keeps all books on the device. It has no server, no accounts held by us, n
 | 18 | Auto-renewal disclosed | Done | Terms §7, before any paid plan exists |
 | 19 | No hidden fees | Done | Free; Terms §7 |
 | 20 | In-app purchase for digital goods | N/A (today) | Rule in `CLAUDE.md` |
-| 21 | No fake reviews | Done | None in the app, the site or the README |
-| 22 | No unsupported claims | Done | "Not approved by the OTA" and "not a Fawtara provider" are stated; `CLAUDE.md` forbids such claims |
+| 21 | No fake reviews | Done | None in the app, the site, the README or the store listing texts (`docs/STORE_LISTING.md`) |
+| 22 | No unsupported claims | Done | "Not approved by the OTA" and "not a Fawtara provider" are stated; `CLAUDE.md` forbids such claims. 18 Nov: every line of the store listing checked against the app (a "company logo on invoices" claim was removed: invoices carry the stamp and signature, not a logo; "Face ID" became "Face ID or fingerprint" for Android). Both descriptions end with: not certified by the Oman Tax Authority, the user stays responsible for their filings |
 | 23 | No false SOC 2 or certification | Done | None claimed |
 | 24 | No fake timers or scarcity | Done | None |
 | 25 | No dark patterns | Done | Consent unticked by default; deletion available in the app; no pre-ticked boxes |
 | 26 | Label AI content | N/A | No AI content |
 | 27 | Realistic uptime | Done | Terms §8: no uptime promise; the app works offline |
-| 28 | Customer logos | N/A | None used |
+| 28 | Customer logos | Done | No customer names or logos anywhere public. 18 Nov: the demo data names companies that may be real (for example Nama Electricity), so the store screenshots rename every business to a clear sample ("Sample Trading LLC", "Sample Hotel"…) in `scripts/store-screenshots.mjs`. The demo data stays as it is in the UAT build, which only testers see |
 | 29 | Colour contrast | **Fixed** | Theme colours darkened to WCAG AA (success, warning, danger, info, draft, muted, accent, UAT banner, tab labels). `e2e/a11y.spec.ts` runs axe on the welcome, home, invoices, invoice, settings and account screens in English and Arabic |
 | 30 | Alt text and accessible names | **Fixed** | Every text, number, date and search input now has an accessible name (`aria-label`); axe checks names and roles. 16 Nov 2026: icon-only buttons (remove a line on invoices, journal entries and budgets; the date field's previous day / today / next day; the round "+" button, now in Arabic too) go through `IconButton`, which requires a spoken name, has the button role and a 44pt touch area. (since 12 Nov the start-up spinner also says "Loading"). `e2e/a11y.spec.ts` now also opens a new invoice, journal entry and budget with a line and checks those buttons by name in English and Arabic. Dropdown fields (customer, product, account, role and others) are announced as buttons named "field: chosen value" |
 | 31 | Keyboard navigation | **Fixed** | Web: the terms checkbox toggles with Space; a keyboard-only test creates a company |

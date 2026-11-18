@@ -32,3 +32,22 @@ for (const lang of ['en', 'ar'] as const) {
     });
   }
 }
+
+test('Arabic: list rows keep a gap between the title and the amount', async ({ page }) => {
+  const errors = watchErrors(page);
+  await demoSignIn(page, 'admin', 'ar');
+  // A row of the demo company on each list: its title and its amount must not touch (they did in Arabic).
+  const rows = [
+    ['/moves?type=out_invoice', /^INV\/\d{4}\/00005$/, 'OMR 294.000'],
+    ['/bank', 'CARD SETTLEMENT POS', 'OMR 196.800'],
+  ] as const;
+  for (const [path, title, amount] of rows) {
+    await page.goto(path);
+    const t = await page.getByText(title, { exact: true }).filter({ visible: true }).first().boundingBox();
+    const a = await page.getByText(amount, { exact: true }).filter({ visible: true }).first().boundingBox();
+    expect(t && a, path).toBeTruthy();
+    const gap = a!.x + a!.width <= t!.x ? t!.x - (a!.x + a!.width) : a!.x - (t!.x + t!.width);
+    expect(gap, `${path}: gap between title and amount`).toBeGreaterThanOrEqual(4);
+  }
+  await expectNoErrors(page, errors);
+});

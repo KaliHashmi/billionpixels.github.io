@@ -89,6 +89,12 @@ The app is listed as **"Data Not Collected"** (App Store) and **"No data collect
 - Payroll and VAT rules change by decree. Update the defaults, `SI_RATES_CHECKED_ON` and the compliance doc together, with sources.
 - Never market or label Hisab as "OTA approved" or "Fawtara certified".
 
+## Store release (see docs/STORE_SUBMISSION.md, "Go-live runbook")
+
+- Waiting for Apple to approve FutureX's organization developer account; the owner will start TestFlight after that.
+- **Before the first upload, remind the owner to decide the permanent app ID** (bundle id / package name, never changeable after the first upload; proposed `com.futurexoman.hisab`). The current `com.hisab.accounting` is only a placeholder.
+- First release is iPhone only (`supportsTablet: false`).
+
 ## Never
 
 - Edit `ios/` or `android/`. They are generated; configure through `app.config.ts` and plugins.

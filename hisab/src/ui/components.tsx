@@ -101,7 +101,7 @@ export function ListItem({
           </Text>
         )}
       </View>
-      <View style={{ alignItems: 'flex-end', marginStart: space.sm }}>
+      <View style={{ alignItems: 'flex-end' }}>
         {!!right && <Text style={styles.listRight}>{right}</Text>}
         {!!rightSub && <Text style={styles.listSubtitle}>{rightSub}</Text>}
         {badge}
@@ -365,6 +365,8 @@ export const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    // A gap, not a one-sided margin, so the amount never touches the title in Arabic (right-to-left) either.
+    gap: space.sm,
     paddingVertical: space.md,
     paddingHorizontal: space.lg,
     backgroundColor: colors.card,

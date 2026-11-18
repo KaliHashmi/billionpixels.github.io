@@ -36,7 +36,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     scheme: v.scheme,
     userInterfaceStyle: 'light',
     ios: {
-      supportsTablet: true,
+      // iPhone only for the first App Store release (owner's choice, 18 Nov 2026): no iPad screenshots or iPad review.
+      supportsTablet: false,
       bundleIdentifier: `${BUNDLE_ID}${v.suffix}`,
       buildNumber: '1',
       config: { usesNonExemptEncryption: false },
