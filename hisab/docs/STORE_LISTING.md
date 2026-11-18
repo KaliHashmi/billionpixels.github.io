@@ -71,7 +71,7 @@ YOUR TEAM
 
 PRIVATE BY DESIGN
 • No account with us, no server, no ads, no tracking
-• Optional unlock with Face ID or fingerprint
+• Optional unlock with Face ID or Touch ID
 • Back up your books to a file and restore them on another phone
 
 Hisab helps you keep your books. It is not certified by the Oman Tax Authority, and you remain responsible for your tax filings.
@@ -150,7 +150,7 @@ Hisab: Accounting & VAT
 Invoices, Oman VAT, payroll and reports in English and Arabic. Works offline.
 
 <!-- field: play.en.full max 4000 -->
-(Use the App Store English description above.)
+(Use the App Store English description above, with one change for Android: "Optional unlock with Face ID or Touch ID" becomes "Optional unlock with your fingerprint or face". Apple's names must not appear in Google Play or Huawei texts, and Android's must not appear in Apple's.)
 
 ### Arabic (العربية)
 
@@ -161,7 +161,7 @@ Invoices, Oman VAT, payroll and reports in English and Arabic. Works offline.
 فواتير وضريبة القيمة المضافة في عُمان ورواتب وتقارير بالعربية والإنجليزية
 
 <!-- field: play.ar.full max 4000 -->
-(Use the App Store Arabic description above.)
+(Use the App Store Arabic description above; its wording "ببصمة الوجه أو الإصبع" fits both stores.)
 
 ---
 

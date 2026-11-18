@@ -41,27 +41,47 @@ When the organization account is approved, in this order:
 
 ## 1. Apple App Store
 
-### Guidelines that reject most apps, and Hisab's status
+### App Review Guidelines, checked one by one (18 Nov 2026)
+
+Checked against the current guidelines text (developer.apple.com/app-store/review/guidelines). ✅ = met in the app or its metadata today; ☐ = a step in App Store Connect or on a device, at submission.
 
 | Guideline | What Apple checks | Hisab |
 | --- | --- | --- |
-| **2.1 App Completeness** | The reviewer must be able to reach every feature. If a sign-in is required, give them working credentials. | Sign-in is local. The reviewer creates a company and administrator on the first screen. Explain this in the review notes (below). |
-| **4.2 Minimum Functionality** | The app is not a thin website or chatbot wrapper. | A native accounting app with offline ledger, PDFs and reports. ✅ |
-| **5.1.1(v) Account deletion** | Apps that create accounts must offer deletion inside the app. | Every user: My Account › **Delete My Account** (password confirmation). Admin: Users & Access › **Delete User**, and Settings › **Delete Company** (erases everything). ✅ |
-| **5.1.1 / 5.1.2 Privacy** | Privacy policy link in the app and in App Store Connect. No data shared (including with AI) without consent. | Policy linked on the welcome, sign-in and account screens. No data leaves the device. No AI. ✅ |
-| **3.1.1 In-App Purchase** | Digital features must be sold through Apple IAP. | Nothing is sold. If subscriptions are added, use IAP (RevenueCat or StoreKit). |
-| **2.3 Accurate metadata** | Screenshots show the real app; the description has no false claims. | Take screenshots from the production build. |
+| **1.5 Developer information** | A support URL with a way to contact you | ✅ Support page with futurex.om@outlook.com, the company, address and CR number |
+| **2.1 App completeness** | Final build, no placeholder content, tested on a device, no crash; demo account info if there is a login; working URLs | ✅ No placeholders (production has no demo company or UAT label: `e2e/production.spec.ts`); all public pages live. Sign-in is local with no server, so there is no account to give: the review notes tell the reviewer to create the company and administrator. ☐ Test the TestFlight build on a real iPhone before submitting |
+| **2.3.1 / 2.3.7 Accurate metadata** | No hidden features; name ≤ 30 characters, unique; honest keywords (no competitor names) | ✅ `docs/STORE_LISTING.md` (lengths checked by `scripts/listing-lengths.mjs`; no other app or brand names). ☐ App Store Connect confirms the name is free when the app record is created |
+| **2.3.3 Screenshots** | Show the app in use, not a title or sign-in screen | ✅ Seven working screens per language. ☐ Replace the drafts with screenshots from the iPhone (status bar, real fonts) |
+| **2.3.6 / 2.3.8 Age rating, metadata for all audiences** | Honest age-rating answers; metadata suitable for 4+ | ✅ Nothing objectionable. ☐ Answer Apple's newer age-rating questions (2025 system: 4+, 9+, 13+, 16+, 18+): no user-generated content shared with others, no messaging, no web browsing, no gambling, no ads, no medical content → 4+ |
+| **2.3.10 Other platforms** | No Android, Google Play or other store names in the iOS app or its metadata | ✅ The iOS texts say "Face ID or Touch ID"; Android wording ("fingerprint") is only in the Google Play / Huawei texts. In the app, "Android" appears only in two messages shown in the browser version, never on iPhone |
+| **2.4.1 iPhone apps on iPad** | iPhone apps should still run on iPad (compatibility mode); reviewers may test there | ✅ `supportsTablet: false`, so it runs on iPad as an iPhone app, portrait. ☐ Open the TestFlight build once on an iPad if one is available |
+| **2.5.1 / 2.5.2 Public APIs, no downloaded code** | No private APIs; no code downloaded or executed to change features | ✅ Expo SDK only. The document reader (pdf.js, Tesseract) and its English and Arabic language data are bundled in the app (`scripts/vendor-ocr.mjs`); nothing is fetched at runtime |
+| **2.5.4 Background modes** | Only declared modes, used for their purpose | ✅ None declared |
+| **3.1.1 In-app purchase** | Digital features sold through Apple IAP | ✅ Nothing is sold; the Terms say Hisab is free and future plans would use App Store / Google Play billing |
+| **4.0 / 4.2 Design, minimum functionality** | Native, useful, not a repackaged website | ✅ Native accounting app with offline ledger, PDFs, scanning, reports, payroll; Arabic right-to-left |
+| **4.8 Login services** | Third-party login (Google, Facebook…) needs an equivalent private option (e.g. Sign in with Apple) | ✅ Not required: Hisab uses only its own sign-in, on the device |
+| **5.1.1(i) Privacy policy** | Linked in App Store Connect and inside the app; says what is collected, retention and deletion | ✅ `site/privacy.html`, linked on the welcome, sign-in and account screens |
+| **5.1.1(ii)–(iv) Permission, minimisation, access** | Clear purpose strings; only needed data; out-of-process pickers; works if a permission is refused | ✅ Camera, photos and Face ID purpose strings in `app.config.ts`; the system document and photo pickers are used; scanning and photos are optional, and everything works without them |
+| **5.1.1(v) Sign-in and account deletion** | Login only if the app has significant account-based features; in-app deletion | ✅ Sign-in exists because a company has several users with different roles (administrator, accountant, viewer) and an audit log of who changed what; this is said in the review notes. Deletion: Delete My Account, Delete User, Delete Company |
+| **5.1.1(ix) Regulated fields** | Financial apps submitted by a legal entity, not an individual | ✅ Submitted by FutureX Technical Solutions LLC once the organization account is approved (one more reason to wait for it) |
+| **5.1.2 Data use and sharing** | No sharing without permission, including with AI | ✅ No data leaves the device; no AI service |
+| **5.2 Intellectual property** | Only content you have rights to | ✅ Own icon and artwork; open-source licences published (`…/hisab/licenses/`); screenshots use sample company names |
+| **Privacy manifest and SDK reasons** | Required-reason APIs declared | ✅ `ios.privacyManifests` in `app.config.ts` |
+| **Export compliance** | Encryption declaration | ✅ `ITSAppUsesNonExemptEncryption = false` (password hashing only) |
+| **Build requirements** | Built with the current Xcode / iOS SDK Apple requires for new uploads | ☐ EAS builds with its latest image for Expo SDK 58; check Apple's "Upcoming requirements" page before the build |
+| **EU trader status (Digital Services Act)** | To be on the EU App Store, declare trader status; traders' address, phone and email are shown to EU customers | ☐ Decide in App Store Connect › Business: declare FutureX as a trader (company address, phone, email shown in the EU), or leave EU countries out of distribution for now |
 
 ### App Store Connect answers
 
 - **App Privacy (nutrition label):** *Data Not Collected*.
 - **Privacy manifest:** declared in `app.config.ts` → `ios.privacyManifests` (no tracking, no collected data types).
 - **Export compliance:** *Uses non-exempt encryption: No*. This is already in the config (`ITSAppUsesNonExemptEncryption = false`). Hisab only hashes passwords.
-- **Age rating:** answer *None* to every content question. The result is 4+.
+- **Age rating:** answer *None* / *No* to every question in the current questionnaire (content, user-generated content, messaging, web access, gambling, ads, medical). The result is 4+.
 - **Category:** Primary *Finance*, secondary *Business*.
 - **Content rights:** *Does not contain third-party content*.
 - **Sign-in required:** No. Use the review notes below.
-- **Localizations:** English and Arabic. Add an Arabic name, subtitle, description and screenshots.
+- **Localizations:** English and Arabic. Add an Arabic name, subtitle, description and screenshots (`docs/STORE_LISTING.md`, `store-assets/`).
+- **Availability:** Oman and the other countries you choose. The EU needs the trader-status decision above first.
+- **Accessibility (optional "Accessibility" labels on the product page):** only claim what was tested on the phone: VoiceOver, larger text, dark interface not supported (the app is light only), sufficient contrast.
 
 ### App Review notes (paste into "Notes")
 
@@ -69,8 +89,12 @@ When the organization account is approved, in this order:
 Hisab is an offline accounting app. All data is stored only on the device; there is no server
 and no online account.
 
+Why there is a sign-in: a company's books are shared by several people on the same device with
+different roles (administrator, accountant, read-only viewer), and an audit log records who changed
+what. There is no server to turn on and no demo account to give: the reviewer creates their own.
+
 How to review:
-1. On first launch, enter any company name and create the administrator
+1. On first launch, enter any company name, tick the Terms checkbox and create the administrator
    (e.g. username "reviewer", password "Review2026").
 2. You are signed in as administrator with full access.
 3. To see role restrictions, go to My Account › Users & Access and create an Accountant
